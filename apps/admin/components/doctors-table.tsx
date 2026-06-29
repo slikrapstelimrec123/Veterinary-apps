@@ -7,32 +7,32 @@ export function DoctorsTable({ doctors, canManage }: { doctors: Doctor[]; canMan
     <table className="table">
       <thead>
         <tr>
-          <th>Name</th>
-          <th>Specialization</th>
-          <th>Contact</th>
-          <th>Status</th>
-          {canManage ? <th>Actions</th> : null}
+          <th>Ім'я</th>
+          <th>Спеціалізація</th>
+          <th>Контакт</th>
+          <th>Статус</th>
+          {canManage ? <th>Дії</th> : null}
         </tr>
       </thead>
       <tbody>
         {doctors.map((doctor) => (
           <tr key={doctor.id}>
             <td>{doctor.full_name}</td>
-            <td>{doctor.specialization ?? "Not set"}</td>
-            <td>{doctor.email ?? doctor.phone ?? "Not set"}</td>
+            <td>{doctor.specialization ?? "Не вказано"}</td>
+            <td>{doctor.email ?? doctor.phone ?? "Не вказано"}</td>
             <td><span className="status">{doctor.status}</span></td>
             {canManage ? (
               <td>
                 <div className="form-actions">
-                  <a className="button button-secondary" href={`/clinic/doctors/${doctor.id}`}>Edit</a>
+                  <a className="button button-secondary" href={`/clinic/doctors/${doctor.id}`}>Редагувати</a>
                   <form action={deactivateDoctor}>
                     <input name="id" type="hidden" value={doctor.id} />
-                    <button className="button button-muted" type="submit">Deactivate</button>
+                    <button className="button button-muted" type="submit">Деактивувати</button>
                   </form>
                   <form action={deleteDoctor}>
                     <input name="id" type="hidden" value={doctor.id} />
-                    <ConfirmSubmitButton className="button button-danger" message="Delete this doctor if it is not connected to appointments?">
-                      Delete
+                    <ConfirmSubmitButton className="button button-danger" message="Видалити цього лікаря, якщо він не пов'язаний із записами?">
+                      Видалити
                     </ConfirmSubmitButton>
                   </form>
                 </div>

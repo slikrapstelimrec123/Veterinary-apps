@@ -12,18 +12,18 @@ import {
 } from "lucide-react";
 
 const links = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/clinic/profile", label: "Clinic Profile", icon: HeartPulse },
-  { href: "/clinic/services", label: "Services", icon: FileText },
-  { href: "/clinic/doctors", label: "Doctors", icon: Stethoscope },
-  { href: "/clinic/schedule", label: "Schedule", icon: CalendarDays },
-  { href: "/clients", label: "Clients", icon: Users },
-  { href: "/pets", label: "Pets", icon: PawPrint },
-  { href: "/appointments", label: "Appointments", icon: CalendarDays },
-  { href: "/visit-records", label: "Visit Records", icon: FileText },
-  { href: "/documents", label: "Documents", icon: FileText },
-  { href: "/subscription", label: "Subscription", icon: WalletCards },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/dashboard", label: "Дашборд", icon: LayoutDashboard },
+  { href: "/clinic/profile", label: "Профіль клініки", icon: HeartPulse },
+  { href: "/clinic/services", label: "Послуги", icon: FileText },
+  { href: "/clinic/doctors", label: "Лікарі", icon: Stethoscope },
+  { href: "/clinic/schedule", label: "Розклад", icon: CalendarDays },
+  { href: "/clients", label: "Клієнти", icon: Users },
+  { href: "/pets", label: "Тварини", icon: PawPrint },
+  { href: "/appointments", label: "Записи", icon: CalendarDays },
+  { href: "/visit-records", label: "Історія візитів", icon: FileText },
+  { href: "/documents", label: "Документи", icon: FileText },
+  { href: "/subscription", label: "Підписка", icon: WalletCards },
+  { href: "/settings", label: "Налаштування", icon: Settings },
 ];
 
 export function AppSidebar() {
@@ -31,7 +31,7 @@ export function AppSidebar() {
     <aside style={{ borderRight: "1px solid var(--border)", background: "var(--surface)", padding: 20 }}>
       <div style={{ marginBottom: 28 }}>
         <div style={{ fontWeight: 900, fontSize: 22 }}>VetCare</div>
-        <div className="muted" style={{ marginTop: 4 }}>Clinic workspace</div>
+        <div className="muted" style={{ marginTop: 4 }}>Робочий простір клініки</div>
       </div>
       <nav style={{ display: "grid", gap: 6 }}>
         {links.map((link) => {

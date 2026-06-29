@@ -16,12 +16,12 @@ export default async function ClinicServicesPage({
   return (
     <div className="page">
       <PageHeader
-        eyebrow="Catalog"
-        title="Services"
-        description="Manage the services pet owners will later see and book."
+        eyebrow="Каталог"
+        title="Послуги"
+        description="Керуйте послугами, які власники тварин зможуть переглядати та бронювати."
       />
       <StatusMessage success={searchParams.success} error={searchParams.error} />
-      {canManage ? <ServiceForm /> : <EmptyState title="View only" description="Your role can view services but cannot manage them." />}
+      {canManage ? <ServiceForm /> : <EmptyState title="Тільки перегляд" description="Ваша роль дозволяє переглядати послуги, але не керувати ними." />}
       {services.length > 0 ? (
         <>
           <ServicesTable services={services} canManage={canManage} />
@@ -33,8 +33,8 @@ export default async function ClinicServicesPage({
         </>
       ) : (
         <EmptyState
-          title="No services yet"
-          description="Add your first service so pet owners can understand what your clinic offers."
+          title="Послуг ще немає"
+          description="Додайте першу послугу, щоб власники тварин розуміли, що пропонує ваша клініка."
         />
       )}
     </div>

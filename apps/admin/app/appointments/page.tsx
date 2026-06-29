@@ -4,10 +4,10 @@ import { appointments } from "../../lib/placeholder-data";
 export default function AppointmentsPage() {
   return (
     <div className="page">
-      <PageHeader eyebrow="Calendar" title="Appointments" description="Clinic booking list for receptionists and doctors." action={<button className="button">Create manually</button>} />
+      <PageHeader eyebrow="Календар" title="Записи" description="Список бронювань клініки для реєстраторів та лікарів." action={<button className="button">Створити вручну</button>} />
       <table className="table">
         <thead>
-          <tr><th>Date and time</th><th>Client</th><th>Pet</th><th>Status</th></tr>
+          <tr><th>Дата і час</th><th>Клієнт</th><th>Тварина</th><th>Статус</th></tr>
         </thead>
         <tbody>
           {appointments.map((appointment) => (

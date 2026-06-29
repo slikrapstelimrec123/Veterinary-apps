@@ -4,12 +4,12 @@ export default function ForgotPasswordPage() {
   return (
     <div className="page">
       <PageHeader
-        eyebrow="Recovery"
-        title="Forgot password"
-        description="Password reset email flow will be connected after core auth is verified."
+        eyebrow="Відновлення"
+        title="Забули пароль"
+        description="Відправлення листа для скидання пароля буде підключено після перевірки основної автентифікації."
       />
       <section className="card">
-        <p className="muted">Placeholder for Supabase password recovery.</p>
+        <p className="muted">Заготовка для відновлення пароля через Supabase.</p>
       </section>
     </div>
   );

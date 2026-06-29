@@ -7,13 +7,13 @@ export function ProfileCompletionChecklist({
 }) {
   return (
     <section className="card">
-      <h2>Profile completion</h2>
-      <p className="muted">{percent}% ready for publishing</p>
+      <h2>Заповненість профілю</h2>
+      <p className="muted">{percent}% готово до публікації</p>
       <ul className="checklist">
         {items.map((item) => (
           <li key={item.label}>
             <span>{item.label}</span>
-            <span className="status">{item.done ? "Done" : "Next"}</span>
+            <span className="status">{item.done ? "Готово" : "Далі"}</span>
           </li>
         ))}
       </ul>

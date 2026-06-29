@@ -4,7 +4,7 @@ import { pets } from "../../lib/placeholder-data";
 export default function PetsPage() {
   return (
     <div className="page">
-      <PageHeader eyebrow="Medical cards" title="Pets" description="Pet cards connected to this clinic through appointments or visits." />
+      <PageHeader eyebrow="Медичні картки" title="Тварини" description="Картки тварин, пов'язаних із цією клінікою через записи або візити." />
       <section className="grid">
         {pets.map((pet) => (
           <div className="card" key={pet.id}>

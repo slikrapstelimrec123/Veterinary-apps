@@ -6,7 +6,7 @@ import { LogoutButton } from "../components/logout-button";
 
 export const metadata: Metadata = {
   title: "VetCare Admin",
-  description: "Clinic admin panel for veterinary teams",
+  description: "Панель адміністратора клініки для ветеринарних команд",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -17,7 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <AppSidebar />
           <main style={{ padding: 28 }}>
             <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 20 }}>
-              <Link className="button" href="/login">Login</Link>
+              <Link className="button" href="/login">Вхід</Link>
               <div style={{ width: 8 }} />
               <LogoutButton />
             </div>

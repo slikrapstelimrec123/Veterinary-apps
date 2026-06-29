@@ -17,16 +17,16 @@ export default async function ClinicSchedulePage({
   return (
     <div className="page">
       <PageHeader
-        eyebrow="Availability"
-        title="Doctor schedule"
-        description="Set doctor availability for future appointment booking."
+        eyebrow="Доступність"
+        title="Розклад лікарів"
+        description="Вкажіть години роботи лікарів для майбутнього бронювання записів."
       />
       <StatusMessage success={searchParams.success} error={searchParams.error} />
       {activeDoctors.length === 0 ? (
         <EmptyState
-          title="No active doctors"
-          description="Add and activate a doctor before creating availability."
-          action={<a className="button" href="/clinic/doctors">Add doctor</a>}
+          title="Немає активних лікарів"
+          description="Додайте та активуйте лікаря, перш ніж створювати розклад."
+          action={<a className="button" href="/clinic/doctors">Додати лікаря</a>}
         />
       ) : canManage ? (
         <DoctorScheduleForm doctors={activeDoctors} />
@@ -35,8 +35,8 @@ export default async function ClinicSchedulePage({
         <DoctorScheduleView doctors={activeDoctors} schedules={schedules} canManage={canManage} />
       ) : (
         <EmptyState
-          title="No schedules yet"
-          description="Set doctor availability so clients can book appointments later."
+          title="Розкладів ще немає"
+          description="Вкажіть години роботи лікарів, щоб клієнти могли бронювати записи."
         />
       )}
     </div>

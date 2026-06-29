@@ -3,10 +3,10 @@ import { PageHeader } from "../../components/page-header";
 export default function ClientsPage() {
   return (
     <div className="page">
-      <PageHeader eyebrow="CRM light" title="Clients" description="Clients connected to appointments and pet records." />
+      <PageHeader eyebrow="CRM" title="Клієнти" description="Клієнти, пов'язані із записами та медичними картками тварин." />
       <table className="table">
         <thead>
-          <tr><th>Name</th><th>Phone</th><th>Pets</th></tr>
+          <tr><th>Ім'я</th><th>Телефон</th><th>Тварини</th></tr>
         </thead>
         <tbody>
           <tr><td>Olena Petrenko</td><td>+380 00 000 0000</td><td>Luna</td></tr>

@@ -3,15 +3,15 @@ import { PageHeader } from "../../components/page-header";
 export default function DocumentsPage() {
   return (
     <div className="page">
-      <PageHeader eyebrow="Files" title="Documents" description="Private medical files attached to completed or draft visit records." action={<button className="button">Upload document</button>} />
+      <PageHeader eyebrow="Файли" title="Документи" description="Приватні медичні файли, прикріплені до завершених або чернеткових записів візитів." action={<button className="button">Завантажити документ</button>} />
       <section className="grid">
         <div className="card">
-          <h2>Vaccination certificate</h2>
-          <p className="muted">Private file. Signed URLs will be generated only after access checks.</p>
+          <h2>Сертифікат про вакцинацію</h2>
+          <p className="muted">Приватний файл. Підписані URL-адреси генеруються лише після перевірки доступу.</p>
         </div>
         <div className="card">
-          <h2>Lab result photo</h2>
-          <p className="muted">Connected to Luna's preventive checkup.</p>
+          <h2>Фото результату аналізу</h2>
+          <p className="muted">Пов'язано з профілактичним оглядом Луни.</p>
         </div>
       </section>
     </div>

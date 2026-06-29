@@ -17,10 +17,10 @@ export function ClinicDashboardCards({
 
   return (
     <section className="grid">
-      <StatCard label="Clinic" value={clinic?.name ?? "No clinic"} note={`Status: ${clinic?.status ?? "unknown"}`} />
-      <StatCard label="Doctors" value={String(activeDoctors)} note={`${doctors.length} total visible in workspace`} />
-      <StatCard label="Services" value={String(activeServices)} note={`${services.length} total configured`} />
-      <StatCard label="Profile" value={`${completionPercent}%`} note="Completion before publishing" />
+      <StatCard label="Клініка" value={clinic?.name ?? "Немає клініки"} note={`Статус: ${clinic?.status ?? "невідомо"}`} />
+      <StatCard label="Лікарі" value={String(activeDoctors)} note={`${doctors.length} загалом відображається в робочому просторі`} />
+      <StatCard label="Послуги" value={String(activeServices)} note={`${services.length} загалом налаштовано`} />
+      <StatCard label="Профіль" value={`${completionPercent}%`} note="Заповненість перед публікацією" />
     </section>
   );
 }

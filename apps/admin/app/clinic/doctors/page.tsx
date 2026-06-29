@@ -17,12 +17,12 @@ export default async function ClinicDoctorsPage({
   return (
     <div className="page">
       <PageHeader
-        eyebrow="Team"
-        title="Doctors"
-        description="Build clean doctor profiles before appointment booking is enabled."
+        eyebrow="Команда"
+        title="Лікарі"
+        description="Створіть профілі лікарів до того, як буде увімкнено бронювання записів."
       />
       <StatusMessage success={searchParams.success} error={searchParams.error} />
-      {canManage ? <DoctorForm /> : <EmptyState title="View only" description="Your role can view doctor profiles but cannot manage them." />}
+      {canManage ? <DoctorForm /> : <EmptyState title="Тільки перегляд" description="Ваша роль дозволяє переглядати профілі лікарів, але не керувати ними." />}
       {doctors.length > 0 ? (
         <>
           <DoctorsTable doctors={doctors} canManage={canManage} />
@@ -34,8 +34,8 @@ export default async function ClinicDoctorsPage({
         </>
       ) : (
         <EmptyState
-          title="No doctors yet"
-          description="Add your first doctor to start building your clinic profile."
+          title="Лікарів ще немає"
+          description="Додайте першого лікаря, щоб почати формувати профіль клініки."
         />
       )}
     </div>

@@ -7,13 +7,13 @@ export default async function PlatformAdminPage() {
   return (
     <div className="page">
       <PageHeader
-        eyebrow="Platform"
-        title="Platform admin"
-        description="Placeholder for moderation and platform-level support workflows."
+        eyebrow="Платформа"
+        title="Адміністратор платформи"
+        description="Заготовка для модерації та робочих процесів підтримки на рівні платформи."
       />
       <section className="card">
-        <h2>{profile?.full_name ?? "Platform admin"}</h2>
-        <p className="muted">Role: {profile?.role ?? "unknown"}</p>
+        <h2>{profile?.full_name ?? "Адміністратор платформи"}</h2>
+        <p className="muted">Роль: {profile?.role ?? "невідома"}</p>
       </section>
     </div>
   );

@@ -4,10 +4,10 @@ import { visitRecords } from "../../lib/placeholder-data";
 export default function VisitRecordsPage() {
   return (
     <div className="page">
-      <PageHeader eyebrow="Medical records" title="Visit records" description="Diagnoses, treatment notes, recommendations, and internal notes." action={<a className="button" href="/visit-records/create">Create record</a>} />
+      <PageHeader eyebrow="Медичні записи" title="Історія візитів" description="Діагнози, нотатки про лікування, рекомендації та внутрішні нотатки." action={<a className="button" href="/visit-records/create">Створити запис</a>} />
       <table className="table">
         <thead>
-          <tr><th>Pet</th><th>Diagnosis</th><th>Status</th></tr>
+          <tr><th>Тварина</th><th>Діагноз</th><th>Статус</th></tr>
         </thead>
         <tbody>
           {visitRecords.map((record) => (

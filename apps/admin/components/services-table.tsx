@@ -7,33 +7,33 @@ export function ServicesTable({ services, canManage }: { services: Service[]; ca
     <table className="table">
       <thead>
         <tr>
-          <th>Name</th>
-          <th>Category</th>
-          <th>Duration</th>
-          <th>Price</th>
-          <th>Status</th>
-          {canManage ? <th>Actions</th> : null}
+          <th>Назва</th>
+          <th>Категорія</th>
+          <th>Тривалість</th>
+          <th>Ціна</th>
+          <th>Статус</th>
+          {canManage ? <th>Дії</th> : null}
         </tr>
       </thead>
       <tbody>
         {services.map((service) => (
           <tr key={service.id}>
             <td>{service.name}</td>
-            <td>{service.category ?? "General"}</td>
-            <td>{service.duration_minutes ?? 30} min</td>
-            <td>{service.price_amount ? `${service.price_amount} ${service.price_currency ?? "UAH"}` : "Not set"}</td>
+            <td>{service.category ?? "Загальна"}</td>
+            <td>{service.duration_minutes ?? 30} хв</td>
+            <td>{service.price_amount ? `${service.price_amount} ${service.price_currency ?? "UAH"}` : "Не вказано"}</td>
             <td><span className="status">{service.status}</span></td>
             {canManage ? (
               <td>
                 <div className="form-actions">
                   <form action={deactivateService}>
                     <input name="id" type="hidden" value={service.id} />
-                    <button className="button button-muted" type="submit">Deactivate</button>
+                    <button className="button button-muted" type="submit">Деактивувати</button>
                   </form>
                   <form action={deleteService}>
                     <input name="id" type="hidden" value={service.id} />
-                    <ConfirmSubmitButton className="button button-danger" message="Delete this service if it is not connected to appointments?">
-                      Delete
+                    <ConfirmSubmitButton className="button button-danger" message="Видалити цю послугу, якщо вона не пов'язана із записами?">
+                      Видалити
                     </ConfirmSubmitButton>
                   </form>
                 </div>

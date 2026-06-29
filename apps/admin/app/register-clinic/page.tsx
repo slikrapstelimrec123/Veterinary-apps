@@ -5,9 +5,9 @@ export default function RegisterClinicPage() {
   return (
     <div className="page">
       <PageHeader
-        eyebrow="Clinic registration"
-        title="Create clinic workspace"
-        description="Creates a clinic owner profile, draft clinic, and active clinic membership."
+        eyebrow="Реєстрація клініки"
+        title="Створити робочий простір клініки"
+        description="Створює профіль власника клініки, чернеткову клініку та активне членство в клініці."
       />
       <RegisterClinicForm />
     </div>

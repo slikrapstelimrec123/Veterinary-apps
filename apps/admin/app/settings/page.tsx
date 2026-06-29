@@ -3,10 +3,10 @@ import { PageHeader } from "../../components/page-header";
 export default function SettingsPage() {
   return (
     <div className="page">
-      <PageHeader eyebrow="Workspace" title="Settings" description="Clinic account, team, permissions, and privacy settings placeholder." />
+      <PageHeader eyebrow="Робочий простір" title="Налаштування" description="Заготовка для облікового запису клініки, команди, дозволів та конфіденційності." />
       <section className="grid">
-        <div className="card"><h2>Team access</h2><p className="muted">Clinic owner, veterinarian, and clinic manager roles.</p></div>
-        <div className="card"><h2>Privacy</h2><p className="muted">Medical records and files must remain private by default.</p></div>
+        <div className="card"><h2>Доступ команди</h2><p className="muted">Ролі: власник клініки, ветеринар та менеджер клініки.</p></div>
+        <div className="card"><h2>Конфіденційність</h2><p className="muted">Медичні записи та файли мають залишатися приватними за замовчуванням.</p></div>
       </section>
     </div>
   );

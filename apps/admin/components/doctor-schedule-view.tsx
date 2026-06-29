@@ -20,7 +20,7 @@ export function DoctorScheduleView({
         return (
           <div className="card" key={dayNumber}>
             <h2>{dayName}</h2>
-            {daySchedules.length === 0 ? <p className="muted">No active hours set.</p> : null}
+            {daySchedules.length === 0 ? <p className="muted">Активних годин не встановлено.</p> : null}
             <div style={{ display: "grid", gap: 12 }}>
               {daySchedules.map((schedule) => (
                 <div key={schedule.id} style={{ borderTop: "1px solid var(--border)", paddingTop: 12 }}>
@@ -28,16 +28,16 @@ export function DoctorScheduleView({
                     {schedule.doctors?.full_name ?? "Doctor"} · {schedule.start_time.slice(0, 5)}-{schedule.end_time.slice(0, 5)}
                   </p>
                   <p className="muted" style={{ marginTop: 0 }}>
-                    Slot {schedule.slot_duration_minutes} min
-                    {schedule.break_start_time ? ` · break ${schedule.break_start_time.slice(0, 5)}-${schedule.break_end_time?.slice(0, 5)}` : ""}
+                    Слот {schedule.slot_duration_minutes} хв
+                    {schedule.break_start_time ? ` · перерва ${schedule.break_start_time.slice(0, 5)}-${schedule.break_end_time?.slice(0, 5)}` : ""}
                   </p>
                   {canManage ? (
                     <>
                       <DoctorScheduleForm doctors={doctors} schedule={schedule} />
                       <form action={deleteSchedule} style={{ marginTop: 10 }}>
                         <input name="id" type="hidden" value={schedule.id} />
-                        <ConfirmSubmitButton className="button button-danger" message="Delete this schedule item?">
-                          Delete schedule item
+                        <ConfirmSubmitButton className="button button-danger" message="Видалити цей запис розкладу?">
+                          Видалити запис розкладу
                         </ConfirmSubmitButton>
                       </form>
                     </>

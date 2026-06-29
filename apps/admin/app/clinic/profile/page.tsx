@@ -17,9 +17,9 @@ export default async function ClinicProfilePage({
   return (
     <div className="page">
       <PageHeader
-        eyebrow="Clinic"
-        title="Clinic profile"
-        description="Public-facing clinic information and publication readiness."
+        eyebrow="Клініка"
+        title="Профіль клініки"
+        description="Публічна інформація про клініку та готовність до публікації."
       />
       <StatusMessage success={searchParams.success} error={searchParams.error} />
       {clinic ? (
@@ -28,7 +28,7 @@ export default async function ClinicProfilePage({
           <ProfileCompletionChecklist items={completion.items} percent={completion.percent} />
         </>
       ) : (
-        <EmptyState title="No clinic profile" description="Ask the clinic owner to finish workspace registration." />
+        <EmptyState title="Профіль клініки відсутній" description="Попросіть власника клініки завершити реєстрацію робочого простору." />
       )}
     </div>
   );

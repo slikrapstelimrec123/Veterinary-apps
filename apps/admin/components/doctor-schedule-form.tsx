@@ -2,13 +2,13 @@ import { createSchedule, updateSchedule } from "../lib/clinic-actions";
 import type { Doctor, DoctorSchedule } from "../types";
 
 export const days = [
-  [1, "Monday"],
-  [2, "Tuesday"],
-  [3, "Wednesday"],
-  [4, "Thursday"],
-  [5, "Friday"],
-  [6, "Saturday"],
-  [7, "Sunday"],
+  [1, "Понеділок"],
+  [2, "Вівторок"],
+  [3, "Середа"],
+  [4, "Четвер"],
+  [5, "П'ятниця"],
+  [6, "Субота"],
+  [7, "Неділя"],
 ] as const;
 
 export function DoctorScheduleForm({
@@ -27,18 +27,18 @@ export function DoctorScheduleForm({
         {!schedule ? (
           <>
             <label className="field">
-              Doctor
+              Лікар
               <select name="doctor_id" required defaultValue="">
-                <option value="" disabled>Select doctor</option>
+                <option value="" disabled>Оберіть лікаря</option>
                 {doctors.map((doctor) => (
                   <option key={doctor.id} value={doctor.id}>{doctor.full_name}</option>
                 ))}
               </select>
             </label>
             <label className="field">
-              Day
+              День
               <select name="day_of_week" required defaultValue="">
-                <option value="" disabled>Select day</option>
+                <option value="" disabled>Оберіть день</option>
                 {days.map(([value, label]) => (
                   <option key={value} value={value}>{label}</option>
                 ))}
@@ -47,32 +47,32 @@ export function DoctorScheduleForm({
           </>
         ) : null}
         <label className="field">
-          Start time
+          Початок роботи
           <input name="start_time" type="time" defaultValue={schedule?.start_time ?? "09:00"} required />
         </label>
         <label className="field">
-          End time
+          Кінець роботи
           <input name="end_time" type="time" defaultValue={schedule?.end_time ?? "18:00"} required />
         </label>
         <label className="field">
-          Break starts
+          Початок перерви
           <input name="break_start_time" type="time" defaultValue={schedule?.break_start_time ?? ""} />
         </label>
         <label className="field">
-          Break ends
+          Кінець перерви
           <input name="break_end_time" type="time" defaultValue={schedule?.break_end_time ?? ""} />
         </label>
         <label className="field">
-          Slot duration
+          Тривалість слоту
           <input name="slot_duration_minutes" type="number" min="1" defaultValue={schedule?.slot_duration_minutes ?? 30} />
         </label>
       </div>
       <label style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <input name="is_active" type="checkbox" defaultChecked={schedule?.is_active ?? true} />
-        Active schedule item
+        Активний запис розкладу
       </label>
       <div className="form-actions">
-        <button className="button" type="submit">{schedule ? "Save schedule" : "Add working day"}</button>
+        <button className="button" type="submit">{schedule ? "Зберегти розклад" : "Додати робочий день"}</button>
       </div>
     </form>
   );

@@ -1,18 +1,18 @@
 const successMessages: Record<string, string> = {
-  saved: "Changes saved.",
-  created: "Created successfully.",
-  deactivated: "Deactivated.",
-  deleted: "Deleted.",
+  saved: "Зміни збережено.",
+  created: "Успішно створено.",
+  deactivated: "Деактивовано.",
+  deleted: "Видалено.",
 };
 
 const errorMessages: Record<string, string> = {
-  validation: "Please check the highlighted required fields.",
-  permission: "You do not have permission for this action.",
-  not_found: "The requested item was not found.",
-  publish_requirements: "Add name, city, address, and phone or email before publishing.",
-  duplicate_schedule: "This doctor already has an active schedule for that day.",
-  unsafe_delete: "This item is connected to future data, so it was archived instead.",
-  unknown: "Something went wrong. Please try again.",
+  validation: "Будь ласка, перевірте виділені обов'язкові поля.",
+  permission: "У вас немає дозволу на цю дію.",
+  not_found: "Запитаний елемент не знайдено.",
+  publish_requirements: "Додайте назву, місто, адресу та телефон або email перед публікацією.",
+  duplicate_schedule: "Цей лікар вже має активний розклад на цей день.",
+  unsafe_delete: "Цей елемент пов'язаний із майбутніми даними, тому він був заархівований.",
+  unknown: "Щось пішло не так. Спробуйте ще раз.",
 };
 
 export function StatusMessage({

@@ -8,14 +8,14 @@ export default function LoginPage({ searchParams }: { searchParams: { error?: st
   return (
     <div className="page">
       <PageHeader
-        eyebrow="Access"
-        title="Clinic login"
-        description="Sign in with the clinic account created in Supabase Auth."
+        eyebrow="Доступ"
+        title="Вхід до клініки"
+        description="Увійдіть за допомогою облікового запису клініки, створеного в Supabase Auth."
       />
       {message ? <p className="card" style={{ color: "#9f1239" }}>{message}</p> : null}
       <LoginForm />
       <p className="muted">
-        New clinic? <a href="/register-clinic">Create clinic account</a>.
+        Нова клініка? <a href="/register-clinic">Створити обліковий запис клініки</a>.
       </p>
     </div>
   );

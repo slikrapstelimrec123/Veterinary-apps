@@ -9,19 +9,19 @@ export function DoctorForm({ doctor }: { doctor?: Doctor }) {
       {doctor ? <input name="id" type="hidden" value={doctor.id} /> : null}
       <div className="form-grid">
         <label className="field">
-          Full name
+          Повне ім'я
           <input name="full_name" defaultValue={doctor?.full_name ?? ""} required />
         </label>
         <label className="field">
-          Specialization
+          Спеціалізація
           <input name="specialization" defaultValue={doctor?.specialization ?? ""} required />
         </label>
         <label className="field">
-          Experience years
+          Роки досвіду
           <input name="experience_years" type="number" min="0" defaultValue={doctor?.experience_years ?? ""} />
         </label>
         <label className="field">
-          Phone
+          Телефон
           <input name="phone" defaultValue={doctor?.phone ?? ""} />
         </label>
         <label className="field">
@@ -29,29 +29,29 @@ export function DoctorForm({ doctor }: { doctor?: Doctor }) {
           <input name="email" type="email" defaultValue={doctor?.email ?? ""} />
         </label>
         <label className="field">
-          Avatar URL
+          URL аватара
           <input name="avatar_url" defaultValue={doctor?.avatar_url ?? ""} />
         </label>
         <label className="field">
-          Status
+          Статус
           <select name="status" defaultValue={doctor?.status ?? "draft"}>
-            <option value="draft">Draft</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-            <option value="archived">Archived</option>
+            <option value="draft">Чернетка</option>
+            <option value="active">Активний</option>
+            <option value="inactive">Неактивний</option>
+            <option value="archived">Архівований</option>
           </select>
         </label>
       </div>
       <label className="field">
-        Bio
+        Біографія
         <textarea name="bio" defaultValue={doctor?.bio ?? ""} />
       </label>
       <label style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <input name="is_public" type="checkbox" defaultChecked={doctor?.is_public ?? true} />
-        Public in future clinic profile
+        Публічний у майбутньому профілі клініки
       </label>
       <div className="form-actions">
-        <button className="button" type="submit">{doctor ? "Save doctor" : "Add doctor"}</button>
+        <button className="button" type="submit">{doctor ? "Зберегти лікаря" : "Додати лікаря"}</button>
       </div>
     </form>
   );

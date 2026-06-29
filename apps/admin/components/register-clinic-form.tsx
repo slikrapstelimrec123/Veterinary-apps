@@ -20,22 +20,22 @@ export function RegisterClinicForm() {
     setMessage(null);
 
     if (fullName.trim().length < 2) {
-      setError("Enter the clinic owner's full name.");
+      setError("Введіть повне ім'я власника клініки.");
       return;
     }
 
     if (clinicName.trim().length < 2) {
-      setError("Enter the clinic name.");
+      setError("Введіть назву клініки.");
       return;
     }
 
     if (!email.includes("@")) {
-      setError("Enter a valid email address.");
+      setError("Введіть дійсну адресу електронної пошти.");
       return;
     }
 
     if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
+      setError("Пароль повинен містити щонайменше 6 символів.");
       return;
     }
 
@@ -54,7 +54,7 @@ export function RegisterClinicForm() {
 
     if (signUpError || !data.user) {
       setIsLoading(false);
-      setError("Unable to create account. Please try again.");
+      setError("Не вдалося створити обліковий запис. Спробуйте ще раз.");
       return;
     }
 
@@ -67,7 +67,7 @@ export function RegisterClinicForm() {
 
     if (profileError) {
       setIsLoading(false);
-      setMessage("Account created. Please confirm your email, then sign in to finish clinic setup.");
+      setMessage("Обліковий запис створено. Будь ласка, підтвердіть свій email, а потім увійдіть, щоб завершити налаштування клініки.");
       return;
     }
 
@@ -84,7 +84,7 @@ export function RegisterClinicForm() {
 
     if (clinicError || !clinic) {
       setIsLoading(false);
-      setError("Account created, but clinic setup could not be completed yet.");
+      setError("Обліковий запис створено, але налаштування клініки поки що не вдалося завершити.");
       return;
     }
 
@@ -98,7 +98,7 @@ export function RegisterClinicForm() {
     setIsLoading(false);
 
     if (memberError) {
-      setError("Clinic created, but owner access could not be linked yet.");
+      setError("Клініку створено, але доступ власника поки що не вдалося підключити.");
       return;
     }
 
@@ -111,11 +111,11 @@ export function RegisterClinicForm() {
       {error ? <p style={{ color: "#9f1239", margin: 0 }}>{error}</p> : null}
       {message ? <p style={{ color: "#166534", margin: 0 }}>{message}</p> : null}
       <label>
-        Owner full name
+        Повне ім'я власника
         <input value={fullName} onChange={(event) => setFullName(event.target.value)} style={{ width: "100%", marginTop: 6, padding: 12 }} />
       </label>
       <label>
-        Clinic name
+        Назва клініки
         <input value={clinicName} onChange={(event) => setClinicName(event.target.value)} style={{ width: "100%", marginTop: 6, padding: 12 }} />
       </label>
       <label>
@@ -123,11 +123,11 @@ export function RegisterClinicForm() {
         <input value={email} onChange={(event) => setEmail(event.target.value)} style={{ width: "100%", marginTop: 6, padding: 12 }} />
       </label>
       <label>
-        Password
+        Пароль
         <input value={password} onChange={(event) => setPassword(event.target.value)} style={{ width: "100%", marginTop: 6, padding: 12 }} type="password" />
       </label>
       <button className="button" type="submit" disabled={isLoading}>
-        {isLoading ? "Creating clinic..." : "Create clinic account"}
+        {isLoading ? "Створення клініки..." : "Створити обліковий запис клініки"}
       </button>
     </form>
   );

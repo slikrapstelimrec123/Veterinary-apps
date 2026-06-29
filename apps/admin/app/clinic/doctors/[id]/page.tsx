@@ -33,16 +33,16 @@ export default async function DoctorDetailsPage({
   return (
     <div className="page">
       <PageHeader
-        eyebrow="Doctor profile"
+        eyebrow="Профіль лікаря"
         title={doctor.full_name}
-        description="Profile preview and editable doctor details."
-        action={<a className="button button-secondary" href="/clinic/doctors">Back to doctors</a>}
+        description="Перегляд профілю та редагування даних лікаря."
+        action={<a className="button button-secondary" href="/clinic/doctors">Назад до лікарів</a>}
       />
       <StatusMessage success={searchParams.success} error={searchParams.error} />
       <section className="card">
         <h2>{doctor.full_name}</h2>
-        <p className="muted">{doctor.specialization ?? "Specialization not set"}</p>
-        <p>{doctor.bio ?? "No bio yet."}</p>
+        <p className="muted">{doctor.specialization ?? "Спеціалізацію не вказано"}</p>
+        <p>{doctor.bio ?? "Біографію ще не додано."}</p>
         <span className="status">{doctor.status}</span>
       </section>
       {canEdit ? <DoctorForm doctor={doctor} /> : null}
