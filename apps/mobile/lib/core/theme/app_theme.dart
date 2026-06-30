@@ -24,7 +24,7 @@ class AppTheme {
         centerTitle: false,
         elevation: 0,
       ),
-      cardTheme: CardThemeData(
+      cardTheme: CardTheme(
         color: surface,
         elevation: 0,
         margin: EdgeInsets.zero,
@@ -48,3 +48,4 @@ class AppTheme {
     );
   }
 }
+

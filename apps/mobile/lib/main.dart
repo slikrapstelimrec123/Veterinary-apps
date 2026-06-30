@@ -3,7 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/auth/auth_gate.dart';
 import 'core/auth/auth_repository.dart';
-import 'core/auth/auth_state.dart';
+import 'core/auth/auth_state.dart' as app_auth;
 import 'core/config/supabase_config.dart';
 import 'core/theme/app_theme.dart';
 
@@ -28,12 +28,12 @@ class VetCareApp extends StatefulWidget {
 }
 
 class _VetCareAppState extends State<VetCareApp> {
-  late final AuthState authState;
+  late final app_auth.AuthState authState;
 
   @override
   void initState() {
     super.initState();
-    authState = AuthState(AuthRepository());
+    authState = app_auth.AuthState(AuthRepository());
     authState.bootstrap();
   }
 
@@ -45,7 +45,7 @@ class _VetCareAppState extends State<VetCareApp> {
 
   @override
   Widget build(BuildContext context) {
-    return AuthScope(
+    return app_auth.AuthScope(
       notifier: authState,
       child: MaterialApp(
         title: 'VetCare',
@@ -56,4 +56,7 @@ class _VetCareAppState extends State<VetCareApp> {
     );
   }
 }
+
+
+
 
