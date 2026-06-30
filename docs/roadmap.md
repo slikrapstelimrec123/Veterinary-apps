@@ -89,7 +89,7 @@ Acceptance criteria:
 
 ## Stage 4: Mobile Pet Owner App
 
-Status: in progress. Pet owner home, pet list, pet creation/editing, pet details, basic treatment history, visit details, document metadata placeholder, settings, logout, and mock preview mode are implemented.
+Status: in progress. Pet owner home, pet list, pet creation/editing, pet details, treatment history, visit details, private document metadata, settings, logout, and mock preview mode are implemented.
 
 Goal: let pet owners create account, pets, and browse clinics.
 
@@ -114,6 +114,8 @@ Acceptance criteria:
 
 ## Stage 5: Appointment Booking
 
+Status: in progress. Mobile clinic discovery, clinic/doctor profiles, booking flow, owner appointment list/details/cancel, clinic appointment list/details, and basic clinic status management are scaffolded.
+
 Goal: close the core booking loop between owner and clinic.
 
 Deliverables:
@@ -132,8 +134,11 @@ Acceptance criteria:
 - Clinic sees new appointment.
 - Owner sees appointment.
 - Clinic can confirm, cancel, complete, or mark no-show.
+- Visit record creation is handled in Stage 6.
 
 ## Stage 6: Visit History And Document Uploads
+
+Status: in progress. Clinic visit record creation/editing, draft/published/archive statuses, private document metadata/upload flow, and owner treatment-history viewing are scaffolded.
 
 Goal: prove the main long-term value: pet medical history.
 

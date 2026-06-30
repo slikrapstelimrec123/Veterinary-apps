@@ -251,3 +251,8 @@ The MVP is successful if:
 - Treat medical records and uploaded files as sensitive private data.
 - Do not build marketplace complexity until clinics and owners prove the core loop.
 
+## 7. Localization Rule
+
+- Усі видимі тексти в мобільному застосунку та кабінеті клініки мають бути українською мовою.
+- Демо-дані, плейсхолдери, повідомлення помилок, порожні стани, кнопки, форми та статуси також мають відображатися українською.
+- Технічні ключі, назви таблиць, enum-значення, URL-адреси, email та внутрішні ідентифікатори можуть залишатися англійською, якщо вони не показуються користувачу як текст інтерфейсу.

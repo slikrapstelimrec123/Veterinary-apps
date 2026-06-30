@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../core/auth/auth_state.dart';
 import '../../../shared/widgets/app_scaffold.dart';
@@ -47,29 +47,29 @@ class _LoginScreenState extends State<LoginScreen> {
     final auth = AuthScope.of(context);
 
     return AppScaffold(
-      title: 'Sign in',
-      subtitle: auth.useMockData ? 'Preview mode uses a local pet owner account.' : 'Access your pet health history.',
+      title: 'Увійти',
+      subtitle: auth.useMockData ? 'Демо-режим використовує локальний акаунт власника тварини.' : 'Відкрийте історію здоров’я своїх тварин.',
       children: [
         if (localError != null || auth.errorMessage != null) ...[
           Text(localError ?? auth.errorMessage!, style: const TextStyle(color: Color(0xFF9F1239))),
           const SizedBox(height: 12),
         ],
-        TextField(controller: emailController, decoration: const InputDecoration(labelText: 'Email')),
+        TextField(controller: emailController, decoration: const InputDecoration(labelText: 'Електронна пошта')),
         const SizedBox(height: 12),
-        TextField(controller: passwordController, obscureText: true, decoration: const InputDecoration(labelText: 'Password')),
+        TextField(controller: passwordController, obscureText: true, decoration: const InputDecoration(labelText: 'Пароль')),
         const SizedBox(height: 20),
         FilledButton(
           onPressed: auth.isLoading ? null : submit,
-          child: Text(auth.isLoading ? 'Signing in...' : 'Continue'),
+          child: Text(auth.isLoading ? 'Вхід...' : 'Продовжити'),
         ),
         const SizedBox(height: 12),
         OutlinedButton(
           onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const RegisterScreen())),
-          child: const Text('Create pet owner account'),
+          child: const Text('Створити акаунт власника тварини'),
         ),
         TextButton(
           onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ForgotPasswordScreen())),
-          child: const Text('Forgot password?'),
+          child: const Text('Забули пароль?'),
         ),
       ],
     );

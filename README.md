@@ -104,10 +104,13 @@ flutter run -d chrome --dart-define=MOCK_MODE=true
 Mock mode includes:
 
 - 2 pets
-- 2 clinics
-- 2 doctors
-- 3 visit records
-- 2 document metadata examples
+- 3 clinics
+- 5 doctors
+- 8 services
+- Doctor schedules and generated available booking slots
+- 2 owner appointments
+- 3 visit records, including one owner-hidden draft
+- 3 document metadata examples, including one owner-hidden internal document
 
 With Supabase:
 
@@ -115,7 +118,7 @@ With Supabase:
 flutter run --dart-define=SUPABASE_URL=your-url --dart-define=SUPABASE_ANON_KEY=your-anon-key
 ```
 
-Pet owner mobile routes currently support home, pet list, add/edit pet, pet profile, treatment history, visit details, document metadata placeholder, settings, and logout.
+Pet owner mobile routes currently support home, pet list, add/edit pet, pet profile, treatment history, visit details, private document metadata, clinic discovery, doctor profiles, appointment booking, owner appointment details/cancellation, settings, and logout.
 
 ## Run Admin Panel
 
@@ -126,7 +129,7 @@ npm run dev
 
 Open `http://localhost:3000`.
 
-The admin panel includes Supabase-backed authentication and clinic management modules for profile, services, doctors, and schedules.
+The admin panel includes Supabase-backed authentication and clinic management modules for profile, services, doctors, schedules, appointment management, visit records, and private visit documents.
 
 Auth routes:
 
@@ -181,8 +184,23 @@ After creating a clinic owner account and applying migrations:
 3. Open `/clinic/services` to add, edit, deactivate, or delete services.
 4. Open `/clinic/doctors` to add, edit, deactivate, or delete doctors.
 5. Open `/clinic/schedule` to add weekly doctor availability.
+6. Open `/clinic/appointments` to review bookings, confirm/cancel/complete/no-show appointments, and assign doctors.
+7. Open an appointment and create a visit record.
+8. Open `/clinic/visit-records` to edit, publish, archive, and attach private documents.
 
-This stage does not include appointment booking, visit records, document uploads, payments, reviews, chat, or push notifications.
+This stage includes visit record creation from appointments and private document attachments. It does not include payments, reviews, chat, push notifications, or advanced marketplace features.
+
+## Test Visit Records And Documents
+
+After applying migrations:
+
+1. Open `/clinic/appointments`.
+2. Open a confirmed or completed appointment.
+3. Use `Створити запис в медкартці`.
+4. Save as draft or publish to the pet owner.
+5. Open `/clinic/visit-records` to view and edit the record.
+6. On the record detail page, upload a PDF/JPG/PNG/HEIC document to the private `visit-documents` bucket.
+7. In the mobile app, open the pet profile, treatment history, and record details. Only published records and owner-visible documents should appear.
 
 ## Development Stages
 
@@ -196,4 +214,4 @@ This stage does not include appointment booking, visit records, document uploads
 
 ## Next Recommended Task
 
-Implement authentication and user roles for pet owners, clinic admins, veterinarians, and platform admins.
+Implement reviews, clinic ratings, doctor ratings, and post-appointment feedback.

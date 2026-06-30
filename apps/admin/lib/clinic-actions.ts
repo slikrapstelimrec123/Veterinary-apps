@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "./supabase-server";
 import { requireClinicAccess } from "./auth";
-import { canManageClinicCatalog, canManageClinicProfile } from "./clinic-data";
+import { canManageClinicAppointments, canManageClinicCatalog, canManageClinicProfile } from "./clinic-data";
 
 function text(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -25,6 +25,11 @@ function checked(formData: FormData, key: string) {
   return formData.get(key) === "on";
 }
 
+function dateText(formData: FormData, key: string) {
+  const value = text(formData, key);
+  return value && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null;
+}
+
 function assertCatalogPermission(role: string) {
   if (!canManageClinicCatalog(role)) {
     redirect("/dashboard?error=permission");
@@ -43,6 +48,14 @@ function revalidateClinicPages() {
   revalidatePath("/clinic/services");
   revalidatePath("/clinic/doctors");
   revalidatePath("/clinic/schedule");
+  revalidatePath("/clinic/appointments");
+  revalidatePath("/clinic/visit-records");
+}
+
+function assertAppointmentPermission(role: string) {
+  if (!canManageClinicAppointments(role)) {
+    redirect("/clinic/appointments?error=permission");
+  }
 }
 
 export async function updateClinicProfile(formData: FormData) {
@@ -413,4 +426,263 @@ export async function deleteSchedule(formData: FormData) {
   await createSupabaseServerClient().from("doctor_schedules").delete().eq("id", id).eq("clinic_id", clinicId);
   revalidateClinicPages();
   redirect("/clinic/schedule?success=deleted");
+}
+
+export async function updateAppointmentStatus(formData: FormData) {
+  const { clinicId, clinicRole } = await requireClinicAccess();
+  assertAppointmentPermission(clinicRole);
+
+  const id = text(formData, "id");
+  const status = text(formData, "status");
+  const returnTo = text(formData, "return_to") ?? "/clinic/appointments";
+
+  if (!id || !status || !["pending", "confirmed", "completed", "cancelled_by_clinic", "no_show"].includes(status)) {
+    redirect(`${returnTo}?error=validation`);
+  }
+
+  const { error } = await createSupabaseServerClient()
+    .from("appointments")
+    .update({
+      status,
+      clinic_note: text(formData, "clinic_note"),
+      cancellation_reason: status === "cancelled_by_clinic" ? text(formData, "cancellation_reason") : null,
+    })
+    .eq("id", id)
+    .eq("clinic_id", clinicId);
+
+  if (error) {
+    redirect(`${returnTo}?error=unknown`);
+  }
+
+  revalidateClinicPages();
+  revalidatePath(`/clinic/appointments/${id}`);
+  redirect(`${returnTo}?success=saved`);
+}
+
+export async function assignAppointmentDoctor(formData: FormData) {
+  const { clinicId, clinicRole } = await requireClinicAccess();
+  assertAppointmentPermission(clinicRole);
+
+  const id = text(formData, "id");
+  const doctorId = text(formData, "doctor_id");
+  const returnTo = text(formData, "return_to") ?? "/clinic/appointments";
+
+  if (!id) {
+    redirect(`${returnTo}?error=validation`);
+  }
+
+  if (doctorId) {
+    const { data: doctor } = await createSupabaseServerClient().from("doctors").select("id").eq("id", doctorId).eq("clinic_id", clinicId).maybeSingle();
+    if (!doctor) {
+      redirect(`${returnTo}?error=not_found`);
+    }
+  }
+
+  const { error } = await createSupabaseServerClient().from("appointments").update({ doctor_id: doctorId }).eq("id", id).eq("clinic_id", clinicId);
+
+  if (error) {
+    redirect(`${returnTo}?error=unknown`);
+  }
+
+  revalidateClinicPages();
+  revalidatePath(`/clinic/appointments/${id}`);
+  redirect(`${returnTo}?success=saved`);
+}
+
+function visitRecordPayload(formData: FormData, status: "draft" | "published") {
+  const visitDate = dateText(formData, "visit_date");
+  const nextVisitRecommended = checked(formData, "next_visit_recommended");
+  const nextVisitDate = dateText(formData, "next_visit_date");
+  const diagnosis = text(formData, "diagnosis");
+  const treatmentNotes = text(formData, "treatment_notes");
+  const recommendations = text(formData, "recommendations");
+
+  if (!visitDate) {
+    return { error: "validation" as const };
+  }
+
+  if (status === "published" && !diagnosis && !treatmentNotes && !recommendations) {
+    return { error: "visit_publish_requirements" as const };
+  }
+
+  if (nextVisitRecommended && !nextVisitDate) {
+    return { error: "validation" as const };
+  }
+
+  if (nextVisitRecommended && nextVisitDate && nextVisitDate < new Date().toISOString().slice(0, 10)) {
+    return { error: "validation" as const };
+  }
+
+  return {
+    data: {
+      visit_date: visitDate,
+      reason_for_visit: text(formData, "reason_for_visit"),
+      reason: text(formData, "reason_for_visit"),
+      symptoms: text(formData, "symptoms"),
+      diagnosis,
+      procedures_performed: text(formData, "procedures_performed"),
+      treatment_notes: treatmentNotes,
+      prescribed_medications: text(formData, "prescribed_medications"),
+      recommendations,
+      next_visit_recommended: nextVisitRecommended,
+      next_visit_date: nextVisitRecommended ? nextVisitDate : null,
+      follow_up_at: nextVisitRecommended ? nextVisitDate : null,
+      internal_notes: text(formData, "internal_notes"),
+      status,
+    },
+  };
+}
+
+export async function createVisitRecord(formData: FormData) {
+  const { clinicId, clinicRole, profile } = await requireClinicAccess();
+  if (!["clinic_owner", "clinic_manager", "veterinarian"].includes(clinicRole)) {
+    redirect("/clinic/visit-records?error=permission");
+  }
+
+  const appointmentId = text(formData, "appointment_id");
+  const action = text(formData, "submit_action");
+  const status = action === "publish" ? "published" : "draft";
+  const payload = visitRecordPayload(formData, status);
+
+  if ("error" in payload) {
+    redirect(appointmentId ? `/clinic/appointments/${appointmentId}/visit-record/create?error=${payload.error}` : `/clinic/visit-records?error=${payload.error}`);
+  }
+
+  const supabase = createSupabaseServerClient();
+  const { data: appointment } = appointmentId
+    ? await supabase
+        .from("appointments")
+        .select("id,clinic_id,pet_id,owner_id,doctor_id,status")
+        .eq("id", appointmentId)
+        .eq("clinic_id", clinicId)
+        .maybeSingle()
+    : { data: null };
+
+  if (!appointment) {
+    redirect("/clinic/appointments?error=not_found");
+  }
+
+  if (clinicRole === "veterinarian" && appointment.doctor_id) {
+    const { data: doctor } = await supabase.from("doctors").select("profile_id").eq("id", appointment.doctor_id).eq("clinic_id", clinicId).maybeSingle();
+    if (doctor?.profile_id !== profile.id) {
+      redirect(`/clinic/appointments/${appointmentId}?error=permission`);
+    }
+  }
+
+  const { data, error } = await supabase
+    .from("visit_records")
+    .insert({
+      ...payload.data,
+      appointment_id: appointment.id,
+      clinic_id: clinicId,
+      pet_id: appointment.pet_id,
+      owner_id: appointment.owner_id,
+      doctor_id: text(formData, "doctor_id") ?? appointment.doctor_id,
+      created_by: profile.id,
+    })
+    .select("id")
+    .single();
+
+  if (error || !data) {
+    redirect(`/clinic/appointments/${appointmentId}/visit-record/create?error=unknown`);
+  }
+
+  if (status === "published") {
+    await supabase.from("appointments").update({ status: "completed" }).eq("id", appointment.id).eq("clinic_id", clinicId);
+  }
+
+  revalidateClinicPages();
+  revalidatePath(`/clinic/appointments/${appointmentId}`);
+  redirect(`/clinic/visit-records/${data.id}?success=created`);
+}
+
+export async function updateVisitRecord(formData: FormData) {
+  const { clinicId, clinicRole } = await requireClinicAccess();
+  if (!["clinic_owner", "clinic_manager", "veterinarian"].includes(clinicRole)) {
+    redirect("/clinic/visit-records?error=permission");
+  }
+
+  const id = text(formData, "id");
+  const action = text(formData, "submit_action");
+  const status = action === "publish" ? "published" : action === "archive" ? "archived" : "draft";
+
+  if (!id) {
+    redirect("/clinic/visit-records?error=validation");
+  }
+
+  const payload = status === "archived" ? { data: { status } } : visitRecordPayload(formData, status);
+  if ("error" in payload) {
+    redirect(`/clinic/visit-records/${id}/edit?error=${payload.error}`);
+  }
+
+  const { error } = await createSupabaseServerClient().from("visit_records").update(payload.data).eq("id", id).eq("clinic_id", clinicId);
+
+  if (error) {
+    redirect(`/clinic/visit-records/${id}/edit?error=unknown`);
+  }
+
+  revalidateClinicPages();
+  revalidatePath(`/clinic/visit-records/${id}`);
+  redirect(`/clinic/visit-records/${id}?success=saved`);
+}
+
+export async function uploadVisitDocument(formData: FormData) {
+  const { clinicId, profile } = await requireClinicAccess();
+  const visitRecordId = text(formData, "visit_record_id");
+  const fileValue = formData.get("file");
+  const documentType = text(formData, "document_type") ?? "other";
+
+  if (!visitRecordId || !(fileValue instanceof File) || fileValue.size === 0) {
+    redirect(visitRecordId ? `/clinic/visit-records/${visitRecordId}?error=validation` : "/clinic/visit-records?error=validation");
+  }
+
+  if (fileValue.size > 10 * 1024 * 1024) {
+    redirect(`/clinic/visit-records/${visitRecordId}?error=validation`);
+  }
+
+  const allowedTypes = ["application/pdf", "image/jpeg", "image/png", "image/heic"];
+  if (!allowedTypes.includes(fileValue.type)) {
+    redirect(`/clinic/visit-records/${visitRecordId}?error=validation`);
+  }
+
+  const supabase = createSupabaseServerClient();
+  const { data: record } = await supabase.from("visit_records").select("id,clinic_id,pet_id").eq("id", visitRecordId).eq("clinic_id", clinicId).maybeSingle();
+
+  if (!record) {
+    redirect("/clinic/visit-records?error=not_found");
+  }
+
+  const safeName = fileValue.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const storagePath = `${clinicId}/${record.pet_id}/${visitRecordId}/${Date.now()}_${safeName}`;
+  const { error: uploadError } = await supabase.storage.from("visit-documents").upload(storagePath, fileValue, {
+    contentType: fileValue.type,
+    upsert: false,
+  });
+
+  if (uploadError) {
+    redirect(`/clinic/visit-records/${visitRecordId}?error=unknown`);
+  }
+
+  const { error } = await supabase.from("visit_documents").insert({
+    visit_record_id: visitRecordId,
+    clinic_id: clinicId,
+    pet_id: record.pet_id,
+    uploaded_by: profile.id,
+    file_name: fileValue.name,
+    file_type: fileValue.type,
+    file_size: fileValue.size,
+    storage_bucket: "visit-documents",
+    storage_path: storagePath,
+    document_type: documentType,
+    title: text(formData, "title") ?? fileValue.name,
+    description: text(formData, "description"),
+    is_visible_to_owner: checked(formData, "is_visible_to_owner"),
+  });
+
+  if (error) {
+    redirect(`/clinic/visit-records/${visitRecordId}?error=unknown`);
+  }
+
+  revalidatePath(`/clinic/visit-records/${visitRecordId}`);
+  redirect(`/clinic/visit-records/${visitRecordId}?success=created`);
 }

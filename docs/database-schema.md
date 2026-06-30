@@ -7,6 +7,8 @@ The implemented MVP schema lives in:
 - `supabase/migrations/20260629150000_initial_mvp_schema.sql`
 - `supabase/migrations/20260629151000_rls_policies.sql`
 - `supabase/migrations/20260629153000_clinic_management_module.sql`
+- `supabase/migrations/20260630143000_appointment_booking_module.sql`
+- `supabase/migrations/20260630160000_visit_records_documents_module.sql`
 
 ## profiles
 
@@ -201,7 +203,7 @@ Access:
 - Clinic members can read schedules for their clinic.
 - Clinic owners and clinic managers can manage schedules.
 - Veterinarians can read their own linked schedule.
-- Public schedule access remains closed until appointment booking is implemented.
+- Public users can read active schedule rows only for active public doctors in published clinics so the mobile app can calculate available booking slots.
 
 ## pets
 
@@ -267,11 +269,17 @@ Fields:
 - `owner_id uuid references profiles(id)`
 - `starts_at timestamptz`
 - `ends_at timestamptz`
+- `appointment_date date`
+- `start_time time`
+- `end_time time`
 - `status text`
 - `price_amount numeric nullable`
 - `price_currency text`
 - `owner_comment text nullable`
 - `clinic_comment text nullable`
+- `owner_note text nullable`
+- `clinic_note text nullable`
+- `cancellation_reason text nullable`
 - `cancelled_by uuid references profiles(id) nullable`
 - `cancelled_at timestamptz nullable`
 - `created_at timestamptz`
@@ -279,9 +287,11 @@ Fields:
 
 Access:
 
-- Pet owners can create appointments for their own pets.
+- Pet owners can create pending appointments for their own pets in published clinics using active public services and doctors.
 - Pet owners can read their own appointments.
-- Clinic members can read and manage appointments for their clinic.
+- Pet owners can cancel their own pending or confirmed appointments.
+- Clinic owners and managers can read appointments for their clinic.
+- Clinic owners and managers can confirm, cancel, complete, mark no-show, add clinic notes, and assign doctors.
 - Veterinarians can read appointments assigned to them.
 
 ## visit_records
@@ -295,14 +305,19 @@ Fields:
 - `clinic_id uuid references clinics(id)`
 - `doctor_id uuid references doctors(id) nullable`
 - `pet_id uuid references pets(id)`
+- `owner_id uuid references profiles(id) nullable`
 - `created_by uuid references profiles(id)`
-- `visit_date timestamptz`
-- `reason text nullable`
+- `visit_date date`
+- `reason_for_visit text nullable`
+- `symptoms text nullable`
 - `diagnosis text nullable`
+- `procedures_performed text nullable`
 - `treatment_notes text nullable`
+- `prescribed_medications text nullable`
 - `recommendations text nullable`
+- `next_visit_recommended boolean`
+- `next_visit_date date nullable`
 - `internal_notes text nullable`
-- `follow_up_at timestamptz nullable`
 - `status text`
 - `created_at timestamptz`
 - `updated_at timestamptz`
@@ -311,7 +326,7 @@ Access:
 
 - Clinic members can create and update records for their clinic.
 - Veterinarians can create records for assigned or clinic-connected appointments.
-- Pet owners can read completed records for their own pets.
+- Pet owners can read only published records for their own pets.
 - Internal notes are clinic-only in UI.
 
 ## visit_documents
@@ -327,18 +342,25 @@ Fields:
 - `uploaded_by uuid references profiles(id)`
 - `document_type text`
 - `title text nullable`
+- `file_name text nullable`
+- `file_type text nullable`
+- `file_size integer nullable`
 - `storage_bucket text`
 - `storage_path text`
 - `mime_type text nullable`
 - `file_size_bytes bigint nullable`
+- `description text nullable`
 - `is_visible_to_owner boolean`
 - `created_at timestamptz`
+- `updated_at timestamptz`
 
 Access:
 
 - Same access logic as visit records.
 - Files must stay in private Supabase Storage.
 - Signed URLs should be generated only after access checks.
+- Private bucket: `visit-documents`.
+- Recommended storage path: `clinic_id/pet_id/visit_record_id/file_name`.
 
 ## reviews
 

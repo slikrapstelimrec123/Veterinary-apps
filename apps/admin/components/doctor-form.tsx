@@ -25,7 +25,7 @@ export function DoctorForm({ doctor }: { doctor?: Doctor }) {
           <input name="phone" defaultValue={doctor?.phone ?? ""} />
         </label>
         <label className="field">
-          Email
+          Електронна пошта
           <input name="email" type="email" defaultValue={doctor?.email ?? ""} />
         </label>
         <label className="field">

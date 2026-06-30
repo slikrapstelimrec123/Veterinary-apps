@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/empty_state.dart';
@@ -39,43 +39,51 @@ class _VisitRecordDetailsScreenState extends State<VisitRecordDetailsScreen> {
         final documents = snapshot.data?.documents ?? [];
 
         return AppScaffold(
-          title: 'Visit details',
-          subtitle: record?.clinicName ?? 'Medical record',
+          title: 'Деталі візиту',
+          subtitle: record?.clinicName ?? 'Медичний запис',
           children: [
             if (snapshot.connectionState == ConnectionState.waiting)
               const Center(child: CircularProgressIndicator())
             else if (snapshot.hasError)
-              ErrorState(message: 'Unable to load visit details.', onRetry: refresh)
+              ErrorState(message: 'Не вдалося завантажити деталі візиту.', onRetry: refresh)
             else if (record == null)
-              const EmptyState(title: 'Visit not found', message: 'This treatment record is not available.', icon: Icons.search_off_outlined)
+              const EmptyState(title: 'Візит не знайдено', message: 'Цей запис лікування недоступний.', icon: Icons.search_off_outlined)
             else ...[
-              _RecordSection(title: 'Visit date', body: record.visitDate.toIso8601String().split('T').first),
-              _RecordSection(title: 'Clinic', body: record.clinicName ?? 'Not specified'),
-              _RecordSection(title: 'Doctor', body: record.doctorName ?? 'Not specified'),
-              _RecordSection(title: 'Reason', body: record.reason ?? 'Not specified'),
-              _RecordSection(title: 'Diagnosis', body: record.diagnosis ?? 'Not specified'),
-              _RecordSection(title: 'Treatment', body: record.treatmentNotes ?? 'No treatment notes added.'),
-              _RecordSection(title: 'Recommendations', body: record.recommendations ?? 'No recommendations added.'),
-              _RecordSection(
-                title: 'Next visit',
-                body: record.followUpAt?.toIso8601String().split('T').first ?? 'No follow-up date.',
-              ),
+              _RecordSection(title: 'Дата візиту', body: record.visitDate.toIso8601String().split('T').first),
+              _RecordSection(title: 'Клініка', body: record.clinicName ?? 'Не вказано'),
+              _RecordSection(title: 'Лікар', body: record.doctorName ?? 'Не вказано'),
+              _RecordSection(title: 'Причина', body: record.reason ?? 'Не вказано'),
+              _RecordSection(title: 'Симптоми', body: record.symptoms ?? 'Не вказано'),
+              _RecordSection(title: 'Діагноз', body: record.diagnosis ?? 'Не вказано'),
+              _RecordSection(title: 'Процедури', body: record.proceduresPerformed ?? 'Процедури не додано.'),
+              _RecordSection(title: 'Лікування', body: record.treatmentNotes ?? 'Нотатки про лікування не додано.'),
+              _RecordSection(title: 'Препарати', body: record.prescribedMedications ?? 'Препарати не додано.'),
+              _RecordSection(title: 'Рекомендації', body: record.recommendations ?? 'Рекомендації не додано.'),
+              _RecordSection(title: 'Наступний візит', body: _nextVisitLabel(record)),
               const SizedBox(height: 8),
-              Text('Documents', style: Theme.of(context).textTheme.titleLarge),
+              Text('Документи', style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 8),
               if (documents.isEmpty)
                 const EmptyState(
-                  title: 'No documents attached',
-                  message: 'No documents attached to this visit.',
+                  title: 'Документи не прикріплено',
+                  message: 'До цього візиту документи не прикріплено.',
                   icon: Icons.attach_file_outlined,
                 )
               else
-                ...documents.map((document) => _DocumentTile(document: document)),
+                ...documents.map((document) => _DocumentTile(document: document, repository: repository)),
             ],
           ],
         );
       },
     );
+  }
+
+  String _nextVisitLabel(VisitRecord record) {
+    if (!record.nextVisitRecommended) {
+      return 'Дату повторного візиту не вказано.';
+    }
+
+    return record.nextVisitDate?.toIso8601String().split('T').first ?? 'Рекомендовано, але дату не вказано.';
   }
 }
 
@@ -114,9 +122,10 @@ class _RecordSection extends StatelessWidget {
 }
 
 class _DocumentTile extends StatelessWidget {
-  const _DocumentTile({required this.document});
+  const _DocumentTile({required this.document, required this.repository});
 
   final VisitDocument document;
+  final VisitRecordRepository repository;
 
   @override
   Widget build(BuildContext context) {
@@ -124,15 +133,19 @@ class _DocumentTile extends StatelessWidget {
       child: ListTile(
         leading: const Icon(Icons.description_outlined),
         title: Text(document.title),
-        subtitle: Text('${document.type} · ${document.createdAt.toIso8601String().split('T').first}'),
-        trailing: const Text('Private'),
-        onTap: () {
+        subtitle: Text('${document.type} - ${document.fileSizeLabel} - ${document.createdAt.toIso8601String().split('T').first}'),
+        trailing: const Icon(Icons.lock_outline),
+        onTap: () async {
+          final url = await repository.getSignedDocumentUrl(document);
+          if (!context.mounted) {
+            return;
+          }
+
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Secure document viewing will be connected after private file access is implemented.')),
+            SnackBar(content: Text(url == null ? 'Безпечний перегляд файлу поки недоступний у демо-режимі.' : 'Приватне посилання для цього сеансу створено.')),
           );
         },
       ),
     );
   }
 }
-

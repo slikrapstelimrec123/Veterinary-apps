@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/app_scaffold.dart';
 import '../data/pet_repository.dart';
@@ -31,6 +31,28 @@ class _PetFormScreenState extends State<PetFormScreen> {
 
   static const speciesOptions = ['dog', 'cat', 'rabbit', 'bird', 'rodent', 'reptile', 'other'];
   static const sexOptions = ['male', 'female', 'unknown'];
+
+  String speciesLabel(String value) {
+    return switch (value) {
+      'dog' => 'Собака',
+      'cat' => 'Кіт',
+      'rabbit' => 'Кролик',
+      'bird' => 'Птах',
+      'rodent' => 'Гризун',
+      'reptile' => 'Рептилія',
+      'other' => 'Інше',
+      _ => value,
+    };
+  }
+
+  String sexLabel(String value) {
+    return switch (value) {
+      'male' => 'Самець',
+      'female' => 'Самка',
+      'unknown' => 'Не вказано',
+      _ => value,
+    };
+  }
 
   @override
   void initState() {
@@ -71,27 +93,27 @@ class _PetFormScreenState extends State<PetFormScreen> {
     final parsedWeight = weightText.isEmpty ? null : double.tryParse(weightText.replaceAll(',', '.'));
 
     if (name.isEmpty) {
-      setState(() => error = 'Pet name is required.');
+      setState(() => error = 'Вкажіть ім’я тварини.');
       return;
     }
 
     if (species.isEmpty) {
-      setState(() => error = 'Species is required.');
+      setState(() => error = 'Оберіть вид тварини.');
       return;
     }
 
     if (birthDateText.isNotEmpty && parsedBirthDate == null) {
-      setState(() => error = 'Birth date should use YYYY-MM-DD format.');
+      setState(() => error = 'Дата народження має бути у форматі РРРР-ММ-ДД.');
       return;
     }
 
     if (parsedBirthDate != null && parsedBirthDate.isAfter(DateTime.now())) {
-      setState(() => error = 'Birth date cannot be in the future.');
+      setState(() => error = 'Дата народження не може бути в майбутньому.');
       return;
     }
 
     if (weightText.isNotEmpty && (parsedWeight == null || parsedWeight <= 0)) {
-      setState(() => error = 'Weight must be a positive number.');
+      setState(() => error = 'Вага має бути додатним числом.');
       return;
     }
 
@@ -119,7 +141,7 @@ class _PetFormScreenState extends State<PetFormScreen> {
       if (!mounted) return;
       Navigator.of(context).pop(saved);
     } catch (_) {
-      setState(() => error = 'Unable to save pet. Please try again.');
+      setState(() => error = 'Не вдалося зберегти тварину. Спробуйте ще раз.');
     } finally {
       if (mounted) {
         setState(() => isSaving = false);
@@ -130,48 +152,47 @@ class _PetFormScreenState extends State<PetFormScreen> {
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
-      title: widget.pet == null ? 'Add pet' : 'Edit pet',
-      subtitle: 'Keep the medical card clear. You can add more details later.',
+      title: widget.pet == null ? 'Додати тварину' : 'Редагувати тварину',
+      subtitle: 'Підтримуйте медичну картку зрозумілою. Деталі можна додати пізніше.',
       children: [
         if (error != null) ...[
           Text(error!, style: const TextStyle(color: Color(0xFF9F1239))),
           const SizedBox(height: 12),
         ],
-        TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Pet name *')),
+        TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Ім’я тварини *')),
         const SizedBox(height: 12),
         DropdownButtonFormField<String>(
           value: species,
-          decoration: const InputDecoration(labelText: 'Species *'),
-          items: speciesOptions.map((value) => DropdownMenuItem(value: value, child: Text(value))).toList(),
+          decoration: const InputDecoration(labelText: 'Вид *'),
+          items: speciesOptions.map((value) => DropdownMenuItem(value: value, child: Text(speciesLabel(value)))).toList(),
           onChanged: (value) => setState(() => species = value ?? 'dog'),
         ),
         const SizedBox(height: 12),
-        TextField(controller: breedController, decoration: const InputDecoration(labelText: 'Breed')),
+        TextField(controller: breedController, decoration: const InputDecoration(labelText: 'Порода')),
         const SizedBox(height: 12),
         DropdownButtonFormField<String>(
           value: sex,
-          decoration: const InputDecoration(labelText: 'Sex'),
-          items: sexOptions.map((value) => DropdownMenuItem(value: value, child: Text(value))).toList(),
+          decoration: const InputDecoration(labelText: 'Стать'),
+          items: sexOptions.map((value) => DropdownMenuItem(value: value, child: Text(sexLabel(value)))).toList(),
           onChanged: (value) => setState(() => sex = value ?? 'unknown'),
         ),
         const SizedBox(height: 12),
-        TextField(controller: birthDateController, decoration: const InputDecoration(labelText: 'Birth date YYYY-MM-DD')),
+        TextField(controller: birthDateController, decoration: const InputDecoration(labelText: 'Дата народження РРРР-ММ-ДД')),
         const SizedBox(height: 12),
-        TextField(controller: weightController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Weight kg')),
+        TextField(controller: weightController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Вага, кг')),
         const SizedBox(height: 12),
-        TextField(controller: colorController, decoration: const InputDecoration(labelText: 'Color')),
+        TextField(controller: colorController, decoration: const InputDecoration(labelText: 'Колір')),
         const SizedBox(height: 12),
-        TextField(controller: microchipController, decoration: const InputDecoration(labelText: 'Microchip number')),
+        TextField(controller: microchipController, decoration: const InputDecoration(labelText: 'Номер мікрочипа')),
         const SizedBox(height: 12),
-        TextField(controller: avatarController, decoration: const InputDecoration(labelText: 'Avatar URL placeholder')),
+        TextField(controller: avatarController, decoration: const InputDecoration(labelText: 'URL фото (тимчасово)')),
         const SizedBox(height: 12),
-        TextField(controller: notesController, minLines: 3, maxLines: 5, decoration: const InputDecoration(labelText: 'Notes')),
+        TextField(controller: notesController, minLines: 3, maxLines: 5, decoration: const InputDecoration(labelText: 'Нотатки')),
         const SizedBox(height: 20),
-        FilledButton(onPressed: isSaving ? null : save, child: Text(isSaving ? 'Saving...' : 'Save pet')),
+        FilledButton(onPressed: isSaving ? null : save, child: Text(isSaving ? 'Збереження...' : 'Зберегти тварину')),
         const SizedBox(height: 8),
-        OutlinedButton(onPressed: isSaving ? null : () => Navigator.of(context).pop(), child: const Text('Cancel')),
+        OutlinedButton(onPressed: isSaving ? null : () => Navigator.of(context).pop(), child: const Text('Скасувати')),
       ],
     );
   }
 }
-

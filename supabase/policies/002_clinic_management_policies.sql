@@ -23,5 +23,4 @@
 -- - clinic members read schedules for their clinic
 -- - clinic_owner and clinic_manager create/update/delete schedules
 -- - veterinarian reads their own linked schedule
--- - public schedule access remains closed until appointment booking is implemented
-
+-- - public booking schedule access is extended in 004_appointment_booking_policies.sql

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/empty_state.dart';
@@ -36,28 +36,21 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         final documents = snapshot.data ?? [];
 
         return AppScaffold(
-          title: 'Documents',
+          title: 'Документи',
           subtitle: widget.petName,
           children: [
             if (snapshot.connectionState == ConnectionState.waiting)
               const Center(child: CircularProgressIndicator())
             else if (snapshot.hasError)
-              ErrorState(message: 'Unable to load documents.', onRetry: refresh)
+              ErrorState(message: 'Не вдалося завантажити документи.', onRetry: refresh)
             else if (documents.isEmpty)
               const EmptyState(
-                title: 'No documents yet',
-                message: 'Medical documents uploaded by clinics will appear here.',
+                title: 'Документів ще немає',
+                message: 'Медичні документи, завантажені клініками, з’являться тут.',
                 icon: Icons.folder_open_outlined,
               )
             else
-              ...documents.map((document) => Card(
-                    child: ListTile(
-                      leading: const Icon(Icons.description_outlined),
-                      title: Text(document.title),
-                      subtitle: Text('${document.type} · ${document.createdAt.toIso8601String().split('T').first}'),
-                      trailing: const Text('Private'),
-                    ),
-                  )),
+              ...documents.map((document) => _DocumentTile(document: document, repository: repository)),
           ],
         );
       },
@@ -65,3 +58,31 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   }
 }
 
+class _DocumentTile extends StatelessWidget {
+  const _DocumentTile({required this.document, required this.repository});
+
+  final VisitDocument document;
+  final VisitRecordRepository repository;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: ListTile(
+        leading: const Icon(Icons.description_outlined),
+        title: Text(document.title),
+        subtitle: Text('${document.type} - ${document.fileSizeLabel} - ${document.createdAt.toIso8601String().split('T').first}'),
+        trailing: const Icon(Icons.lock_outline),
+        onTap: () async {
+          final url = await repository.getSignedDocumentUrl(document);
+          if (!context.mounted) {
+            return;
+          }
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(url == null ? 'Безпечний перегляд файлу поки недоступний у демо-режимі.' : 'Приватне посилання для цього сеансу створено.')),
+          );
+        },
+      ),
+    );
+  }
+}

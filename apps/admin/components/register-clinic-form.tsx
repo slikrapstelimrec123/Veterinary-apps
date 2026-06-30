@@ -20,7 +20,7 @@ export function RegisterClinicForm() {
     setMessage(null);
 
     if (fullName.trim().length < 2) {
-      setError("Введіть повне ім'я власника клініки.");
+      setError("Введіть повне ім’я власника клініки.");
       return;
     }
 
@@ -67,7 +67,7 @@ export function RegisterClinicForm() {
 
     if (profileError) {
       setIsLoading(false);
-      setMessage("Обліковий запис створено. Будь ласка, підтвердіть свій email, а потім увійдіть, щоб завершити налаштування клініки.");
+      setMessage("Обліковий запис створено. Будь ласка, підтвердьте свій email, а потім увійдіть, щоб завершити налаштування клініки.");
       return;
     }
 
@@ -111,7 +111,7 @@ export function RegisterClinicForm() {
       {error ? <p style={{ color: "#9f1239", margin: 0 }}>{error}</p> : null}
       {message ? <p style={{ color: "#166534", margin: 0 }}>{message}</p> : null}
       <label>
-        Повне ім'я власника
+        Повне ім’я власника
         <input value={fullName} onChange={(event) => setFullName(event.target.value)} style={{ width: "100%", marginTop: 6, padding: 12 }} />
       </label>
       <label>
@@ -119,7 +119,7 @@ export function RegisterClinicForm() {
         <input value={clinicName} onChange={(event) => setClinicName(event.target.value)} style={{ width: "100%", marginTop: 6, padding: 12 }} />
       </label>
       <label>
-        Email
+        Електронна пошта
         <input value={email} onChange={(event) => setEmail(event.target.value)} style={{ width: "100%", marginTop: 6, padding: 12 }} />
       </label>
       <label>
@@ -132,4 +132,3 @@ export function RegisterClinicForm() {
     </form>
   );
 }
-

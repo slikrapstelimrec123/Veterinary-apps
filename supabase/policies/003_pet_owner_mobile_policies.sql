@@ -12,10 +12,9 @@
 -- - clinic access remains indirect through clinic-connected appointments/records
 
 -- visit_records:
--- - pet_owner reads only completed records for owned pets
+-- - pet_owner reads only published records for owned pets
 -- - pet_owner cannot create or update clinic records
 
 -- visit_documents:
 -- - pet_owner reads only visible metadata for owned pets and accessible visit records
 -- - private file URLs must not be exposed publicly
-

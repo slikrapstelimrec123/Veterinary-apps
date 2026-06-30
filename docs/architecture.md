@@ -33,10 +33,15 @@ Current pet owner module:
 - `PetProfileScreen` shows pet medical card details and quick cards.
 - `VisitHistoryScreen` reads completed visit records for a selected pet.
 - `VisitRecordDetailsScreen` shows diagnosis, treatment notes, recommendations, follow-up, and document metadata.
-- `DocumentsScreen` shows private document metadata placeholders only.
+- `DocumentsScreen` shows owner-visible private document metadata and requests signed URLs for allowed files.
+- `ClinicListScreen` lists published clinics with simple name/city search.
+- `ClinicProfileScreen` shows public clinic details, services, doctors, and a booking action.
+- `DoctorProfileScreen` shows public doctor details and routes to booking.
+- `AppointmentBookingScreen` lets an owner choose pet, clinic, service, doctor, date, and generated free slot.
+- `MyAppointmentsScreen` and `AppointmentDetailsScreen` show owner appointments and allow owner cancellation while pending or confirmed.
 - Mock mode is enabled with `MOCK_MODE=true` or missing Supabase env values.
 
-Appointment booking, real document viewing/upload, reviews, chat, payments, and push notifications are intentionally not part of this stage.
+Real document viewing/upload, reviews, chat, payments, and push notifications are intentionally not part of this stage.
 
 ### Web Admin Panel For Clinics
 
@@ -70,8 +75,14 @@ Current clinic admin module:
 - `/clinic/doctors` manages doctor profiles.
 - `/clinic/doctors/[id]` shows and edits a doctor profile.
 - `/clinic/schedule` manages weekly doctor availability.
+- `/clinic/appointments` lists clinic appointments.
+- `/clinic/appointments/[id]` shows appointment details, status controls for owner/manager roles, optional doctor assignment, and a visit-record action.
+- `/clinic/appointments/[id]/visit-record/create` creates a medical visit record from an appointment.
+- `/clinic/visit-records` lists clinic visit records.
+- `/clinic/visit-records/[id]` shows diagnosis, treatment notes, recommendations, internal notes, and private document metadata.
+- `/clinic/visit-records/[id]/edit` edits draft/published/archived records.
 
-This module intentionally does not implement appointments, visit records, document uploads, payments, reviews, chat, or push notifications.
+This module intentionally does not implement visit records, document uploads, payments, reviews, chat, or push notifications.
 
 ### Backend And Database
 
@@ -737,7 +748,7 @@ Suggested buckets:
 
 - `public-clinic-media`
 - `public-doctor-media`
-- `private-visit-documents`
+- `visit-documents` for the implemented private visit-document bucket
 - `private-pet-media` if owner uploads are enabled later
 
 ## 8. Deployment Approach

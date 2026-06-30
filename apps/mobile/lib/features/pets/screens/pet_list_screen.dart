@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/empty_state.dart';
@@ -39,21 +39,21 @@ class _PetListScreenState extends State<PetListScreen> {
         final pets = snapshot.data ?? [];
 
         return AppScaffold(
-          title: 'My pets',
-          subtitle: 'Keep every medical card in one calm place.',
+          title: 'Мої тварини',
+          subtitle: 'Зберігайте всі медичні картки в одному спокійному місці.',
           children: [
-            FilledButton(onPressed: addPet, child: const Text('Add pet')),
+            FilledButton(onPressed: addPet, child: const Text('Додати тварину')),
             const SizedBox(height: 16),
             if (snapshot.connectionState == ConnectionState.waiting)
               const Center(child: CircularProgressIndicator())
             else if (snapshot.hasError)
-              ErrorState(message: 'Unable to load pets.', onRetry: refresh)
+              ErrorState(message: 'Не вдалося завантажити тварин.', onRetry: refresh)
             else if (pets.isEmpty)
               EmptyState(
-                title: 'No pets yet',
-                message: 'Add your first pet to keep their medical history in one place.',
+                title: 'Тварин ще немає',
+                message: 'Додайте першу тварину, щоб зберігати її медичну історію в одному місці.',
                 icon: Icons.pets_outlined,
-                action: FilledButton(onPressed: addPet, child: const Text('Add pet')),
+                action: FilledButton(onPressed: addPet, child: const Text('Додати тварину')),
               )
             else
               ...pets.map((pet) => Padding(
@@ -96,9 +96,9 @@ class _PetListCard extends StatelessWidget {
                   children: [
                     Text(pet.name, style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 4),
-                    Text('${pet.speciesLabel} · ${pet.breed ?? 'Breed not set'} · ${pet.ageLabel}'),
+                    Text('${pet.speciesLabel} · ${pet.breed ?? 'Породу не вказано'} · ${pet.ageLabel}'),
                     const SizedBox(height: 4),
-                    const Text('Last visit: placeholder', style: TextStyle(color: Colors.black54)),
+                    const Text('Останній візит: поки немає даних', style: TextStyle(color: Colors.black54)),
                   ],
                 ),
               ),

@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/error_state.dart';
 import '../../../shared/widgets/pet_avatar.dart';
-import '../../appointments/screens/appointment_placeholder_screen.dart';
+import '../../appointments/screens/appointment_booking_screen.dart';
 import '../../visit_records/screens/documents_screen.dart';
 import '../../visit_records/screens/visit_history_screen.dart';
 import '../data/pet_repository.dart';
@@ -36,15 +36,15 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
         final pet = snapshot.data;
 
         return AppScaffold(
-          title: pet?.name ?? 'Pet profile',
-          subtitle: pet == null ? 'Loading medical card.' : '${pet.speciesLabel} · ${pet.breed ?? 'Breed not set'}',
+          title: pet?.name ?? 'Профіль тварини',
+          subtitle: pet == null ? 'Завантаження медичної картки.' : '${pet.speciesLabel} · ${pet.breed ?? 'Породу не вказано'}',
           children: [
             if (snapshot.connectionState == ConnectionState.waiting)
               const Center(child: CircularProgressIndicator())
             else if (snapshot.hasError)
-              ErrorState(message: 'Unable to load pet profile.', onRetry: refresh)
+              ErrorState(message: 'Не вдалося завантажити профіль тварини.', onRetry: refresh)
             else if (pet == null)
-              const EmptyState(title: 'Pet not found', message: 'This pet profile is not available.', icon: Icons.search_off_outlined)
+              const EmptyState(title: 'Тварину не знайдено', message: 'Цей профіль тварини недоступний.', icon: Icons.search_off_outlined)
             else
               _PetProfileContent(pet: pet, onChanged: refresh),
           ],
@@ -83,12 +83,12 @@ class _PetProfileContent extends StatelessWidget {
         const SizedBox(height: 12),
         FilledButton(
           onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => VisitHistoryScreen(petId: pet.id, petName: pet.name))),
-          child: const Text('View treatment history'),
+          child: const Text('Переглянути історію лікування'),
         ),
         const SizedBox(height: 8),
         OutlinedButton(
-          onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AppointmentPlaceholderScreen())),
-          child: const Text('Book appointment'),
+          onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AppointmentBookingScreen())),
+          child: const Text('Записатися на прийом'),
         ),
         OutlinedButton(
           onPressed: () async {
@@ -100,11 +100,11 @@ class _PetProfileContent extends StatelessWidget {
               }
             }
           },
-          child: const Text('Edit pet'),
+          child: const Text('Редагувати тварину'),
         ),
         OutlinedButton(
           onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => DocumentsScreen(petId: pet.id, petName: pet.name))),
-          child: const Text('Documents'),
+          child: const Text('Документи'),
         ),
       ],
     );
@@ -119,27 +119,27 @@ class _DetailGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final details = [
-      ('Sex', pet.sex ?? 'Unknown'),
-      ('Birth date', pet.birthDate?.toIso8601String().split('T').first ?? 'Not set'),
-      ('Weight', pet.weightKg == null ? 'Not set' : '${pet.weightKg} kg'),
-      ('Color', pet.color ?? 'Not set'),
-      ('Microchip', pet.microchipNumber ?? 'Not set'),
-      ('Notes', pet.notes ?? 'No notes yet'),
+      ('Стать', pet.sex ?? 'Unknown'),
+      ('Дата народження', pet.birthDate?.toIso8601String().split('T').first ?? 'Не вказано'),
+      ('Вага', pet.weightKg == null ? 'Не вказано' : '${pet.weightKg} кг'),
+      ('Колір', pet.color ?? 'Не вказано'),
+      ('Мікрочип', pet.microchipNumber ?? 'Не вказано'),
+      ('Нотатки', pet.notes ?? 'No notes yet'),
     ];
 
     return Column(
       children: [
         Row(
           children: const [
-            Expanded(child: _QuickCard(title: 'Last visit', value: 'Placeholder')),
+            Expanded(child: _QuickCard(title: 'Останній візит', value: 'Поки немає даних')),
             SizedBox(width: 10),
-            Expanded(child: _QuickCard(title: 'Documents', value: 'Metadata')),
+            Expanded(child: _QuickCard(title: 'Документи', value: 'Метадані')),
           ],
         ),
         const SizedBox(height: 10),
         Row(
           children: const [
-            Expanded(child: _QuickCard(title: 'Upcoming', value: 'Next stage')),
+            Expanded(child: _QuickCard(title: 'Найближче', value: 'Розділ записів')),
           ],
         ),
         const SizedBox(height: 12),
@@ -186,4 +186,3 @@ class _QuickCard extends StatelessWidget {
     );
   }
 }
-

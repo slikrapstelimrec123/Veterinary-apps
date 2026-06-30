@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../core/auth/auth_state.dart';
 import '../../../core/auth/current_user.dart';
@@ -18,18 +18,18 @@ class RoleMessageScreen extends StatelessWidget {
         : 'Platform administration is not part of the mobile MVP.';
 
     return AppScaffold(
-      title: 'Signed in',
+      title: 'Вхід виконано',
       subtitle: '${user.fullName} • ${user.email}',
       children: [
         PlaceholderCard(
-          title: 'Role access',
+          title: 'Доступ за роллю',
           body: message,
           icon: Icons.admin_panel_settings_outlined,
         ),
         const SizedBox(height: 16),
         FilledButton(
           onPressed: auth.logout,
-          child: const Text('Logout'),
+          child: const Text('Вийти'),
         ),
       ],
     );

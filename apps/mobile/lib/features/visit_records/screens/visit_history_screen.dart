@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/empty_state.dart';
@@ -37,17 +37,17 @@ class _VisitHistoryScreenState extends State<VisitHistoryScreen> {
         final records = snapshot.data ?? [];
 
         return AppScaffold(
-          title: 'Treatment history',
+          title: 'Історія лікування',
           subtitle: widget.petName,
           children: [
             if (snapshot.connectionState == ConnectionState.waiting)
               const Center(child: CircularProgressIndicator())
             else if (snapshot.hasError)
-              ErrorState(message: 'Unable to load treatment history.', onRetry: refresh)
+              ErrorState(message: 'Не вдалося завантажити історію лікування.', onRetry: refresh)
             else if (records.isEmpty)
               const EmptyState(
-                title: 'No treatment records yet',
-                message: 'Records will appear here after a clinic adds them.',
+                title: 'Записів лікування ще немає',
+                message: 'Записи з’являться тут після додавання клінікою.',
                 icon: Icons.history_outlined,
               )
             else
@@ -82,15 +82,19 @@ class _VisitRecordCard extends StatelessWidget {
             children: [
               Text(date, style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 6),
-              Text(record.clinicName ?? 'Clinic not specified'),
+              Text(record.clinicName ?? 'Клініку не вказано'),
               const SizedBox(height: 6),
-              Text(record.reason ?? record.diagnosis ?? 'Visit record'),
+              Text(record.reason ?? record.diagnosis ?? 'Запис візиту'),
+              if (record.treatmentNotes != null) ...[
+                const SizedBox(height: 6),
+                Text(record.treatmentNotes!, maxLines: 2, overflow: TextOverflow.ellipsis),
+              ],
               if (record.recommendations != null) ...[
                 const SizedBox(height: 6),
                 Text(record.recommendations!, maxLines: 2, overflow: TextOverflow.ellipsis),
               ],
               const SizedBox(height: 8),
-              Text('${record.documentCount} documents', style: const TextStyle(color: Colors.black54)),
+              Text('Документів: ${record.documentCount}', style: const TextStyle(color: Colors.black54)),
             ],
           ),
         ),
@@ -98,4 +102,3 @@ class _VisitRecordCard extends StatelessWidget {
     );
   }
 }
-

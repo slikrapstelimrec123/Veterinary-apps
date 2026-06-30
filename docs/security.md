@@ -54,7 +54,7 @@ Clinic owners and clinic managers can create, update, and delete schedule rows.
 
 Veterinarians can read their own linked schedules.
 
-Public schedule access is intentionally closed until appointment booking is implemented.
+Public users can read only active schedules for active public doctors in published clinics. Clinic-only schedules for non-public doctors remain private.
 
 ## Clinic Members
 
@@ -76,11 +76,15 @@ Platform admin access should be reserved for support and audited later.
 
 ## Appointments
 
-Pet owners can create appointments only for pets they own.
+Pet owners can create pending appointments only for pets they own, published clinics, active public services, and active public doctors.
 
 Pet owners can read their own appointments.
 
-Clinic members can read and manage appointments for their clinic.
+Pet owners can cancel their own pending or confirmed appointments.
+
+Clinic owners and clinic managers can read appointments for their clinic.
+
+Clinic owners and clinic managers can confirm, cancel, complete, mark no-show, assign doctors, and add clinic notes.
 
 Veterinarians can read appointments assigned to them.
 
@@ -90,11 +94,13 @@ Clinic medical staff can create visit records for their clinic.
 
 Veterinarians can create records for appointments assigned to them or connected to their clinic according to RLS checks.
 
-Pet owners can read completed records connected to their own pets.
+Pet owners can read published records connected to their own pets.
 
 Pet owners cannot create or edit clinic visit records.
 
 `internal_notes` must not be shown in owner-facing UI.
+
+Draft and archived records are clinic-only.
 
 ## Documents
 
@@ -102,11 +108,11 @@ Visit documents are not public.
 
 The database stores metadata in `visit_documents`.
 
-Files should live in a private Supabase Storage bucket, for example `private-visit-documents`.
+Files should live in the private Supabase Storage bucket `visit-documents`.
 
 Signed URLs should be created only after checking database access.
 
-The mobile MVP shows document metadata only. It does not expose public file URLs.
+The mobile app can request a short-lived signed URL for owner-visible documents only. It does not expose public file URLs.
 
 ## Current Test Checklist
 

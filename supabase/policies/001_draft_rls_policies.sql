@@ -384,5 +384,5 @@ using (
 
 -- Storage policy intent:
 -- public-clinic-media: public read for published clinic/doctor media.
--- private-visit-documents: private only; create signed URLs after checking visit_documents RLS.
+-- visit-documents: private only; create signed URLs after checking visit_documents RLS.
 -- Do not expose SUPABASE_SERVICE_ROLE_KEY to admin or mobile clients.

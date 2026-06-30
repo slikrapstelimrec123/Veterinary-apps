@@ -1,4 +1,4 @@
-class Pet {
+﻿class Pet {
   const Pet({
     required this.id,
     required this.name,
@@ -29,11 +29,33 @@ class Pet {
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
-  String get speciesLabel => species.isEmpty ? 'Unknown species' : species[0].toUpperCase() + species.substring(1);
+  String get speciesLabel {
+    return switch (species.toLowerCase()) {
+      'dog' => 'Собака',
+      'cat' => 'Кіт',
+      'rabbit' => 'Кролик',
+      'bird' => 'Птах',
+      'rodent' => 'Гризун',
+      'reptile' => 'Рептилія',
+      'other' => 'Інше',
+      '' => 'Вид невідомий',
+      _ => species,
+    };
+  }
+
+  String get sexLabel {
+    return switch (sex?.toLowerCase()) {
+      'male' => 'Самець',
+      'female' => 'Самка',
+      'unknown' => 'Не вказано',
+      null => 'Не вказано',
+      _ => sex!,
+    };
+  }
 
   String get ageLabel {
     if (birthDate == null) {
-      return 'Age unknown';
+      return 'Вік невідомий';
     }
 
     final now = DateTime.now();
@@ -44,10 +66,10 @@ class Pet {
 
     if (years <= 0) {
       final months = (now.year - birthDate!.year) * 12 + now.month - birthDate!.month;
-      return months <= 1 ? 'Less than 1 month' : '$months months';
+      return months <= 1 ? 'Менше 1 місяця' : '$months міс.';
     }
 
-    return years == 1 ? '1 year' : '$years years';
+    return years == 1 ? '1 рік' : '$years р.';
   }
 
   Map<String, dynamic> toInsertJson() {
@@ -115,4 +137,3 @@ class Pet {
     );
   }
 }
-

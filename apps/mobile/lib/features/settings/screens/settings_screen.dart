@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../core/auth/auth_state.dart';
 import '../../../core/config/supabase_config.dart';
@@ -14,38 +14,38 @@ class SettingsScreen extends StatelessWidget {
     final user = auth.currentUser;
 
     return AppScaffold(
-      title: 'Settings',
-      subtitle: user == null ? 'Account and app settings.' : '${user.fullName} • ${user.email}',
+      title: 'Налаштування',
+      subtitle: user == null ? 'Налаштування акаунта та застосунку.' : '${user.fullName} • ${user.email}',
       children: [
         const PlaceholderCard(
-          title: 'Profile',
+          title: 'Профіль',
           body: 'Owner name, email, role, and account settings.',
           icon: Icons.person_outline,
         ),
         if (user != null) ...[
           const SizedBox(height: 12),
           PlaceholderCard(
-            title: 'Account',
+            title: 'Акаунт',
             body: '${user.fullName}\n${user.email}\nRole: ${user.role.name}',
             icon: Icons.badge_outlined,
           ),
         ],
         const SizedBox(height: 12),
         PlaceholderCard(
-          title: 'Preview mode',
+          title: 'Демо-режим',
           body: SupabaseConfig.useMockData ? 'Mock data is enabled for local visual preview.' : 'Connected to Supabase.',
           icon: Icons.visibility_outlined,
         ),
         const SizedBox(height: 12),
         const PlaceholderCard(
-          title: 'Privacy',
-          body: 'Medical records and documents remain private by default.',
+          title: 'Приватність',
+          body: 'Медичні записи та документи за замовчуванням залишаються приватними.',
           icon: Icons.lock_outline,
         ),
         const SizedBox(height: 16),
         FilledButton(
           onPressed: auth.logout,
-          child: const Text('Logout'),
+          child: const Text('Вийти'),
         ),
       ],
     );

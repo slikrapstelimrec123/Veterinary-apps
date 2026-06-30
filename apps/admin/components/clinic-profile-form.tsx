@@ -26,7 +26,7 @@ export function ClinicProfileForm({ clinic, canEdit }: { clinic: Clinic; canEdit
           <input name="phone" defaultValue={clinic.phone ?? ""} disabled={!canEdit} />
         </label>
         <label className="field">
-          Email
+          Електронна пошта
           <input name="email" defaultValue={clinic.email ?? ""} type="email" disabled={!canEdit} />
         </label>
         <label className="field">

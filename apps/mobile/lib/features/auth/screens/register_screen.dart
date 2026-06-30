@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../core/auth/auth_state.dart';
 import '../../../shared/widgets/app_scaffold.dart';
@@ -64,24 +64,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final auth = AuthScope.of(context);
 
     return AppScaffold(
-      title: 'Create account',
-      subtitle: 'Pet owner registration creates a pet_owner profile.',
+      title: 'Створити акаунт',
+      subtitle: 'Реєстрація власника тварини створює профіль pet_owner.',
       children: [
         if (localError != null || auth.errorMessage != null) ...[
           Text(localError ?? auth.errorMessage!, style: const TextStyle(color: Color(0xFF9F1239))),
           const SizedBox(height: 12),
         ],
-        TextField(controller: fullNameController, decoration: const InputDecoration(labelText: 'Full name')),
+        TextField(controller: fullNameController, decoration: const InputDecoration(labelText: 'Повне ім’я')),
         const SizedBox(height: 12),
-        TextField(controller: emailController, decoration: const InputDecoration(labelText: 'Email')),
+        TextField(controller: emailController, decoration: const InputDecoration(labelText: 'Електронна пошта')),
         const SizedBox(height: 12),
-        TextField(controller: phoneController, decoration: const InputDecoration(labelText: 'Phone')),
+        TextField(controller: phoneController, decoration: const InputDecoration(labelText: 'Телефон')),
         const SizedBox(height: 12),
-        TextField(controller: passwordController, obscureText: true, decoration: const InputDecoration(labelText: 'Password')),
+        TextField(controller: passwordController, obscureText: true, decoration: const InputDecoration(labelText: 'Пароль')),
         const SizedBox(height: 20),
         FilledButton(
           onPressed: auth.isLoading ? null : submit,
-          child: Text(auth.isLoading ? 'Creating account...' : 'Create account'),
+          child: Text(auth.isLoading ? 'Створення акаунта...' : 'Створити акаунт'),
         ),
       ],
     );

@@ -10,7 +10,7 @@ function friendlyAuthError(message?: string) {
   }
 
   if (message.toLowerCase().includes("invalid")) {
-    return "Email або пароль неправильний.";
+    return "Електронна пошта або пароль неправильні.";
   }
 
   return "Не вдалося увійти. Спробуйте ще раз.";
@@ -56,7 +56,7 @@ export function LoginForm() {
     <form className="card" style={{ display: "grid", gap: 12, maxWidth: 440 }} onSubmit={handleSubmit}>
       {error ? <p style={{ color: "#9f1239", margin: 0 }}>{error}</p> : null}
       <label>
-        Email
+        Електронна пошта
         <input value={email} onChange={(event) => setEmail(event.target.value)} style={{ width: "100%", marginTop: 6, padding: 12 }} placeholder="clinic@example.com" />
       </label>
       <label>

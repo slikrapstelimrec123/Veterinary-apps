@@ -24,7 +24,7 @@ class AuthState extends ChangeNotifier {
       currentUser = await _repository.getCurrentUser();
       errorMessage = null;
     } catch (_) {
-      errorMessage = 'Unable to restore your session.';
+      errorMessage = 'Не вдалося відновити сесію.';
     } finally {
       isLoading = false;
       notifyListeners();
@@ -64,7 +64,7 @@ class AuthState extends ChangeNotifier {
         phone: phone,
       );
     } catch (_) {
-      errorMessage = 'Unable to create account. Please check the fields and try again.';
+      errorMessage = 'Не вдалося створити акаунт. Перевірте поля й спробуйте ще раз.';
     } finally {
       isLoading = false;
       notifyListeners();

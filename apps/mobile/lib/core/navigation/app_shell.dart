@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
-import '../../features/clinics/screens/clinic_placeholder_screen.dart';
+import '../../features/appointments/screens/my_appointments_screen.dart';
+import '../../features/clinics/screens/clinic_list_screen.dart';
 import '../../features/pets/data/pet_repository.dart';
 import '../../features/pets/domain/pet.dart';
 import '../../features/pets/screens/add_pet_screen.dart';
@@ -28,7 +29,8 @@ class _AppShellState extends State<AppShell> {
     final tabs = [
       HomeScreen(onOpenPets: () => setState(() => _index = 1)),
       const PetListScreen(),
-      const ClinicPlaceholderScreen(),
+      const ClinicListScreen(),
+      const MyAppointmentsScreen(),
       const SettingsScreen(),
     ];
 
@@ -38,10 +40,11 @@ class _AppShellState extends State<AppShell> {
         selectedIndex: _index,
         onDestinationSelected: (value) => setState(() => _index = value),
         destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.pets_outlined), label: 'Pets'),
-          NavigationDestination(icon: Icon(Icons.local_hospital_outlined), label: 'Clinics'),
-          NavigationDestination(icon: Icon(Icons.settings_outlined), label: 'Settings'),
+          NavigationDestination(icon: Icon(Icons.home_outlined), label: 'Головна'),
+          NavigationDestination(icon: Icon(Icons.pets_outlined), label: 'Тварини'),
+          NavigationDestination(icon: Icon(Icons.local_hospital_outlined), label: 'Клініки'),
+          NavigationDestination(icon: Icon(Icons.calendar_month_outlined), label: 'Записи'),
+          NavigationDestination(icon: Icon(Icons.settings_outlined), label: 'Налаштування'),
         ],
       ),
     );
@@ -82,39 +85,39 @@ class _HomeScreenState extends State<HomeScreen> {
         final pets = snapshot.data ?? [];
 
         return AppScaffold(
-          title: 'Hello, ${user?.fullName.split(' ').first ?? 'there'}',
-          subtitle: 'Your pet health history in one calm place.',
+          title: 'Вітаємо, ${user?.fullName.split(' ').first ?? 'друже'}',
+          subtitle: 'Історія здоров’я ваших тварин в одному спокійному місці.',
           children: [
             if (snapshot.connectionState == ConnectionState.waiting)
               const Center(child: CircularProgressIndicator())
             else if (snapshot.hasError)
-              ErrorState(message: 'Unable to load home data.', onRetry: refresh)
+              ErrorState(message: 'Не вдалося завантажити головну сторінку.', onRetry: refresh)
             else ...[
               _SummaryCard(petCount: pets.length),
               const SizedBox(height: 12),
               if (pets.isEmpty)
                 EmptyState(
-                  title: 'Start a medical card',
-                  message: 'Add your pet to start building their medical history.',
+                  title: 'Створіть медичну картку',
+                  message: 'Додайте тварину, щоб почати вести її медичну історію.',
                   icon: Icons.pets_outlined,
-                  action: FilledButton(onPressed: addPet, child: const Text('Add pet')),
+                  action: FilledButton(onPressed: addPet, child: const Text('Додати тварину')),
                 )
               else ...[
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Your pets', style: Theme.of(context).textTheme.titleLarge),
-                    TextButton(onPressed: widget.onOpenPets, child: const Text('View all')),
+                    Text('Ваші тварини', style: Theme.of(context).textTheme.titleLarge),
+                    TextButton(onPressed: widget.onOpenPets, child: const Text('Переглянути всі')),
                   ],
                 ),
                 ...pets.take(2).map((pet) => _HomePetPreview(pet: pet, onChanged: refresh)),
                 const SizedBox(height: 12),
-                FilledButton(onPressed: addPet, child: const Text('Add pet')),
+                FilledButton(onPressed: addPet, child: const Text('Додати тварину')),
               ],
               const SizedBox(height: 8),
               OutlinedButton(
-                onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ClinicPlaceholderScreen())),
-                child: const Text('Find a clinic'),
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ClinicListScreen())),
+                child: const Text('Знайти клініку'),
               ),
             ],
           ],
@@ -137,13 +140,13 @@ class _SummaryCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Health summary', style: Theme.of(context).textTheme.titleMedium),
+            Text('Підсумок здоров’я', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 12),
-            Text('Pets: $petCount'),
+            Text('Тварин: $petCount'),
             const SizedBox(height: 6),
-            const Text('Upcoming appointment: next stage'),
+            const Text('Найближчий запис: у розділі записів'),
             const SizedBox(height: 6),
-            const Text('Last visit: placeholder'),
+            const Text('Останній візит: поки немає даних'),
           ],
         ),
       ),
@@ -165,7 +168,7 @@ class _HomePetPreview extends StatelessWidget {
         child: ListTile(
           leading: PetAvatar(name: pet.name),
           title: Text(pet.name),
-          subtitle: Text('${pet.speciesLabel} · ${pet.breed ?? 'Breed not set'}'),
+          subtitle: Text('${pet.speciesLabel} · ${pet.breed ?? 'Породу не вказано'}'),
           trailing: const Icon(Icons.chevron_right),
           onTap: () async {
             final result = await Navigator.of(context).push(MaterialPageRoute(builder: (_) => PetProfileScreen(petId: pet.id)));
@@ -178,4 +181,3 @@ class _HomePetPreview extends StatelessWidget {
     );
   }
 }
-

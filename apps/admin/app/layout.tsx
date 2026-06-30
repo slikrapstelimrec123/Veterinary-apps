@@ -5,13 +5,13 @@ import { AppSidebar } from "../components/app-sidebar";
 import { LogoutButton } from "../components/logout-button";
 
 export const metadata: Metadata = {
-  title: "VetCare Admin",
-  description: "Панель адміністратора клініки для ветеринарних команд",
+  title: "VetCare Кабінет",
+  description: "Кабінет клініки для ветеринарних команд",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="uk">
       <body>
         <div style={{ display: "grid", gridTemplateColumns: "260px 1fr", minHeight: "100vh" }}>
           <AppSidebar />
