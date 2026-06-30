@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase_config.dart';
+import '../../notifications/domain/app_notification.dart';
 import '../../../shared/data/mock_data.dart';
 import '../../../shared/utils/iterable_extensions.dart';
 import '../models/appointment.dart';
@@ -83,6 +84,18 @@ class AppointmentRepository {
         ownerNote: created.ownerNote,
       );
       MockData.appointments.add(appointment);
+      MockData.notifications.insert(
+        0,
+        AppNotification(
+          id: 'mock_notification_${DateTime.now().millisecondsSinceEpoch}',
+          type: 'appointment_created',
+          title: 'Запит на запис створено',
+          body: 'Ваш запит на запис надіслано до клініки.',
+          status: 'unread',
+          appointmentId: appointment.id,
+          createdAt: DateTime.now(),
+        ),
+      );
       return appointment;
     }
 
@@ -102,6 +115,18 @@ class AppointmentRepository {
       if (index >= 0) {
         MockData.appointments[index] = updated;
       }
+      MockData.notifications.insert(
+        0,
+        AppNotification(
+          id: 'mock_notification_${DateTime.now().millisecondsSinceEpoch}',
+          type: 'appointment_cancelled_by_owner',
+          title: 'Запис скасовано',
+          body: 'Ваш запис скасовано.',
+          status: 'unread',
+          appointmentId: appointment.id,
+          createdAt: DateTime.now(),
+        ),
+      );
       return updated;
     }
 

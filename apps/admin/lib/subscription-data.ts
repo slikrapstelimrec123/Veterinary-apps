@@ -107,6 +107,7 @@ export async function requirePlanCapacity(clinicId: string, kind: "doctor" | "se
   const { data } = await supabase.rpc(rpc, params);
 
   if (data !== true) {
+    await supabase.rpc("notify_subscription_limit_warning", { target_clinic_id: clinicId, limit_code: kind });
     redirect(kind === "appointment" ? "/clinic/appointments?error=limit_reached" : kind === "visit_record" ? "/clinic/visit-records?error=limit_reached" : "/clinic/subscription?error=limit_reached");
   }
 }

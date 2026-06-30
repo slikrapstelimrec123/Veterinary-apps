@@ -7,6 +7,7 @@ const successMessages: Record<string, string> = {
   requested: "Запит на зміну тарифу надіслано.",
   approved: "Запит на тариф підтверджено.",
   rejected: "Запит на тариф відхилено.",
+  feedback_sent: "Дякуємо, відгук для beta-команди надіслано.",
 };
 
 const errorMessages: Record<string, string> = {

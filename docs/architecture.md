@@ -97,6 +97,8 @@ Current clinic admin module:
 - `/clinic/subscription/usage` shows calculated usage against plan limits.
 - `/clinic/subscription/billing-placeholder` explains that real payment processing is not implemented.
 - `/platform/subscription-requests` lets a platform admin manually approve or reject mock upgrade requests.
+- `/clinic/notifications` lists in-app notifications for the current clinic user.
+- `/clinic/settings/notifications` stores notification preferences.
 
 This module intentionally does not implement real payments, chat, push notifications, or AI features. Reviews are implemented only as post-appointment feedback, not as advanced marketplace ranking.
 
@@ -109,6 +111,25 @@ This module intentionally does not implement real payments, chat, push notificat
 - Admin server actions call helper checks before high-impact mutations.
 - Upgrade requests are stored in `subscription_upgrade_requests` and can be manually approved by a platform admin.
 - Pet owners never see clinic billing, plan, or payment status.
+
+## Notifications And Reminders
+
+- In-app notifications live in `notifications` and are addressed to one `recipient_user_id`.
+- Preferences live in `notification_preferences`; marketing is disabled by default and forced off in MVP.
+- Delivery attempts can be recorded in `notification_delivery_log`; only in-app delivery is active now.
+- Scheduled reminders live in `scheduled_notifications` with `pending`, `sent`, `cancelled`, or `failed` status.
+- Appointment triggers create clinic notifications for new requests and owner notifications for confirmations, clinic cancellations, completed visits, and review requests.
+- Visit record and document triggers notify owners with generic, privacy-safe copy.
+- Review triggers notify clinic owner/manager roles.
+- Subscription request status triggers notify the requesting clinic owner.
+- Future cron or Edge Functions can process pending scheduled notifications, but no external provider is connected yet.
+
+## Beta Readiness Layer
+
+- `/privacy`, `/terms`, `/data-processing`, and `/support` provide beta trust/legal placeholders.
+- `beta_feedback` stores tester feedback from mobile and admin users.
+- Mobile settings link to notification preferences, beta feedback, privacy, terms, export request placeholder, and account deletion placeholder.
+- Demo seed data lives in `supabase/seed/seed.sql` and assumes fake Supabase Auth users are created first.
 
 ### Backend And Database
 

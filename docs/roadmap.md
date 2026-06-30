@@ -379,6 +379,46 @@ Out of scope:
 - Downgrade data deletion.
 - Aggressive paywalls.
 
+## Stage 9: Notifications And Reminders
+
+Status: implemented for MVP without external providers.
+
+Goal: keep pet owners and clinic teams informed about appointment, treatment, document, review, and subscription events.
+
+Scope:
+
+- In-app notifications for pet owners and clinic users.
+- User notification preferences.
+- Scheduled appointment reminder records for 24h and 2h reminders.
+- Delivery log placeholder for future email, push, and SMS.
+- Mobile notification center with unread badge and mark-as-read actions.
+- Clinic admin notification dropdown, full notifications page, and notification settings.
+- Database triggers for appointment, visit record, document, review, and subscription request events.
+
+Out of scope:
+
+- Real SMS sending.
+- Real email provider integration.
+- Full Firebase Cloud Messaging setup.
+- Marketing automation.
+
+## Stage 10: Beta Readiness
+
+Status: implemented for controlled beta preparation.
+
+Scope:
+
+- Beta disclaimer.
+- Legal/trust placeholder pages.
+- Mobile privacy/terms/export/delete/support entry points.
+- Beta feedback table and forms.
+- Demo account strategy and seed data.
+- Beta QA checklist.
+- Beta release notes.
+- Known limitations.
+- Security beta audit.
+- Environment example updates.
+
 ## Next Recommended Task
 
-Implement notifications and reminders for appointments, treatment follow-ups, and clinic actions.
+Prepare production deployment, hosting, domains, environment configuration, monitoring, backups, and app store readiness.

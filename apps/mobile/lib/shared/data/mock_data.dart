@@ -3,12 +3,16 @@ import '../../features/appointments/models/doctor_schedule.dart';
 import '../../features/clinics/models/clinic.dart';
 import '../../features/clinics/models/doctor.dart';
 import '../../features/clinics/models/service.dart';
+import '../../features/notifications/domain/app_notification.dart';
+import '../../features/notifications/domain/notification_preferences.dart';
 import '../../features/pets/domain/pet.dart';
 import '../../features/reviews/domain/review.dart';
 import '../../features/visit_records/domain/visit_document.dart';
 import '../../features/visit_records/domain/visit_record.dart';
 
 class MockData {
+  static NotificationPreferences notificationPreferences = const NotificationPreferences();
+
   static final pets = <Pet>[
     Pet(
       id: 'mock_pet_luna',
@@ -182,6 +186,57 @@ class MockData {
       endTime: '13:15',
       status: 'completed',
       ownerNote: 'Потрібна консультація щодо травлення.',
+    ),
+  ];
+
+  static final notifications = <AppNotification>[
+    AppNotification(
+      id: 'mock_notification_1',
+      type: 'appointment_confirmed',
+      title: 'Запис підтверджено',
+      body: 'Клініка підтвердила ваш запис.',
+      status: 'unread',
+      appointmentId: 'mock_appointment_2',
+      createdAt: DateTime.now().subtract(const Duration(hours: 1)),
+    ),
+    AppNotification(
+      id: 'mock_notification_2',
+      type: 'visit_record_published',
+      title: 'Додано запис лікування',
+      body: 'Клініка додала новий запис до медичної історії вашої тварини.',
+      status: 'unread',
+      appointmentId: 'mock_appointment_1',
+      visitRecordId: 'mock_visit_1',
+      createdAt: DateTime.now().subtract(const Duration(hours: 5)),
+    ),
+    AppNotification(
+      id: 'mock_notification_3',
+      type: 'document_uploaded',
+      title: 'Новий медичний документ',
+      body: 'До історії лікування вашої тварини додано новий документ.',
+      status: 'read',
+      visitRecordId: 'mock_visit_1',
+      documentId: 'mock_document_1',
+      createdAt: DateTime.now().subtract(const Duration(days: 2)),
+    ),
+    AppNotification(
+      id: 'mock_notification_4',
+      type: 'review_request',
+      title: 'Як пройшов візит?',
+      body: 'Залиште відгук, щоб допомогти іншим власникам тварин.',
+      status: 'unread',
+      appointmentId: 'mock_appointment_1',
+      visitRecordId: 'mock_visit_1',
+      createdAt: DateTime.now().subtract(const Duration(days: 3)),
+    ),
+    AppNotification(
+      id: 'mock_notification_5',
+      type: 'next_visit_recommended',
+      title: 'Рекомендовано повторний візит',
+      body: 'Клініка рекомендувала повторний візит для вашої тварини.',
+      status: 'read',
+      visitRecordId: 'mock_visit_1',
+      createdAt: DateTime.now().subtract(const Duration(days: 4)),
     ),
   ];
 

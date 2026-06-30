@@ -2,6 +2,8 @@
 
 import '../../features/appointments/screens/my_appointments_screen.dart';
 import '../../features/clinics/screens/clinic_list_screen.dart';
+import '../../features/notifications/data/notification_repository.dart';
+import '../../features/notifications/screens/notifications_screen.dart';
 import '../../features/pets/data/pet_repository.dart';
 import '../../features/pets/domain/pet.dart';
 import '../../features/pets/screens/add_pet_screen.dart';
@@ -23,6 +25,12 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   int _index = 0;
+  final notificationRepository = NotificationRepository();
+  late Future<int> unreadFuture = notificationRepository.getUnreadCount();
+
+  void refreshUnreadCount() {
+    setState(() => unreadFuture = notificationRepository.getUnreadCount());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,21 +39,41 @@ class _AppShellState extends State<AppShell> {
       const PetListScreen(),
       const ClinicListScreen(),
       const MyAppointmentsScreen(),
+      const NotificationsScreen(),
       const SettingsScreen(),
     ];
 
     return Scaffold(
       body: tabs[_index],
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: (value) => setState(() => _index = value),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), label: 'Головна'),
-          NavigationDestination(icon: Icon(Icons.pets_outlined), label: 'Тварини'),
-          NavigationDestination(icon: Icon(Icons.local_hospital_outlined), label: 'Клініки'),
-          NavigationDestination(icon: Icon(Icons.calendar_month_outlined), label: 'Записи'),
-          NavigationDestination(icon: Icon(Icons.settings_outlined), label: 'Налаштування'),
-        ],
+      bottomNavigationBar: FutureBuilder<int>(
+        future: unreadFuture,
+        builder: (context, snapshot) {
+          final unread = snapshot.data ?? 0;
+          return NavigationBar(
+            selectedIndex: _index,
+            onDestinationSelected: (value) {
+              setState(() => _index = value);
+              if (value == 4) {
+                refreshUnreadCount();
+              }
+            },
+            destinations: [
+              const NavigationDestination(icon: Icon(Icons.home_outlined), label: 'Головна'),
+              const NavigationDestination(icon: Icon(Icons.pets_outlined), label: 'Тварини'),
+              const NavigationDestination(icon: Icon(Icons.local_hospital_outlined), label: 'Клініки'),
+              const NavigationDestination(icon: Icon(Icons.calendar_month_outlined), label: 'Записи'),
+              NavigationDestination(
+                icon: Badge(
+                  isLabelVisible: unread > 0,
+                  label: Text(unread > 9 ? '9+' : '$unread'),
+                  child: const Icon(Icons.notifications_none_outlined),
+                ),
+                label: 'Сповіщення',
+              ),
+              const NavigationDestination(icon: Icon(Icons.settings_outlined), label: 'Налаштування'),
+            ],
+          );
+        },
       ),
     );
   }
@@ -93,6 +121,8 @@ class _HomeScreenState extends State<HomeScreen> {
             else if (snapshot.hasError)
               ErrorState(message: 'Не вдалося завантажити головну сторінку.', onRetry: refresh)
             else ...[
+              const _BetaWelcomeCard(),
+              const SizedBox(height: 12),
               _SummaryCard(petCount: pets.length),
               const SizedBox(height: 12),
               if (pets.isEmpty)
@@ -123,6 +153,29 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         );
       },
+    );
+  }
+}
+
+class _BetaWelcomeCard extends StatelessWidget {
+  const _BetaWelcomeCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Card(
+      child: Padding(
+        padding: EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Beta-тестування VetCare', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+            SizedBox(height: 8),
+            Text('Зберігайте медичну історію тварини в одному місці, знаходьте клініку та бронюйте прийом.'),
+            SizedBox(height: 10),
+            Text('Кроки: додайте тварину → знайдіть клініку → створіть запис.'),
+          ],
+        ),
+      ),
     );
   }
 }

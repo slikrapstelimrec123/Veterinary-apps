@@ -2,7 +2,7 @@
 
 Premium MVP platform for veterinary clinics, veterinarians, and pet owners.
 
-The product helps clinics manage profiles, doctors, services, schedules, appointments, clients, pets, visit records, medical documents, reviews, and clinic subscription limits. Pet owners can create pet profiles, book appointments, and keep treatment history in one trusted place.
+The product helps clinics manage profiles, doctors, services, schedules, appointments, clients, pets, visit records, medical documents, reviews, clinic subscription limits, and in-app notifications. Pet owners can create pet profiles, book appointments, receive updates, and keep treatment history in one trusted place.
 
 ## Tech Stack
 
@@ -113,6 +113,7 @@ Mock mode includes:
 - 3 document metadata examples, including one owner-hidden internal document
 - published review/rating examples
 - one clinic that is temporarily unavailable for online booking
+- notification inbox examples and notification preferences
 
 With Supabase:
 
@@ -131,7 +132,7 @@ npm run dev
 
 Open `http://localhost:3000`.
 
-The admin panel includes Supabase-backed authentication and clinic management modules for profile, services, doctors, schedules, appointment management, visit records, private visit documents, reviews, and subscription limits.
+The admin panel includes Supabase-backed authentication and clinic management modules for profile, services, doctors, schedules, appointment management, visit records, private visit documents, reviews, subscription limits, and notifications.
 
 Auth routes:
 
@@ -215,6 +216,80 @@ Implemented checks:
 
 No card data is collected and no payment provider is connected.
 
+## Notifications And Reminders
+
+Mobile mock mode:
+
+1. Open the `Сповіщення` tab.
+2. Review unread/read notification examples.
+3. Tap a notification to open the related appointment or visit record.
+4. Use the check icon to mark all notifications as read.
+5. Open Settings → `Сповіщення` to update preferences locally.
+
+Real Supabase mode:
+
+1. Apply `20260630210000_notifications_reminders_module.sql`.
+2. Confirm RLS policies from `008_notifications_reminders_policies.sql`.
+3. Create an appointment from mobile to notify clinic owner/manager.
+4. Confirm/cancel/complete appointments in admin to notify the pet owner.
+5. Publish a visit record or upload an owner-visible document to notify the pet owner.
+6. Submit a review to notify clinic owner/manager.
+7. Open `/clinic/notifications` and `/clinic/settings/notifications` in the admin panel.
+
+Real email, SMS, and push providers are not connected in this stage.
+
+## Beta Readiness
+
+Beta support files:
+
+- `docs/demo-accounts.md`
+- `docs/beta-qa-checklist.md`
+- `docs/beta-release-notes.md`
+- `docs/security-beta-audit.md`
+- `docs/known-limitations.md`
+
+Admin trust/support pages:
+
+- `/privacy`
+- `/terms`
+- `/data-processing`
+- `/support`
+
+Mobile settings include privacy, terms, beta feedback, data export placeholder, and account deletion placeholder.
+
+## Demo Data
+
+Create fake Supabase Auth users first:
+
+- `demo.pet.owner@example.com`
+- `demo.clinic.owner@example.com`
+- `demo.vet@example.com`
+- `demo.manager@example.com`
+- `demo.platform.admin@example.com`
+
+Do not commit real passwords.
+
+Then run:
+
+```bash
+supabase db reset
+```
+
+or, after migrations are already applied, seed manually with your local database connection:
+
+```bash
+psql "$SUPABASE_DB_URL" -f supabase/seed/seed.sql
+```
+
+The seed creates fake clinic data, doctors, services, schedules, pets, appointments, visit records, document metadata, reviews, notifications, and subscription state.
+
+## Troubleshooting
+
+- If `next` is not recognized, run `npm install` inside `apps/admin`.
+- If `flutter` or `dart` is not recognized, install Flutter SDK and add it to PATH.
+- If mobile opens mock data unexpectedly, provide `SUPABASE_URL` and `SUPABASE_ANON_KEY`, or set `MOCK_MODE=false`.
+- If Git says `not a git repository`, first run `cd "C:\Users\slikr\Desktop\Project IT\Приложение для ветклиник"`.
+
 ## Reviews And Ratings
 
 Mobile mock mode:
@@ -258,4 +333,4 @@ After applying migrations:
 
 ## Next Recommended Task
 
-Implement notifications and reminders for appointments, treatment follow-ups, and clinic actions.
+Prepare the MVP for beta testing: onboarding, demo accounts, QA checklist, privacy pages, terms, and release readiness.

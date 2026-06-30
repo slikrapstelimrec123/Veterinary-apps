@@ -146,6 +146,26 @@ Plan limits are enforced server-side and through database helper functions. UI p
 
 Pet owners see only a generic online-booking unavailable message when a clinic cannot accept bookings. Billing or subscription reasons are never exposed in the mobile app.
 
+## Notifications
+
+Notifications are private per recipient.
+
+Users can read and update only notifications where `recipient_user_id = auth.uid()`. Clinic members cannot read a pet owner's inbox unless a separate notification is addressed directly to that clinic user.
+
+Notification bodies must avoid sensitive medical details. Use generic copy such as `Додано запис лікування` instead of diagnosis text. Document URLs are never stored in notification bodies.
+
+Notification preferences are user-owned. Users can read and update only their own preferences. Marketing notifications are disabled by default.
+
+Delivery logs are not exposed to regular users. Platform admins can inspect them later for support.
+
+Scheduled notifications are readable only by the recipient and platform admin. Processing pending reminders should happen later through a trusted backend job or Edge Function.
+
+## Beta Feedback
+
+Users can create feedback only as themselves. Users can read their own feedback. Platform admins can read and manage all beta feedback.
+
+Feedback should not include real sensitive medical details during local demo testing. Beta testers should describe issues without copying full diagnoses or private document contents.
+
 ## Current Test Checklist
 
 - Pet owner cannot read another owner's pets.
@@ -160,6 +180,10 @@ Pet owners see only a generic online-booking unavailable message when a clinic c
 - Veterinarian cannot manage subscription.
 - Pet owner cannot access clinic subscription or usage data.
 - Clinic cannot create doctors, services, appointment confirmations, visit records, or document uploads after relevant plan limits are reached.
+- User cannot read another user's notification inbox.
+- User can mark only own notifications as read.
+- Marketing notifications are disabled by default.
+- Beta feedback can be created only by the signed-in user.
 - Public user can read only published clinics, doctors, and services.
 - Public user can read only active public subscription plans.
 - Visit documents cannot be opened without authorized signed URL.

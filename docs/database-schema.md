@@ -11,6 +11,8 @@ The implemented MVP schema lives in:
 - `supabase/migrations/20260630160000_visit_records_documents_module.sql`
 - `supabase/migrations/20260630183000_reviews_ratings_module.sql`
 - `supabase/migrations/20260630200000_clinic_subscriptions_module.sql`
+- `supabase/migrations/20260630210000_notifications_reminders_module.sql`
+- `supabase/migrations/20260630220000_beta_feedback_module.sql`
 
 ## profiles
 
@@ -501,6 +503,133 @@ Allowed statuses:
 - `rejected`
 - `cancelled`
 
+## notifications
+
+In-app notification inbox for one recipient user.
+
+Fields:
+
+- `id uuid primary key`
+- `recipient_user_id uuid references profiles(id)`
+- `clinic_id uuid nullable references clinics(id)`
+- `pet_id uuid nullable references pets(id)`
+- `appointment_id uuid nullable references appointments(id)`
+- `visit_record_id uuid nullable references visit_records(id)`
+- `document_id uuid nullable references visit_documents(id)`
+- `review_id uuid nullable references reviews(id)`
+- `type text`
+- `title text`
+- `body text`
+- `data jsonb`
+- `status text`
+- `read_at timestamptz nullable`
+- `created_at timestamptz`
+- `updated_at timestamptz`
+
+Statuses:
+
+- `unread`
+- `read`
+- `archived`
+
+## notification_preferences
+
+User-level notification settings.
+
+Fields:
+
+- `id uuid primary key`
+- `user_id uuid references profiles(id)`
+- `in_app_enabled boolean`
+- `email_enabled boolean`
+- `push_enabled boolean`
+- `sms_enabled boolean`
+- `appointment_reminders_enabled boolean`
+- `treatment_updates_enabled boolean`
+- `review_requests_enabled boolean`
+- `new_appointment_alerts_enabled boolean`
+- `appointment_cancellation_alerts_enabled boolean`
+- `review_alerts_enabled boolean`
+- `subscription_limit_alerts_enabled boolean`
+- `marketing_enabled boolean`
+- `created_at timestamptz`
+- `updated_at timestamptz`
+
+Marketing is disabled by default.
+
+## notification_delivery_log
+
+Placeholder for future provider delivery attempts.
+
+Fields:
+
+- `id uuid primary key`
+- `notification_id uuid references notifications(id)`
+- `channel text`
+- `status text`
+- `provider text nullable`
+- `provider_message_id text nullable`
+- `error_message text nullable`
+- `sent_at timestamptz nullable`
+- `created_at timestamptz`
+
+Channels:
+
+- `in_app`
+- `email`
+- `push`
+- `sms`
+
+## scheduled_notifications
+
+Prepared appointment reminders for future background processing.
+
+Fields:
+
+- `id uuid primary key`
+- `recipient_user_id uuid references profiles(id)`
+- `clinic_id uuid nullable references clinics(id)`
+- `appointment_id uuid nullable references appointments(id)`
+- `type text`
+- `title text`
+- `body text`
+- `scheduled_for timestamptz`
+- `status text`
+- `created_at timestamptz`
+- `updated_at timestamptz`
+
+## beta_feedback
+
+Controlled beta feedback from mobile and clinic/admin users.
+
+Fields:
+
+- `id uuid primary key`
+- `user_id uuid references profiles(id)`
+- `clinic_id uuid nullable references clinics(id)`
+- `role text`
+- `rating integer nullable`
+- `category text nullable`
+- `message text`
+- `status text`
+- `created_at timestamptz`
+- `updated_at timestamptz`
+
+Categories:
+
+- `bug`
+- `usability`
+- `feature_request`
+- `data_issue`
+- `other`
+
+Statuses:
+
+- `new`
+- `reviewed`
+- `resolved`
+- `ignored`
+
 ## Helper Functions
 
 Implemented in the RLS migration:
@@ -520,3 +649,7 @@ Implemented in the RLS migration:
 - `can_clinic_upload_document(target_clinic_id uuid, file_size_bytes bigint)`
 - `can_clinic_publish_profile(target_clinic_id uuid)`
 - `can_clinic_use_reviews(target_clinic_id uuid)`
+- `mark_notification_read(target_notification_id uuid)`
+- `mark_all_notifications_read()`
+- `create_appointment_reminders(target_appointment_id uuid)`
+- `cancel_appointment_reminders(target_appointment_id uuid)`

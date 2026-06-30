@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import "./globals.css";
 import { AppSidebar } from "../components/app-sidebar";
+import { BetaBanner } from "../components/beta-banner";
 import { LogoutButton } from "../components/logout-button";
+import { NotificationDropdown } from "../components/notification-dropdown";
 
 export const metadata: Metadata = {
   title: "VetCare Кабінет",
@@ -16,11 +18,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div style={{ display: "grid", gridTemplateColumns: "260px 1fr", minHeight: "100vh" }}>
           <AppSidebar />
           <main style={{ padding: 28 }}>
-            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 20 }}>
+            <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "flex-start", gap: 8, marginBottom: 20 }}>
+              <NotificationDropdown />
               <Link className="button" href="/login">Вхід</Link>
-              <div style={{ width: 8 }} />
               <LogoutButton />
             </div>
+            <BetaBanner />
             {children}
           </main>
         </div>

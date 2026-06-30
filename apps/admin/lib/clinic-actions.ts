@@ -815,7 +815,7 @@ export async function approveSubscriptionUpgrade(formData: FormData) {
   const supabase = createSupabaseServerClient();
   const { data: request } = await supabase
     .from("subscription_upgrade_requests")
-    .select("id,clinic_id,requested_plan_id,status")
+    .select("id,clinic_id,requested_plan_id,requested_by,status")
     .eq("id", requestId)
     .maybeSingle();
 
@@ -882,7 +882,18 @@ export async function rejectSubscriptionUpgrade(formData: FormData) {
     redirect("/platform/subscription-requests?error=validation");
   }
 
-  const { error } = await createSupabaseServerClient()
+  const supabase = createSupabaseServerClient();
+  const { data: request } = await supabase
+    .from("subscription_upgrade_requests")
+    .select("id,clinic_id,requested_by,status")
+    .eq("id", requestId)
+    .maybeSingle();
+
+  if (!request || request.status !== "pending") {
+    redirect("/platform/subscription-requests?error=not_found");
+  }
+
+  const { error } = await supabase
     .from("subscription_upgrade_requests")
     .update({ status: "rejected", note: text(formData, "note") })
     .eq("id", requestId)

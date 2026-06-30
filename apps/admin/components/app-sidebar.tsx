@@ -5,7 +5,9 @@ import {
   HeartPulse,
   LayoutDashboard,
   PawPrint,
+  Bell,
   Settings,
+  LifeBuoy,
   Star,
   Stethoscope,
   Users,
@@ -23,8 +25,10 @@ const links = [
   { href: "/clinic/appointments", label: "Записи", icon: CalendarDays },
   { href: "/clinic/visit-records", label: "Історія візитів", icon: FileText },
   { href: "/clinic/reviews", label: "Відгуки", icon: Star },
+  { href: "/clinic/notifications", label: "Сповіщення", icon: Bell },
   { href: "/documents", label: "Документи", icon: FileText },
   { href: "/clinic/subscription", label: "Підписка", icon: WalletCards },
+  { href: "/support", label: "Підтримка beta", icon: LifeBuoy },
   { href: "/settings", label: "Налаштування", icon: Settings },
 ];
 

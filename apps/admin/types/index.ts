@@ -255,3 +255,75 @@ export type SubscriptionUpgradeRequest = {
   subscription_plans?: SubscriptionPlan | null;
   profiles?: Pick<UserProfile, "id" | "full_name" | "email"> | null;
 };
+
+export type NotificationStatus = "unread" | "read" | "archived";
+
+export type NotificationType =
+  | "appointment_created"
+  | "appointment_confirmed"
+  | "appointment_cancelled_by_clinic"
+  | "appointment_reminder_24h"
+  | "appointment_reminder_2h"
+  | "visit_record_published"
+  | "document_uploaded"
+  | "next_visit_recommended"
+  | "review_request"
+  | "clinic_message_placeholder"
+  | "new_appointment_request"
+  | "appointment_cancelled_by_owner"
+  | "appointment_upcoming_today"
+  | "visit_record_missing"
+  | "review_received"
+  | "subscription_limit_warning"
+  | "subscription_upgrade_request_status";
+
+export type NotificationItem = {
+  id: string;
+  recipient_user_id: string;
+  clinic_id?: string | null;
+  pet_id?: string | null;
+  appointment_id?: string | null;
+  visit_record_id?: string | null;
+  document_id?: string | null;
+  review_id?: string | null;
+  type: NotificationType;
+  title: string;
+  body: string;
+  data?: Record<string, unknown> | null;
+  status: NotificationStatus;
+  read_at?: string | null;
+  created_at: string;
+  updated_at?: string;
+};
+
+export type NotificationPreferences = {
+  id?: string;
+  user_id: string;
+  in_app_enabled: boolean;
+  email_enabled: boolean;
+  push_enabled: boolean;
+  sms_enabled: boolean;
+  appointment_reminders_enabled: boolean;
+  treatment_updates_enabled: boolean;
+  review_requests_enabled: boolean;
+  new_appointment_alerts_enabled: boolean;
+  appointment_cancellation_alerts_enabled: boolean;
+  review_alerts_enabled: boolean;
+  subscription_limit_alerts_enabled: boolean;
+  marketing_enabled: boolean;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type BetaFeedback = {
+  id: string;
+  user_id: string;
+  clinic_id?: string | null;
+  role: string;
+  rating?: number | null;
+  category?: "bug" | "usability" | "feature_request" | "data_issue" | "other" | null;
+  message: string;
+  status: "new" | "reviewed" | "resolved" | "ignored";
+  created_at: string;
+  updated_at?: string;
+};
