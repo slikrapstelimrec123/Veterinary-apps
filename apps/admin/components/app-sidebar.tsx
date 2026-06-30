@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   PawPrint,
   Settings,
+  Star,
   Stethoscope,
   Users,
   WalletCards,
@@ -21,8 +22,9 @@ const links = [
   { href: "/pets", label: "Тварини", icon: PawPrint },
   { href: "/clinic/appointments", label: "Записи", icon: CalendarDays },
   { href: "/clinic/visit-records", label: "Історія візитів", icon: FileText },
+  { href: "/clinic/reviews", label: "Відгуки", icon: Star },
   { href: "/documents", label: "Документи", icon: FileText },
-  { href: "/subscription", label: "Підписка", icon: WalletCards },
+  { href: "/clinic/subscription", label: "Підписка", icon: WalletCards },
   { href: "/settings", label: "Налаштування", icon: Settings },
 ];
 

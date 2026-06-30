@@ -3,6 +3,8 @@
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/error_state.dart';
+import '../../reviews/data/review_repository.dart';
+import '../../reviews/screens/leave_review_screen.dart';
 import '../data/visit_record_repository.dart';
 import '../domain/visit_document.dart';
 import '../domain/visit_record.dart';
@@ -18,6 +20,7 @@ class VisitRecordDetailsScreen extends StatefulWidget {
 
 class _VisitRecordDetailsScreenState extends State<VisitRecordDetailsScreen> {
   final repository = VisitRecordRepository();
+  final reviewRepository = ReviewRepository();
   late Future<_VisitDetailsData> future = load();
 
   Future<_VisitDetailsData> load() async {
@@ -60,6 +63,7 @@ class _VisitRecordDetailsScreenState extends State<VisitRecordDetailsScreen> {
               _RecordSection(title: 'Препарати', body: record.prescribedMedications ?? 'Препарати не додано.'),
               _RecordSection(title: 'Рекомендації', body: record.recommendations ?? 'Рекомендації не додано.'),
               _RecordSection(title: 'Наступний візит', body: _nextVisitLabel(record)),
+              if (record.appointmentId != null && record.clinicId != null) _VisitReviewAction(record: record, repository: reviewRepository, onChanged: refresh),
               const SizedBox(height: 8),
               Text('Документи', style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 8),
@@ -84,6 +88,59 @@ class _VisitRecordDetailsScreenState extends State<VisitRecordDetailsScreen> {
     }
 
     return record.nextVisitDate?.toIso8601String().split('T').first ?? 'Рекомендовано, але дату не вказано.';
+  }
+}
+
+class _VisitReviewAction extends StatelessWidget {
+  const _VisitReviewAction({required this.record, required this.repository, required this.onChanged});
+
+  final VisitRecord record;
+  final ReviewRepository repository;
+  final VoidCallback onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: repository.getReviewForAppointment(record.appointmentId!),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox.shrink();
+        }
+
+        if (snapshot.data != null) {
+          return const Card(
+            child: Padding(
+              padding: EdgeInsets.all(14),
+              child: Text('Цей візит уже оцінено.'),
+            ),
+          );
+        }
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: OutlinedButton.icon(
+            onPressed: () async {
+              await Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => LeaveReviewScreen(
+                    clinicId: record.clinicId!,
+                    clinicName: record.clinicName ?? 'Клініка',
+                    appointmentId: record.appointmentId!,
+                    visitRecordId: record.id,
+                    petId: record.petId,
+                    doctorId: record.doctorId,
+                    doctorName: record.doctorName,
+                  ),
+                ),
+              );
+              onChanged();
+            },
+            icon: const Icon(Icons.star_border),
+            label: const Text('Залишити відгук'),
+          ),
+        );
+      },
+    );
   }
 }
 

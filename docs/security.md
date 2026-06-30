@@ -114,6 +114,38 @@ Signed URLs should be created only after checking database access.
 
 The mobile app can request a short-lived signed URL for owner-visible documents only. It does not expose public file URLs.
 
+## Reviews And Anti-Fake Rules
+
+Reviews are protected by Row Level Security plus database constraints.
+
+Pet owners can create reviews only for their own appointment, their own pet, and only after the appointment is completed or a linked visit record is published.
+
+One appointment can receive only one owner review.
+
+Review inserts are checked against appointment owner, clinic, pet, doctor, and optional visit record relationships.
+
+Public users can read only `published` reviews.
+
+Clinic members can view reviews for their own clinic but cannot edit or delete owner review content.
+
+Platform admins can change moderation status.
+
+Hidden, reported, pending, and removed reviews are excluded from public clinic/doctor rating summaries.
+
+## Clinic Subscriptions
+
+Subscription data is clinic-private.
+
+Public and logged-in users can read only active public plan definitions from `subscription_plans`.
+
+Clinic owners and clinic managers can read their clinic subscription and usage. Veterinarians cannot manage subscription. Pet owners cannot access clinic subscription, usage, upgrade requests, provider IDs, or billing state.
+
+Clinic owners can create upgrade requests only for their own clinic. Platform admins can read and update all subscription requests and manually activate a plan.
+
+Plan limits are enforced server-side and through database helper functions. UI prompts are guidance only and do not replace RLS or server checks.
+
+Pet owners see only a generic online-booking unavailable message when a clinic cannot accept bookings. Billing or subscription reasons are never exposed in the mobile app.
+
 ## Current Test Checklist
 
 - Pet owner cannot read another owner's pets.
@@ -126,5 +158,8 @@ The mobile app can request a short-lived signed URL for owner-visible documents 
 - Veterinarian can view own schedule without catalog management actions.
 - Clinic owner cannot access another clinic's data.
 - Veterinarian cannot manage subscription.
+- Pet owner cannot access clinic subscription or usage data.
+- Clinic cannot create doctors, services, appointment confirmations, visit records, or document uploads after relevant plan limits are reached.
 - Public user can read only published clinics, doctors, and services.
+- Public user can read only active public subscription plans.
 - Visit documents cannot be opened without authorized signed URL.

@@ -1,6 +1,6 @@
 import { createSupabaseServerClient } from "./supabase-server";
-import { requireClinicAccess } from "./auth";
-import type { Appointment, Clinic, Doctor, DoctorSchedule, Service, VisitRecord } from "../types";
+import { getCurrentProfile, requireClinicAccess } from "./auth";
+import type { Appointment, Clinic, Doctor, DoctorSchedule, Review, Service, VisitRecord } from "../types";
 
 export type ClinicContext = Awaited<ReturnType<typeof requireClinicAccess>>;
 
@@ -135,6 +135,41 @@ export async function getVisitRecordCreateData(appointmentId: string) {
     doctors,
     existingRecord: visitRecord,
   };
+}
+
+export async function getClinicReviewsData() {
+  const context = await requireClinicAccess();
+  const supabase = createSupabaseServerClient();
+
+  const { data } = await supabase
+    .from("reviews")
+    .select("*, pets(id,name,species,breed), profiles(id,full_name,email,phone), doctors(id,full_name,specialization), appointments(id,appointment_date,start_time,status), visit_records(id,status,visit_date,diagnosis)")
+    .eq("clinic_id", context.clinicId)
+    .order("created_at", { ascending: false });
+
+  return { context, reviews: (data ?? []) as Review[] };
+}
+
+export async function getClinicReviewDetails(id: string) {
+  const { context, reviews } = await getClinicReviewsData();
+  return {
+    context,
+    review: reviews.find((review) => review.id === id) ?? null,
+  };
+}
+
+export async function getPlatformReviewsData() {
+  const profile = await getCurrentProfile();
+  if (!profile || profile.role !== "platform_admin") {
+    return { profile, reviews: [] as Review[] };
+  }
+
+  const { data } = await createSupabaseServerClient()
+    .from("reviews")
+    .select("*, pets(id,name,species,breed), profiles(id,full_name,email,phone), doctors(id,full_name,specialization), appointments(id,appointment_date,start_time,status), visit_records(id,status,visit_date,diagnosis)")
+    .order("created_at", { ascending: false });
+
+  return { profile, reviews: (data ?? []) as Review[] };
 }
 
 export function profileCompletion(clinic: Clinic | null, services: Service[], doctors: Doctor[], schedules: DoctorSchedule[]) {

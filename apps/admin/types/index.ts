@@ -157,9 +157,101 @@ export type VisitDocument = {
   updated_at?: string;
 };
 
-export type Subscription = {
+export type ReviewStatus = "pending_moderation" | "published" | "hidden" | "reported" | "removed";
+
+export type Review = {
   id: string;
-  clinicId: string;
-  plan: "free" | "paid";
-  status: "inactive" | "trialing" | "active" | "past_due" | "cancelled";
+  clinic_id: string;
+  doctor_id?: string | null;
+  appointment_id: string;
+  visit_record_id?: string | null;
+  pet_id: string;
+  owner_id: string;
+  rating: number;
+  doctor_rating?: number | null;
+  clinic_rating?: number | null;
+  service_quality_rating?: number | null;
+  comment?: string | null;
+  status: ReviewStatus;
+  is_anonymous: boolean;
+  created_at: string;
+  updated_at?: string;
+  appointments?: Appointment | null;
+  visit_records?: Pick<VisitRecord, "id" | "status" | "visit_date" | "diagnosis"> | null;
+  pets?: { id: string; name: string; species?: string | null; breed?: string | null } | null;
+  profiles?: { id: string; full_name?: string | null; email?: string | null; phone?: string | null } | null;
+  doctors?: Pick<Doctor, "id" | "full_name" | "specialization" | "profile_id"> | null;
+};
+
+export type SubscriptionPlanLimits = {
+  max_doctors?: number;
+  max_services?: number;
+  max_clinic_managers?: number;
+  max_appointments_per_month?: number;
+  max_visit_records?: number;
+  max_documents?: number;
+  max_storage_mb?: number;
+  can_publish_clinic_profile?: boolean;
+  can_use_reviews?: boolean;
+  can_use_advanced_analytics?: boolean;
+  can_export_data?: boolean;
+  can_use_multi_location?: boolean;
+  can_use_priority_support?: boolean;
+};
+
+export type SubscriptionPlan = {
+  id: string;
+  code: "free" | "basic" | "pro" | "enterprise" | string;
+  name: string;
+  description?: string | null;
+  price_monthly?: number | null;
+  price_yearly?: number | null;
+  currency: string;
+  is_active: boolean;
+  is_public: boolean;
+  sort_order: number;
+  limits: SubscriptionPlanLimits;
+  features: string[];
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type ClinicSubscription = {
+  id: string;
+  clinic_id: string;
+  plan_id: string;
+  status: "trialing" | "active" | "past_due" | "cancelled" | "expired" | "suspended" | "manual";
+  billing_period?: "monthly" | "yearly" | "manual" | null;
+  current_period_start?: string | null;
+  current_period_end?: string | null;
+  trial_ends_at?: string | null;
+  cancel_at_period_end: boolean;
+  external_provider?: string | null;
+  external_subscription_id?: string | null;
+  subscription_plans?: SubscriptionPlan | null;
+};
+
+export type SubscriptionUsage = {
+  doctors_count: number;
+  services_count: number;
+  appointments_count: number;
+  visit_records_count: number;
+  documents_count: number;
+  storage_used_mb: number;
+  period_start?: string;
+  period_end?: string;
+};
+
+export type SubscriptionUpgradeRequest = {
+  id: string;
+  clinic_id: string;
+  requested_plan_id: string;
+  requested_by: string;
+  status: "pending" | "approved" | "rejected" | "cancelled";
+  note?: string | null;
+  created_at: string;
+  updated_at?: string;
+  clinics?: Pick<Clinic, "id" | "name"> | null;
+  subscription_plans?: SubscriptionPlan | null;
+  profiles?: Pick<UserProfile, "id" | "full_name" | "email"> | null;
 };

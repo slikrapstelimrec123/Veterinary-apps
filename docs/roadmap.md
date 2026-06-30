@@ -89,7 +89,7 @@ Acceptance criteria:
 
 ## Stage 4: Mobile Pet Owner App
 
-Status: in progress. Pet owner home, pet list, pet creation/editing, pet details, treatment history, visit details, private document metadata, settings, logout, and mock preview mode are implemented.
+Status: in progress. Pet owner home, pet list, pet creation/editing, pet details, treatment history, visit details, private document metadata, reviews after completed appointments, clinic/doctor rating display, settings, logout, and mock preview mode are implemented.
 
 Goal: let pet owners create account, pets, and browse clinics.
 
@@ -187,7 +187,7 @@ Build only after MVP learning:
 - Paid clinic plans.
 - Payment provider integration.
 - Push notifications and reminders.
-- Reviews UI.
+- Reviews UI, clinic rating, and doctor rating MVP are implemented.
 - Clinic analytics.
 - Chat.
 - Multi-branch clinics.
@@ -201,14 +201,14 @@ Build only after MVP learning:
 
 ### MVP
 
-Do not implement payments.
+Do not implement real payments.
 
-Prepare architecture:
+Implemented architecture:
 
-- Create `subscriptions` table.
+- Create `subscription_plans`, `clinic_subscriptions`, `subscription_usage`, and `subscription_upgrade_requests`.
 - Create `free` plan by default for every clinic.
-- Keep plan limits in configuration, not scattered through UI logic.
-- Show subscription section as informational or hidden in MVP.
+- Keep plan limits in database JSONB configuration, not scattered through UI logic.
+- Show clinic subscription section with usage, limits, plans, and manual upgrade request flow.
 
 ### Future Free Clinic Plan
 
@@ -333,3 +333,52 @@ Recommended order:
 9. Documents.
 10. Security testing.
 11. Beta launch.
+## Stage 7: Reviews And Ratings
+
+Status: implemented for MVP.
+
+Goal: allow trustworthy post-appointment feedback without fake or duplicate reviews.
+
+Scope:
+
+- One owner review per completed appointment.
+- Review CTA from completed appointment details and published visit record details.
+- Clinic and doctor rating summaries from published reviews only.
+- Clinic review list/detail pages.
+- Basic platform moderation placeholder.
+
+Out of scope:
+
+- Payments.
+- Subscriptions.
+- Chat.
+- Push notifications.
+- AI review analysis.
+- Advanced marketplace ranking.
+- Clinic replies.
+
+## Stage 8: Clinic Subscriptions And Plan Limits
+
+Status: implemented for MVP without real payments.
+
+Goal: prepare SaaS monetization for clinics with configurable limits and safe manual upgrade flow.
+
+Scope:
+
+- `Free`, `Basic`, `Pro`, and `Enterprise` plans in the database.
+- Configurable JSONB limits for doctors, services, appointments, visit records, documents, storage, profile publishing, reviews, analytics, export, multi-location, and priority support.
+- Clinic subscription overview, plans, usage, and billing placeholder pages.
+- Mock upgrade request flow with platform admin approval.
+- Server-side limit checks before adding doctors/services, confirming appointments, creating visit records, uploading documents, and publishing clinic profile.
+- Mobile pet owner booking shows only a generic unavailable message when a clinic cannot accept online booking.
+
+Out of scope:
+
+- Stripe, LiqPay, WayForPay, Fondy, Apple Billing, Google Billing.
+- Card collection.
+- Downgrade data deletion.
+- Aggressive paywalls.
+
+## Next Recommended Task
+
+Implement notifications and reminders for appointments, treatment follow-ups, and clinic actions.

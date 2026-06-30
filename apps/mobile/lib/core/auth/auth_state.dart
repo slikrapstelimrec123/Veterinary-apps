@@ -39,7 +39,7 @@ class AuthState extends ChangeNotifier {
     try {
       currentUser = await _repository.login(email: email, password: password);
     } catch (_) {
-      errorMessage = 'Email or password is incorrect.';
+      errorMessage = 'Електронна пошта або пароль неправильні.';
     } finally {
       isLoading = false;
       notifyListeners();

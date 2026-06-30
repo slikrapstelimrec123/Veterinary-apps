@@ -2,7 +2,7 @@
 
 Premium MVP platform for veterinary clinics, veterinarians, and pet owners.
 
-The product helps clinics manage profiles, doctors, services, schedules, appointments, clients, pets, visit records, and medical documents. Pet owners can create pet profiles, book appointments, and keep treatment history in one trusted place.
+The product helps clinics manage profiles, doctors, services, schedules, appointments, clients, pets, visit records, medical documents, reviews, and clinic subscription limits. Pet owners can create pet profiles, book appointments, and keep treatment history in one trusted place.
 
 ## Tech Stack
 
@@ -11,7 +11,7 @@ The product helps clinics manage profiles, doctors, services, schedules, appoint
 - **Backend**: Supabase Auth, PostgreSQL, Storage, Row Level Security
 - **Future payments**: Stripe or local provider for clinics; Apple/Google subscriptions only if a later client premium plan is justified
 
-Payments, chat, push notifications, AI features, and complex marketplace logic are intentionally outside the first scaffold.
+Real payments, chat, push notifications, AI features, and complex marketplace logic are intentionally outside the first scaffold.
 
 ## Repository Structure
 
@@ -111,6 +111,8 @@ Mock mode includes:
 - 2 owner appointments
 - 3 visit records, including one owner-hidden draft
 - 3 document metadata examples, including one owner-hidden internal document
+- published review/rating examples
+- one clinic that is temporarily unavailable for online booking
 
 With Supabase:
 
@@ -129,7 +131,7 @@ npm run dev
 
 Open `http://localhost:3000`.
 
-The admin panel includes Supabase-backed authentication and clinic management modules for profile, services, doctors, schedules, appointment management, visit records, and private visit documents.
+The admin panel includes Supabase-backed authentication and clinic management modules for profile, services, doctors, schedules, appointment management, visit records, private visit documents, reviews, and subscription limits.
 
 Auth routes:
 
@@ -187,8 +189,50 @@ After creating a clinic owner account and applying migrations:
 6. Open `/clinic/appointments` to review bookings, confirm/cancel/complete/no-show appointments, and assign doctors.
 7. Open an appointment and create a visit record.
 8. Open `/clinic/visit-records` to edit, publish, archive, and attach private documents.
+9. Open `/clinic/subscription` to review the current plan, usage, and upgrade state.
 
-This stage includes visit record creation from appointments and private document attachments. It does not include payments, reviews, chat, push notifications, or advanced marketplace features.
+This stage includes visit record creation from appointments, private document attachments, reviews after completed appointments, and manual subscription limits. It does not include real payments, chat, push notifications, or advanced marketplace ranking.
+
+## Clinic Subscriptions And Limits
+
+After applying migrations:
+
+1. Open `/clinic/subscription` to see current plan, status, usage, and limits.
+2. Open `/clinic/subscription/plans` to view Free, Basic, Pro, and Enterprise.
+3. Click `Запросити апгрейд` to create a mock upgrade request.
+4. Sign in as `platform_admin` and open `/platform/subscription-requests`.
+5. Approve the request to manually activate the requested plan.
+
+Implemented checks:
+
+- adding doctors;
+- adding services;
+- confirming appointments;
+- creating visit records;
+- uploading visit documents;
+- publishing a clinic profile;
+- mobile online booking availability.
+
+No card data is collected and no payment provider is connected.
+
+## Reviews And Ratings
+
+Mobile mock mode:
+
+1. Open a completed appointment that has no review.
+2. Tap `Залишити відгук`.
+3. Select a 1-5 star rating, optionally add doctor/service ratings and a comment.
+4. Submit and confirm the thank-you screen.
+5. Open a clinic or doctor profile to see published rating summaries and review cards.
+
+Real Supabase mode:
+
+1. Apply the reviews migration `20260630183000_reviews_ratings_module.sql`.
+2. Confirm RLS policies from `006_reviews_ratings_policies.sql`.
+3. Complete an appointment or publish a visit record connected to the appointment.
+4. Sign in as the pet owner and submit one review for that appointment.
+5. Open `/clinic/reviews` in the clinic cabinet to view the review context.
+6. Use `/platform/reviews` as the basic platform moderation placeholder.
 
 ## Test Visit Records And Documents
 
@@ -214,4 +258,4 @@ After applying migrations:
 
 ## Next Recommended Task
 
-Implement reviews, clinic ratings, doctor ratings, and post-appointment feedback.
+Implement notifications and reminders for appointments, treatment follow-ups, and clinic actions.

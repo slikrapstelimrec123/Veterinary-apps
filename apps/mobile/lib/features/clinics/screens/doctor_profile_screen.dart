@@ -4,6 +4,10 @@ import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/error_state.dart';
 import '../../appointments/screens/appointment_booking_screen.dart';
+import '../../reviews/data/review_repository.dart';
+import '../../reviews/domain/review.dart';
+import '../../reviews/screens/doctor_reviews_screen.dart';
+import '../../reviews/widgets/rating_widgets.dart';
 import '../data/clinic_repository.dart';
 import '../models/doctor.dart';
 
@@ -18,18 +22,27 @@ class DoctorProfileScreen extends StatefulWidget {
 
 class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
   final repository = ClinicRepository();
-  late Future<Doctor?> doctorFuture = repository.getDoctor(widget.doctorId);
+  final reviewRepository = ReviewRepository();
+  late Future<_DoctorProfileData> doctorFuture = _load();
+
+  Future<_DoctorProfileData> _load() async {
+    final doctor = await repository.getDoctor(widget.doctorId);
+    final summary = await reviewRepository.getDoctorSummary(widget.doctorId);
+    final reviews = await reviewRepository.getDoctorReviews(widget.doctorId);
+    return _DoctorProfileData(doctor: doctor, summary: summary, reviews: reviews.take(3).toList());
+  }
 
   void refresh() {
-    setState(() => doctorFuture = repository.getDoctor(widget.doctorId));
+    setState(() => doctorFuture = _load());
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<Doctor?>(
+    return FutureBuilder<_DoctorProfileData>(
       future: doctorFuture,
       builder: (context, snapshot) {
-        final doctor = snapshot.data;
+        final data = snapshot.data;
+        final doctor = data?.doctor;
 
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const AppScaffold(title: 'Лікар', children: [Center(child: CircularProgressIndicator())]);
@@ -52,6 +65,16 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
           children: [
             _DoctorSummaryCard(doctor: doctor),
             const SizedBox(height: 12),
+            RatingSummaryCard(summary: data!.summary, emptyText: 'Відгуків про лікаря ще немає.'),
+            if (data.summary.hasReviews) ...[
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => DoctorReviewsScreen(doctorId: doctor.id, doctorName: doctor.fullName))),
+                child: const Text('Переглянути всі відгуки'),
+              ),
+              ...data.reviews.map((review) => ReviewCard(review: review)),
+            ],
+            const SizedBox(height: 12),
             Card(
               child: ListTile(
                 leading: const Icon(Icons.schedule_outlined),
@@ -68,6 +91,14 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
       },
     );
   }
+}
+
+class _DoctorProfileData {
+  const _DoctorProfileData({required this.doctor, required this.summary, required this.reviews});
+
+  final Doctor? doctor;
+  final RatingSummary summary;
+  final List<Review> reviews;
 }
 
 class _DoctorSummaryCard extends StatelessWidget {

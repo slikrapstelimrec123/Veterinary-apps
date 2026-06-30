@@ -32,17 +32,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final password = passwordController.text;
 
     if (fullName.length < 2) {
-      setState(() => localError = 'Enter your full name.');
+      setState(() => localError = 'Введіть повне ім’я.');
       return;
     }
 
     if (!email.contains('@')) {
-      setState(() => localError = 'Enter a valid email address.');
+      setState(() => localError = 'Введіть дійсну адресу електронної пошти.');
       return;
     }
 
     if (password.length < 6) {
-      setState(() => localError = 'Password must be at least 6 characters.');
+      setState(() => localError = 'Пароль має містити щонайменше 6 символів.');
       return;
     }
 
@@ -65,7 +65,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     return AppScaffold(
       title: 'Створити акаунт',
-      subtitle: 'Реєстрація власника тварини створює профіль pet_owner.',
+      subtitle: 'Реєстрація створює профіль власника тварини.',
       children: [
         if (localError != null || auth.errorMessage != null) ...[
           Text(localError ?? auth.errorMessage!, style: const TextStyle(color: Color(0xFF9F1239))),

@@ -48,6 +48,19 @@ class ClinicRepository {
     return row == null ? null : Clinic.fromJson(row);
   }
 
+  Future<bool> canClinicAcceptOnlineBooking(String clinicId) async {
+    if (_useMockData) {
+      return MockData.clinics.where((clinic) => clinic.id == clinicId).firstOrNull?.canAcceptOnlineBooking ?? false;
+    }
+
+    try {
+      final result = await _client.rpc('can_clinic_create_appointment', params: {'target_clinic_id': clinicId});
+      return result == true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<List<Doctor>> getClinicDoctors(String clinicId) async {
     if (_useMockData) {
       return MockData.doctors.where((doctor) => doctor.clinicId == clinicId && doctor.isBookable).toList();

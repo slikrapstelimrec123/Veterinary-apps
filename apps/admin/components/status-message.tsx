@@ -3,6 +3,10 @@ const successMessages: Record<string, string> = {
   created: "Успішно створено.",
   deactivated: "Деактивовано.",
   deleted: "Видалено.",
+  reported: "Відгук передано на модерацію.",
+  requested: "Запит на зміну тарифу надіслано.",
+  approved: "Запит на тариф підтверджено.",
+  rejected: "Запит на тариф відхилено.",
 };
 
 const errorMessages: Record<string, string> = {
@@ -13,6 +17,9 @@ const errorMessages: Record<string, string> = {
   visit_publish_requirements: "Перед публікацією медичного запису додайте діагноз, лікування або рекомендації.",
   duplicate_schedule: "Цей лікар вже має активний розклад на цей день.",
   unsafe_delete: "Цей елемент пов'язаний із майбутніми даними, тому він був заархівований.",
+  limit_reached: "Досягнуто ліміт поточного тарифу. Перегляньте підписку, щоб розширити можливості.",
+  feature_locked: "Ця можливість недоступна на поточному тарифі.",
+  upgrade_pending: "У клініки вже є активний запит на зміну тарифу.",
   unknown: "Щось пішло не так. Спробуйте ще раз.",
 };
 

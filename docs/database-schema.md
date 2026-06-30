@@ -9,6 +9,8 @@ The implemented MVP schema lives in:
 - `supabase/migrations/20260629153000_clinic_management_module.sql`
 - `supabase/migrations/20260630143000_appointment_booking_module.sql`
 - `supabase/migrations/20260630160000_visit_records_documents_module.sql`
+- `supabase/migrations/20260630183000_reviews_ratings_module.sql`
+- `supabase/migrations/20260630200000_clinic_subscriptions_module.sql`
 
 ## profiles
 
@@ -364,7 +366,7 @@ Access:
 
 ## reviews
 
-Future public feedback after completed appointments.
+Post-appointment feedback from pet owners after completed appointments or published visit records.
 
 Fields:
 
@@ -372,37 +374,132 @@ Fields:
 - `clinic_id uuid references clinics(id)`
 - `doctor_id uuid references doctors(id) nullable`
 - `appointment_id uuid references appointments(id)`
+- `visit_record_id uuid references visit_records(id) nullable`
+- `pet_id uuid references pets(id)`
 - `owner_id uuid references profiles(id)`
 - `rating integer`
+- `doctor_rating integer nullable`
+- `clinic_rating integer nullable`
+- `service_quality_rating integer nullable`
 - `comment text nullable`
 - `is_published boolean`
+- `status text`
+- `is_anonymous boolean`
 - `created_at timestamptz`
+- `updated_at timestamptz`
 
-MVP note:
+Constraints and helpers:
 
-- Table exists for expansion, but marketplace-style review features are not part of the current stage.
+- `rating`, `doctor_rating`, `clinic_rating`, and `service_quality_rating` are limited to 1-5.
+- Unique review per `appointment_id` + `owner_id`.
+- Trigger validates owner, clinic, doctor, pet, appointment, and visit record relationships.
+- `can_user_review_appointment(user_id, appointment_id)` checks review eligibility.
+- `has_user_reviewed_appointment(user_id, appointment_id)` prevents duplicate reviews.
 
-## subscriptions
+Rating summaries:
 
-Prepared future clinic monetization state.
+- `clinic_rating_summary`: average rating, review count, average clinic rating, latest review date.
+- `doctor_rating_summary`: average rating, review count, average doctor rating, latest review date.
+- Summary views include only `published` reviews.
+
+## subscription_plans
+
+Configurable SaaS plans for clinics.
+
+Fields:
+
+- `id uuid primary key`
+- `code text unique`
+- `name text`
+- `description text nullable`
+- `price_monthly numeric nullable`
+- `price_yearly numeric nullable`
+- `currency text`
+- `is_active boolean`
+- `is_public boolean`
+- `sort_order integer`
+- `limits jsonb`
+- `features jsonb`
+- `created_at timestamptz`
+- `updated_at timestamptz`
+
+Seeded plans:
+
+- `free`
+- `basic`
+- `pro`
+- `enterprise`
+
+## clinic_subscriptions
+
+Current clinic plan state.
 
 Fields:
 
 - `id uuid primary key`
 - `clinic_id uuid references clinics(id)`
-- `plan text`
+- `plan_id uuid references subscription_plans(id)`
 - `status text`
-- `provider text nullable`
-- `provider_customer_id text nullable`
-- `provider_subscription_id text nullable`
+- `billing_period text nullable`
 - `current_period_start timestamptz nullable`
 - `current_period_end timestamptz nullable`
+- `trial_ends_at timestamptz nullable`
+- `cancel_at_period_end boolean`
+- `external_provider text nullable`
+- `external_subscription_id text nullable`
 - `created_at timestamptz`
 - `updated_at timestamptz`
 
-MVP note:
+Allowed statuses:
 
-- Payments are not implemented yet.
+- `trialing`
+- `active`
+- `past_due`
+- `cancelled`
+- `expired`
+- `suspended`
+- `manual`
+
+## subscription_usage
+
+Optional stored usage snapshot table. Current MVP calculates usage dynamically with helper functions.
+
+Fields:
+
+- `id uuid primary key`
+- `clinic_id uuid references clinics(id)`
+- `period_start timestamptz`
+- `period_end timestamptz`
+- `doctors_count integer`
+- `services_count integer`
+- `appointments_count integer`
+- `visit_records_count integer`
+- `documents_count integer`
+- `storage_used_mb numeric`
+- `created_at timestamptz`
+- `updated_at timestamptz`
+
+## subscription_upgrade_requests
+
+Mock upgrade flow for MVP manual activation.
+
+Fields:
+
+- `id uuid primary key`
+- `clinic_id uuid references clinics(id)`
+- `requested_plan_id uuid references subscription_plans(id)`
+- `requested_by uuid references profiles(id)`
+- `status text`
+- `note text nullable`
+- `created_at timestamptz`
+- `updated_at timestamptz`
+
+Allowed statuses:
+
+- `pending`
+- `approved`
+- `rejected`
+- `cancelled`
 
 ## Helper Functions
 
@@ -413,3 +510,13 @@ Implemented in the RLS migration:
 - `has_clinic_role(target_clinic_id uuid, allowed_roles text[])`
 - `owns_pet(target_pet_id uuid)`
 - `can_access_visit_record(target_visit_record_id uuid)`
+- `get_clinic_active_subscription(target_clinic_id uuid)`
+- `get_clinic_plan_limits(target_clinic_id uuid)`
+- `get_clinic_usage(target_clinic_id uuid)`
+- `can_clinic_add_doctor(target_clinic_id uuid)`
+- `can_clinic_add_service(target_clinic_id uuid)`
+- `can_clinic_create_appointment(target_clinic_id uuid)`
+- `can_clinic_create_visit_record(target_clinic_id uuid)`
+- `can_clinic_upload_document(target_clinic_id uuid, file_size_bytes bigint)`
+- `can_clinic_publish_profile(target_clinic_id uuid)`
+- `can_clinic_use_reviews(target_clinic_id uuid)`

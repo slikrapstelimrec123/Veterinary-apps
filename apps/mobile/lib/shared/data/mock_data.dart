@@ -4,6 +4,7 @@ import '../../features/clinics/models/clinic.dart';
 import '../../features/clinics/models/doctor.dart';
 import '../../features/clinics/models/service.dart';
 import '../../features/pets/domain/pet.dart';
+import '../../features/reviews/domain/review.dart';
 import '../../features/visit_records/domain/visit_document.dart';
 import '../../features/visit_records/domain/visit_record.dart';
 
@@ -61,6 +62,7 @@ class MockData {
       description: 'Преміальний ветеринарний госпіталь з хірургією, стоматологією та супроводом хронічних станів.',
       phone: '+380 48 300 40 50',
       email: 'frontdesk@calmtail.vet',
+      canAcceptOnlineBooking: false,
     ),
   ];
 
@@ -165,6 +167,22 @@ class MockData {
       endTime: '11:30',
       status: 'pending',
     ),
+    Appointment(
+      id: 'mock_reviewed_appointment_1',
+      petId: 'mock_pet_luna',
+      petName: 'Luna',
+      clinicId: 'mock_clinic_2',
+      clinicName: 'Ветеринарія Зелена Лапа',
+      serviceId: 'mock_service_4',
+      serviceName: 'Діагностична консультація',
+      doctorId: 'mock_doctor_3',
+      doctorName: 'Лікар Максим Левін',
+      appointmentDate: DateTime.now().subtract(const Duration(days: 96)),
+      startTime: '12:30',
+      endTime: '13:15',
+      status: 'completed',
+      ownerNote: 'Потрібна консультація щодо травлення.',
+    ),
   ];
 
   static final visitRecords = <VisitRecord>[
@@ -172,6 +190,8 @@ class MockData {
       id: 'mock_visit_1',
       appointmentId: 'mock_appointment_1',
       petId: 'mock_pet_luna',
+      clinicId: 'mock_clinic_1',
+      doctorId: 'mock_doctor_1',
       visitDate: DateTime.now().subtract(const Duration(days: 18)),
       clinicName: 'Ветклініка Північна Зірка',
       doctorName: 'Лікар Анна Коваленко',
@@ -188,7 +208,10 @@ class MockData {
     ),
     VisitRecord(
       id: 'mock_visit_2',
+      appointmentId: 'mock_reviewed_appointment_1',
       petId: 'mock_pet_luna',
+      clinicId: 'mock_clinic_2',
+      doctorId: 'mock_doctor_3',
       visitDate: DateTime.now().subtract(const Duration(days: 96)),
       clinicName: 'Ветеринарія Зелена Лапа',
       doctorName: 'Лікар Максим Левін',
@@ -203,6 +226,8 @@ class MockData {
     VisitRecord(
       id: 'mock_visit_3',
       petId: 'mock_pet_milo',
+      clinicId: 'mock_clinic_1',
+      doctorId: 'mock_doctor_1',
       visitDate: DateTime.now().subtract(const Duration(days: 42)),
       clinicName: 'Ветклініка Північна Зірка',
       doctorName: 'Лікар Анна Коваленко',
@@ -253,6 +278,72 @@ class MockData {
       description: 'Внутрішнє фото лише для клініки.',
       storagePath: 'mock_clinic_1/mock_pet_luna/mock_visit_1/internal-photo.jpg',
       isVisibleToOwner: false,
+    ),
+  ];
+
+  static final reviews = <Review>[
+    Review(
+      id: 'mock_review_1',
+      clinicId: 'mock_clinic_2',
+      doctorId: 'mock_doctor_3',
+      appointmentId: 'mock_reviewed_appointment_1',
+      visitRecordId: 'mock_visit_2',
+      petId: 'mock_pet_luna',
+      ownerId: 'mock_pet_owner',
+      rating: 5,
+      doctorRating: 5,
+      clinicRating: 5,
+      serviceQualityRating: 5,
+      comment: 'Дуже уважно пояснили план харчування і спокійно поводилися з Luna.',
+      status: 'published',
+      createdAt: DateTime.now().subtract(const Duration(days: 90)),
+      ownerName: 'Олена Петренко',
+      doctorName: 'Лікар Максим Левін',
+    ),
+    Review(
+      id: 'mock_review_2',
+      clinicId: 'mock_clinic_1',
+      doctorId: 'mock_doctor_2',
+      appointmentId: 'mock_other_appointment_1',
+      petId: 'mock_pet_milo',
+      ownerId: 'mock_other_owner',
+      rating: 4,
+      doctorRating: 4,
+      clinicRating: 4,
+      serviceQualityRating: 4,
+      comment: 'Запис пройшов організовано, лікар дав зрозумілі рекомендації.',
+      status: 'published',
+      createdAt: DateTime.now().subtract(const Duration(days: 12)),
+      ownerName: 'Андрій Савенко',
+      doctorName: 'Лікар Дмитро Гриценко',
+    ),
+    Review(
+      id: 'mock_review_3',
+      clinicId: 'mock_clinic_1',
+      doctorId: 'mock_doctor_1',
+      appointmentId: 'mock_pending_review_appointment',
+      petId: 'mock_pet_luna',
+      ownerId: 'mock_other_owner',
+      rating: 5,
+      comment: 'Очікує перевірки адміністратором платформи.',
+      status: 'pending_moderation',
+      createdAt: DateTime.now().subtract(const Duration(days: 2)),
+      ownerName: 'Марія Кравець',
+      doctorName: 'Лікар Анна Коваленко',
+    ),
+    Review(
+      id: 'mock_review_4',
+      clinicId: 'mock_clinic_3',
+      doctorId: 'mock_doctor_5',
+      appointmentId: 'mock_hidden_review_appointment',
+      petId: 'mock_pet_luna',
+      ownerId: 'mock_other_owner',
+      rating: 2,
+      comment: 'Прихований відгук для адмін-перегляду.',
+      status: 'hidden',
+      createdAt: DateTime.now().subtract(const Duration(days: 6)),
+      ownerName: 'Ірина Лисенко',
+      doctorName: 'Лікар Олег Савчук',
     ),
   ];
 }

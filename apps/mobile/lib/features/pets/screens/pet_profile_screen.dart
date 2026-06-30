@@ -119,12 +119,12 @@ class _DetailGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final details = [
-      ('Стать', pet.sex ?? 'Unknown'),
+      ('Стать', pet.sexLabel),
       ('Дата народження', pet.birthDate?.toIso8601String().split('T').first ?? 'Не вказано'),
       ('Вага', pet.weightKg == null ? 'Не вказано' : '${pet.weightKg} кг'),
       ('Колір', pet.color ?? 'Не вказано'),
       ('Мікрочип', pet.microchipNumber ?? 'Не вказано'),
-      ('Нотатки', pet.notes ?? 'No notes yet'),
+      ('Нотатки', pet.notes ?? 'Нотаток поки немає'),
     ];
 
     return Column(

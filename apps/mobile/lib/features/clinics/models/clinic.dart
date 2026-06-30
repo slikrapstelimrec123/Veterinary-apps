@@ -11,6 +11,7 @@ class Clinic {
     this.coverImageUrl,
     this.status = 'published',
     this.published = true,
+    this.canAcceptOnlineBooking = true,
   });
 
   final String id;
@@ -24,6 +25,7 @@ class Clinic {
   final String? coverImageUrl;
   final String status;
   final bool published;
+  final bool canAcceptOnlineBooking;
 
   String get locationLabel => [city, address].where((value) => value.trim().isNotEmpty).join(', ');
   bool get isPublished => status == 'published' && published;
@@ -41,6 +43,7 @@ class Clinic {
       coverImageUrl: json['cover_image_url'] as String?,
       status: json['status'] as String? ?? 'draft',
       published: json['published'] as bool? ?? false,
+      canAcceptOnlineBooking: json['can_accept_online_booking'] as bool? ?? true,
     );
   }
 }

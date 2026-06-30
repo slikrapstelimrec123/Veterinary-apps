@@ -37,11 +37,22 @@ Current pet owner module:
 - `ClinicListScreen` lists published clinics with simple name/city search.
 - `ClinicProfileScreen` shows public clinic details, services, doctors, and a booking action.
 - `DoctorProfileScreen` shows public doctor details and routes to booking.
-- `AppointmentBookingScreen` lets an owner choose pet, clinic, service, doctor, date, and generated free slot.
+- `AppointmentBookingScreen` lets an owner choose pet, clinic, service, doctor, date, and generated free slot. If a clinic cannot accept online booking because of internal clinic limits, the owner sees only a generic temporary-unavailable message.
 - `MyAppointmentsScreen` and `AppointmentDetailsScreen` show owner appointments and allow owner cancellation while pending or confirmed.
 - Mock mode is enabled with `MOCK_MODE=true` or missing Supabase env values.
 
-Real document viewing/upload, reviews, chat, payments, and push notifications are intentionally not part of this stage.
+Real document viewing/upload, chat, payments, and push notifications are intentionally not part of this stage. Reviews and ratings now exist as a focused MVP module after completed appointments.
+
+## Reviews And Ratings Flow
+
+- Reviews are tied to `clinic_id`, optional `doctor_id`, `appointment_id`, optional `visit_record_id`, `pet_id`, and `owner_id`.
+- A pet owner can review only their own completed appointment or an appointment with a published visit record.
+- One appointment can have only one review from the owner.
+- The mobile app shows the review CTA from appointment details and published visit record details.
+- Clinic and doctor profile screens load published reviews plus `clinic_rating_summary` / `doctor_rating_summary`.
+- Clinic staff can view reviews in `/clinic/reviews` and open `/clinic/reviews/[id]`; they cannot edit or delete review text.
+- Platform admins can change review status in `/platform/reviews`.
+- MVP moderation publishes reviews immediately; `pending_moderation`, `hidden`, `reported`, and `removed` statuses are supported for future moderation workflows.
 
 ### Web Admin Panel For Clinics
 
@@ -81,8 +92,23 @@ Current clinic admin module:
 - `/clinic/visit-records` lists clinic visit records.
 - `/clinic/visit-records/[id]` shows diagnosis, treatment notes, recommendations, internal notes, and private document metadata.
 - `/clinic/visit-records/[id]/edit` edits draft/published/archived records.
+- `/clinic/subscription` shows current clinic plan, status, usage, and upgrade state.
+- `/clinic/subscription/plans` shows Free, Basic, Pro, and Enterprise plans from the database.
+- `/clinic/subscription/usage` shows calculated usage against plan limits.
+- `/clinic/subscription/billing-placeholder` explains that real payment processing is not implemented.
+- `/platform/subscription-requests` lets a platform admin manually approve or reject mock upgrade requests.
 
-This module intentionally does not implement visit records, document uploads, payments, reviews, chat, or push notifications.
+This module intentionally does not implement real payments, chat, push notifications, or AI features. Reviews are implemented only as post-appointment feedback, not as advanced marketplace ranking.
+
+## Clinic Subscription Flow
+
+- Plan definitions live in `subscription_plans` with configurable JSONB `limits` and `features`.
+- Each clinic receives a current row in `clinic_subscriptions`; the Free plan is seeded for existing clinics.
+- Usage is calculated dynamically with `get_clinic_usage(clinic_id)` from doctors, services, appointments, visit records, and visit documents.
+- Database helpers expose plan checks such as `can_clinic_add_doctor`, `can_clinic_create_appointment`, and `can_clinic_upload_document`.
+- Admin server actions call helper checks before high-impact mutations.
+- Upgrade requests are stored in `subscription_upgrade_requests` and can be manually approved by a platform admin.
+- Pet owners never see clinic billing, plan, or payment status.
 
 ### Backend And Database
 

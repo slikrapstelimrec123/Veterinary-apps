@@ -29,12 +29,12 @@ class _LoginScreenState extends State<LoginScreen> {
     final password = passwordController.text;
 
     if (!email.contains('@')) {
-      setState(() => localError = 'Enter a valid email address.');
+      setState(() => localError = 'Введіть дійсну адресу електронної пошти.');
       return;
     }
 
     if (password.length < 6) {
-      setState(() => localError = 'Password must be at least 6 characters.');
+      setState(() => localError = 'Пароль має містити щонайменше 6 символів.');
       return;
     }
 

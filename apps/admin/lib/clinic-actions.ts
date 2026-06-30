@@ -3,8 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "./supabase-server";
-import { requireClinicAccess } from "./auth";
+import { getCurrentProfile, requireClinicAccess } from "./auth";
 import { canManageClinicAppointments, canManageClinicCatalog, canManageClinicProfile } from "./clinic-data";
+import { requirePlanCapacity } from "./subscription-data";
 
 function text(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -50,6 +51,7 @@ function revalidateClinicPages() {
   revalidatePath("/clinic/schedule");
   revalidatePath("/clinic/appointments");
   revalidatePath("/clinic/visit-records");
+  revalidatePath("/clinic/reviews");
 }
 
 function assertAppointmentPermission(role: string) {
@@ -77,6 +79,14 @@ export async function updateClinicProfile(formData: FormData) {
 
   const nextStatus = published ? "published" : status === "published" ? "draft" : status;
   const supabase = createSupabaseServerClient();
+
+  if (published) {
+    const { data: canPublish } = await supabase.rpc("can_clinic_publish_profile", { target_clinic_id: clinicId });
+    if (canPublish !== true) {
+      redirect("/clinic/subscription?error=feature_locked");
+    }
+  }
+
   const { error } = await supabase
     .from("clinics")
     .update({
@@ -114,6 +124,8 @@ export async function createService(formData: FormData) {
   if (!name || (duration !== null && duration <= 0) || (price !== null && price < 0)) {
     redirect("/clinic/services?error=validation");
   }
+
+  await requirePlanCapacity(clinicId, "service");
 
   const supabase = createSupabaseServerClient();
   const { error } = await supabase.from("services").insert({
@@ -223,6 +235,8 @@ export async function createDoctor(formData: FormData) {
   if (!fullName || !specialization || (experience !== null && experience < 0) || (email && !email.includes("@"))) {
     redirect("/clinic/doctors?error=validation");
   }
+
+  await requirePlanCapacity(clinicId, "doctor");
 
   const supabase = createSupabaseServerClient();
   const { data, error } = await supabase
@@ -440,6 +454,10 @@ export async function updateAppointmentStatus(formData: FormData) {
     redirect(`${returnTo}?error=validation`);
   }
 
+  if (status === "confirmed") {
+    await requirePlanCapacity(clinicId, "appointment");
+  }
+
   const { error } = await createSupabaseServerClient()
     .from("appointments")
     .update({
@@ -569,6 +587,8 @@ export async function createVisitRecord(formData: FormData) {
     }
   }
 
+  await requirePlanCapacity(clinicId, "visit_record");
+
   const { data, error } = await supabase
     .from("visit_records")
     .insert({
@@ -652,6 +672,8 @@ export async function uploadVisitDocument(formData: FormData) {
     redirect("/clinic/visit-records?error=not_found");
   }
 
+  await requirePlanCapacity(clinicId, "document", fileValue.size);
+
   const safeName = fileValue.name.replace(/[^a-zA-Z0-9._-]/g, "_");
   const storagePath = `${clinicId}/${record.pet_id}/${visitRecordId}/${Date.now()}_${safeName}`;
   const { error: uploadError } = await supabase.storage.from("visit-documents").upload(storagePath, fileValue, {
@@ -685,4 +707,191 @@ export async function uploadVisitDocument(formData: FormData) {
 
   revalidatePath(`/clinic/visit-records/${visitRecordId}`);
   redirect(`/clinic/visit-records/${visitRecordId}?success=created`);
+}
+
+export async function reportReviewPlaceholder(formData: FormData) {
+  const { clinicId } = await requireClinicAccess();
+  const id = text(formData, "id");
+
+  if (!id) {
+    redirect("/clinic/reviews?error=validation");
+  }
+
+  const { data: review } = await createSupabaseServerClient().from("reviews").select("id").eq("id", id).eq("clinic_id", clinicId).maybeSingle();
+  if (!review) {
+    redirect("/clinic/reviews?error=not_found");
+  }
+
+  redirect(`/clinic/reviews/${id}?success=reported`);
+}
+
+export async function updateReviewStatus(formData: FormData) {
+  const profile = await getCurrentProfile();
+  const id = text(formData, "id");
+  const status = text(formData, "status");
+
+  if (!profile || profile.role !== "platform_admin") {
+    redirect("/platform-admin?error=permission");
+  }
+
+  if (!id || !status || !["pending_moderation", "published", "hidden", "reported", "removed"].includes(status)) {
+    redirect("/platform/reviews?error=validation");
+  }
+
+  const { error } = await createSupabaseServerClient().from("reviews").update({ status, is_published: status === "published" }).eq("id", id);
+  if (error) {
+    redirect("/platform/reviews?error=unknown");
+  }
+
+  revalidatePath("/platform/reviews");
+  revalidatePath("/clinic/reviews");
+  redirect("/platform/reviews?success=saved");
+}
+
+export async function requestSubscriptionUpgrade(formData: FormData) {
+  const { clinicId, clinicRole, profile } = await requireClinicAccess();
+
+  if (clinicRole !== "clinic_owner") {
+    redirect("/clinic/subscription?error=permission");
+  }
+
+  const planId = text(formData, "plan_id");
+  if (!planId) {
+    redirect("/clinic/subscription/plans?error=validation");
+  }
+
+  const supabase = createSupabaseServerClient();
+  const { data: plan } = await supabase
+    .from("subscription_plans")
+    .select("id,code,is_active,is_public")
+    .eq("id", planId)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  if (!plan || plan.code === "free" || !plan.is_public) {
+    redirect("/clinic/subscription/plans?error=validation");
+  }
+
+  const { data: pending } = await supabase
+    .from("subscription_upgrade_requests")
+    .select("id")
+    .eq("clinic_id", clinicId)
+    .eq("status", "pending")
+    .maybeSingle();
+
+  if (pending) {
+    redirect("/clinic/subscription/plans?error=upgrade_pending");
+  }
+
+  const { error } = await supabase.from("subscription_upgrade_requests").insert({
+    clinic_id: clinicId,
+    requested_plan_id: plan.id,
+    requested_by: profile.id,
+    note: text(formData, "note"),
+    status: "pending",
+  });
+
+  if (error) {
+    redirect("/clinic/subscription/plans?error=unknown");
+  }
+
+  revalidatePath("/clinic/subscription");
+  revalidatePath("/clinic/subscription/plans");
+  revalidatePath("/platform/subscription-requests");
+  redirect("/clinic/subscription?success=requested");
+}
+
+export async function approveSubscriptionUpgrade(formData: FormData) {
+  const profile = await getCurrentProfile();
+  if (!profile || profile.role !== "platform_admin") {
+    redirect("/platform-admin?error=permission");
+  }
+
+  const requestId = text(formData, "request_id");
+  if (!requestId) {
+    redirect("/platform/subscription-requests?error=validation");
+  }
+
+  const supabase = createSupabaseServerClient();
+  const { data: request } = await supabase
+    .from("subscription_upgrade_requests")
+    .select("id,clinic_id,requested_plan_id,status")
+    .eq("id", requestId)
+    .maybeSingle();
+
+  if (!request || request.status !== "pending") {
+    redirect("/platform/subscription-requests?error=not_found");
+  }
+
+  const subscriptionPayload = {
+    plan_id: request.requested_plan_id,
+    status: "manual",
+    billing_period: "manual",
+    current_period_start: new Date().toISOString(),
+    cancel_at_period_end: false,
+    external_provider: "manual",
+    external_subscription_id: null,
+  };
+
+  const { data: existingSubscription } = await supabase
+    .from("clinic_subscriptions")
+    .select("id")
+    .eq("clinic_id", request.clinic_id)
+    .in("status", ["trialing", "active", "manual", "past_due"])
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const { error: subscriptionError } = existingSubscription
+    ? await supabase
+        .from("clinic_subscriptions")
+        .update(subscriptionPayload)
+        .eq("id", existingSubscription.id)
+    : await supabase.from("clinic_subscriptions").insert({
+        clinic_id: request.clinic_id,
+        ...subscriptionPayload,
+      });
+
+  if (subscriptionError) {
+    redirect("/platform/subscription-requests?error=unknown");
+  }
+
+  const { error } = await supabase
+    .from("subscription_upgrade_requests")
+    .update({ status: "approved" })
+    .eq("id", request.id);
+
+  if (error) {
+    redirect("/platform/subscription-requests?error=unknown");
+  }
+
+  revalidatePath("/platform/subscription-requests");
+  revalidatePath("/platform/subscriptions");
+  revalidatePath("/clinic/subscription");
+  redirect("/platform/subscription-requests?success=approved");
+}
+
+export async function rejectSubscriptionUpgrade(formData: FormData) {
+  const profile = await getCurrentProfile();
+  if (!profile || profile.role !== "platform_admin") {
+    redirect("/platform-admin?error=permission");
+  }
+
+  const requestId = text(formData, "request_id");
+  if (!requestId) {
+    redirect("/platform/subscription-requests?error=validation");
+  }
+
+  const { error } = await createSupabaseServerClient()
+    .from("subscription_upgrade_requests")
+    .update({ status: "rejected", note: text(formData, "note") })
+    .eq("id", requestId)
+    .eq("status", "pending");
+
+  if (error) {
+    redirect("/platform/subscription-requests?error=unknown");
+  }
+
+  revalidatePath("/platform/subscription-requests");
+  redirect("/platform/subscription-requests?success=rejected");
 }

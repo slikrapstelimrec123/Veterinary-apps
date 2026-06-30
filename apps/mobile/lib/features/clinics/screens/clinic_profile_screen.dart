@@ -4,6 +4,10 @@ import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/error_state.dart';
 import '../../appointments/screens/appointment_booking_screen.dart';
+import '../../reviews/data/review_repository.dart';
+import '../../reviews/domain/review.dart';
+import '../../reviews/screens/clinic_reviews_screen.dart';
+import '../../reviews/widgets/rating_widgets.dart';
 import '../data/clinic_repository.dart';
 import '../models/clinic.dart';
 import '../models/doctor.dart';
@@ -21,13 +25,16 @@ class ClinicProfileScreen extends StatefulWidget {
 
 class _ClinicProfileScreenState extends State<ClinicProfileScreen> {
   final repository = ClinicRepository();
+  final reviewRepository = ReviewRepository();
   late Future<_ClinicProfileData> dataFuture = _load();
 
   Future<_ClinicProfileData> _load() async {
     final clinic = await repository.getClinic(widget.clinicId);
     final doctors = await repository.getClinicDoctors(widget.clinicId);
     final services = await repository.getClinicServices(widget.clinicId);
-    return _ClinicProfileData(clinic: clinic, doctors: doctors, services: services);
+    final summary = await reviewRepository.getClinicSummary(widget.clinicId);
+    final reviews = await reviewRepository.getClinicReviews(widget.clinicId);
+    return _ClinicProfileData(clinic: clinic, doctors: doctors, services: services, summary: summary, reviews: reviews.take(3).toList());
   }
 
   void refresh() {
@@ -75,6 +82,16 @@ class _ClinicProfileScreenState extends State<ClinicProfileScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: 12),
+            RatingSummaryCard(summary: data!.summary, emptyText: 'Відгуків ще немає. Вони з’являться після завершених записів.'),
+            if (data.summary.hasReviews) ...[
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ClinicReviewsScreen(clinicId: clinic.id, clinicName: clinic.name))),
+                child: const Text('Переглянути всі відгуки'),
+              ),
+              ...data.reviews.map((review) => ReviewCard(review: review)),
+            ],
             const SizedBox(height: 12),
             FilledButton.icon(
               onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => AppointmentBookingScreen(clinicId: clinic.id))),
@@ -139,9 +156,11 @@ class _DoctorTile extends StatelessWidget {
 }
 
 class _ClinicProfileData {
-  const _ClinicProfileData({required this.clinic, required this.doctors, required this.services});
+  const _ClinicProfileData({required this.clinic, required this.doctors, required this.services, required this.summary, required this.reviews});
 
   final Clinic? clinic;
   final List<Doctor> doctors;
   final List<ClinicService> services;
+  final RatingSummary summary;
+  final List<Review> reviews;
 }

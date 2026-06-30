@@ -70,7 +70,20 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
     }
 
     if (clinicId == null) {
-      return _BookingData(clinics: clinics, pets: pets, services: const [], doctors: const [], schedules: const [], appointments: const []);
+      return _BookingData(clinics: clinics, pets: pets, services: const [], doctors: const [], schedules: const [], appointments: const [], canAcceptOnlineBooking: false);
+    }
+
+    final canAcceptOnlineBooking = await clinicRepository.canClinicAcceptOnlineBooking(clinicId);
+    if (!canAcceptOnlineBooking) {
+      return _BookingData(
+        clinics: clinics,
+        pets: pets,
+        services: const [],
+        doctors: const [],
+        schedules: const [],
+        appointments: const [],
+        canAcceptOnlineBooking: false,
+      );
     }
 
     final services = await clinicRepository.getClinicServices(clinicId);
@@ -89,7 +102,15 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
       selectedDoctorId = null;
     }
 
-    return _BookingData(clinics: clinics, pets: pets, services: services, doctors: doctors, schedules: schedules, appointments: appointments);
+    return _BookingData(
+      clinics: clinics,
+      pets: pets,
+      services: services,
+      doctors: doctors,
+      schedules: schedules,
+      appointments: appointments,
+      canAcceptOnlineBooking: true,
+    );
   }
 
   void reloadForClinic(String? clinicId) {
@@ -108,6 +129,11 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
     final service = data.services.where((item) => item.id == selectedServiceId).firstOrNull;
     final doctor = data.doctors.where((item) => item.id == selectedDoctorId).firstOrNull;
     final slot = selectedSlot;
+
+    if (!data.canAcceptOnlineBooking) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ця клініка тимчасово недоступна для онлайн-запису.')));
+      return;
+    }
 
     if (clinic == null || pet == null || service == null || doctor == null || slot == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Оберіть тварину, клініку, послугу, лікаря, дату й час.')));
@@ -267,6 +293,16 @@ class _BookingForm extends StatelessWidget {
           items: data.pets.map((pet) => DropdownMenuItem(value: pet.id, child: Text(pet.name))).toList(),
           onChanged: onPetChanged,
         ),
+        if (!data.canAcceptOnlineBooking) ...[
+          const SizedBox(height: 16),
+          const EmptyState(
+            title: 'Онлайн-запис недоступний',
+            message: 'Ця клініка тимчасово недоступна для онлайн-запису.',
+            icon: Icons.event_busy_outlined,
+          ),
+          const SizedBox(height: 16),
+          FilledButton(onPressed: null, child: Text('Підтвердити запис')),
+        ] else ...[
         const SizedBox(height: 12),
         DropdownButtonFormField<String>(
           value: selectedServiceId,
@@ -322,6 +358,7 @@ class _BookingForm extends StatelessWidget {
           onPressed: isSubmitting ? null : onSubmit,
           child: Text(isSubmitting ? 'Створення...' : 'Підтвердити запис'),
         ),
+        ],
       ],
     );
   }
@@ -337,6 +374,7 @@ class _BookingData {
     required this.doctors,
     required this.schedules,
     required this.appointments,
+    required this.canAcceptOnlineBooking,
   });
 
   final List<Clinic> clinics;
@@ -345,4 +383,5 @@ class _BookingData {
   final List<Doctor> doctors;
   final List<DoctorSchedule> schedules;
   final List<Appointment> appointments;
+  final bool canAcceptOnlineBooking;
 }
