@@ -113,6 +113,7 @@ class _HomeScreenState extends State<HomeScreen> {
         return AppScaffold(
           title: 'Вітаємо, ${user?.fullName.split(' ').first ?? 'друже'}',
           subtitle: 'Медична картка ваших тварин завжди під рукою.',
+          showLogo: true,
           children: [
             if (snapshot.connectionState == ConnectionState.waiting)
               const Center(child: CircularProgressIndicator())
