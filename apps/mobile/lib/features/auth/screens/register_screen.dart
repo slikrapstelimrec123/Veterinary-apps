@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../../core/auth/auth_state.dart';
 import '../../../shared/widgets/app_scaffold.dart';
@@ -32,7 +32,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final password = passwordController.text;
 
     if (fullName.length < 2) {
-      setState(() => localError = 'Введіть повне ім’я.');
+      setState(() => localError = 'Введіть повне ім'я.');
       return;
     }
 
@@ -68,45 +68,66 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (auth.registrationPendingConfirmation) {
       return AppScaffold(
-        title: ‘Підтвердьте пошту’,
+        title: 'Підтвердьте пошту',
         children: [
           const Icon(Icons.mark_email_unread_outlined, size: 64, color: Color(0xFF0D1B3E)),
           const SizedBox(height: 16),
           const Text(
-            ‘Ми надіслали вам лист з підтвердженням. Перейдіть за посиланням у листі, щоб активувати акаунт.’,
+            'Ми надіслали вам лист з підтвердженням. Перейдіть за посиланням у листі, щоб активувати акаунт.',
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text(‘Зрозуміло’),
+            child: const Text('Зрозуміло'),
           ),
         ],
       );
     }
 
     return AppScaffold(
-      title: ‘Створити акаунт’,
-      subtitle: ‘Реєстрація створює профіль власника тварини.’,
+      title: 'Створити акаунт',
+      subtitle: 'Реєстрація створює профіль власника тварини.',
       children: [
         if (localError != null || auth.errorMessage != null) ...[
-          Text(localError ?? auth.errorMessage!, style: const TextStyle(color: Color(0xFF9F1239))),
+          Text(
+            localError ?? auth.errorMessage!,
+            style: const TextStyle(color: Color(0xFF9F1239)),
+          ),
           const SizedBox(height: 12),
         ],
-        TextField(controller: fullNameController, decoration: const InputDecoration(labelText: ‘Повне ім’я’)),
+        TextField(
+          controller: fullNameController,
+          decoration: const InputDecoration(labelText: 'Повне ім'я'),
+        ),
         const SizedBox(height: 12),
-        TextField(controller: emailController, keyboardType: TextInputType.emailAddress, decoration: const InputDecoration(labelText: ‘Електронна пошта’)),
+        TextField(
+          controller: emailController,
+          keyboardType: TextInputType.emailAddress,
+          decoration: const InputDecoration(labelText: 'Електронна пошта'),
+        ),
         const SizedBox(height: 12),
-        TextField(controller: phoneController, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: ‘Телефон’)),
+        TextField(
+          controller: phoneController,
+          keyboardType: TextInputType.phone,
+          decoration: const InputDecoration(labelText: 'Телефон'),
+        ),
         const SizedBox(height: 12),
-        TextField(controller: passwordController, obscureText: true, decoration: const InputDecoration(labelText: ‘Пароль’)),
+        TextField(
+          controller: passwordController,
+          obscureText: true,
+          decoration: const InputDecoration(labelText: 'Пароль'),
+        ),
         const SizedBox(height: 20),
         FilledButton(
           onPressed: auth.isLoading ? null : submit,
-          child: Text(auth.isLoading ? ‘Створення акаунта...’ : ‘Створити акаунт’),
+          child: Text(
+            auth.isLoading
+                ? 'Створення акаунта...'
+                : 'Створити акаунт',
+          ),
         ),
       ],
     );
   }
 }
-
