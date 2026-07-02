@@ -126,14 +126,13 @@ class _QrSection extends StatelessWidget {
 
   String _buildQrData() {
     final parts = [
-      'Lappo Pet Passport',
-      'Name: ${pet.name}',
-      'Species: ${pet.speciesLabel}',
-      if (pet.breed != null) 'Breed: ${pet.breed}',
-      'Sex: ${pet.sexLabel}',
-      if (pet.microchipNumber != null) 'Microchip: ${pet.microchipNumber}',
-      if (pet.weightKg != null) 'Weight: ${pet.weightKg} kg',
-      'ID: ${pet.id}',
+      'Lappo — Паспорт тварини',
+      'Ім\'я: ${pet.name}',
+      'Вид: ${pet.speciesLabel}',
+      if (pet.breed != null) 'Порода: ${pet.breed}',
+      if (pet.microchipNumber != null) 'Мікрочип: ${pet.microchipNumber}',
+      if (pet.weightKg != null) 'Вага: ${pet.weightKg} кг',
+      'Для повних даних встановіть Lappo',
     ];
     return parts.join('\n');
   }

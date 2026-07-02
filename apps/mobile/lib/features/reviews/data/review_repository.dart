@@ -110,8 +110,8 @@ class ReviewRepository {
       'service_quality_rating': serviceQualityRating,
       'comment': comment,
       'is_anonymous': isAnonymous,
-      'status': 'published',
-      'is_published': true,
+      'status': 'pending',
+      'is_published': false,
     };
 
     if (_useMockData) {
