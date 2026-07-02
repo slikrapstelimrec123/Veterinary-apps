@@ -32,7 +32,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final password = passwordController.text;
 
     if (fullName.length < 2) {
-      setState(() => localError = 'Введіть повне ім'я.');
+      setState(() => localError = "Введіть повне ім'я.");
       return;
     }
 
@@ -98,7 +98,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ],
         TextField(
           controller: fullNameController,
-          decoration: const InputDecoration(labelText: 'Повне ім'я'),
+          decoration: const InputDecoration(labelText: "Повне ім'я"),
         ),
         const SizedBox(height: 12),
         TextField(
@@ -121,11 +121,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         const SizedBox(height: 20),
         FilledButton(
           onPressed: auth.isLoading ? null : submit,
-          child: Text(
-            auth.isLoading
-                ? 'Створення акаунта...'
-                : 'Створити акаунт',
-          ),
+          child: Text(auth.isLoading ? 'Створення акаунта...' : 'Створити акаунт'),
         ),
       ],
     );
