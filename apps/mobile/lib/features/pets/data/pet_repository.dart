@@ -13,17 +13,13 @@ class PetRepository {
       return MockData.pets;
     }
 
-    final links = await _client
-        .from('pet_owners')
-        .select('pets(*)')
-        .eq('user_id', _client.auth.currentUser!.id)
+    final data = await _client
+        .from('pets')
+        .select('*')
+        .eq('owner_id', _client.auth.currentUser!.id)
         .order('created_at', ascending: false);
 
-    return (links as List<dynamic>)
-        .map((row) => row['pets'])
-        .whereType<Map<String, dynamic>>()
-        .map(Pet.fromJson)
-        .toList();
+    return (data as List<dynamic>).map((row) => Pet.fromJson(row as Map<String, dynamic>)).toList();
   }
 
   Future<Pet?> getPet(String id) async {
@@ -47,17 +43,12 @@ class PetRepository {
       return created;
     }
 
-    final created = await _client.from('pets').insert(pet.toInsertJson()).select('*').single();
-    final parsed = Pet.fromJson(created);
-    await _client.from('pet_owners').insert({
-      'pet_id': parsed.id,
-      'user_id': _client.auth.currentUser!.id,
-      'relationship': 'primary_owner',
-      'relationship_type': 'primary_owner',
-      'is_primary': true,
-    });
-
-    return parsed;
+    final insertData = {
+      ...pet.toInsertJson(),
+      'owner_id': _client.auth.currentUser!.id,
+    };
+    final created = await _client.from('pets').insert(insertData).select('*').single();
+    return Pet.fromJson(created);
   }
 
   Future<Pet> updatePet(Pet pet) async {
