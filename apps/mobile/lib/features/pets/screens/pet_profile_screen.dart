@@ -4,8 +4,10 @@ import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/error_state.dart';
 import '../../../shared/widgets/pet_avatar.dart';
-import '../../appointments/screens/appointment_booking_screen.dart';
-import '../../visit_records/screens/documents_screen.dart';
+import '../../passport/screens/passport_tools_screen.dart';
+import '../../passport/screens/pet_documents_screen.dart';
+import '../../passport/screens/preventive_care_screen.dart';
+import '../../passport/screens/reminders_screen.dart';
 import '../../visit_records/screens/visit_history_screen.dart';
 import '../data/pet_repository.dart';
 import '../domain/pet.dart';
@@ -81,15 +83,12 @@ class _PetProfileContent extends StatelessWidget {
         const SizedBox(height: 12),
         _DetailGrid(pet: pet),
         const SizedBox(height: 12),
-        FilledButton(
-          onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => VisitHistoryScreen(petId: pet.id, petName: pet.name))),
-          child: const Text('Переглянути історію лікування'),
+        FilledButton.icon(
+          onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => PreventiveCareScreen(petId: pet.id, petName: pet.name))),
+          icon: const Icon(Icons.health_and_safety_outlined),
+          label: const Text('Профілактика і вакцинації'),
         ),
         const SizedBox(height: 8),
-        OutlinedButton(
-          onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AppointmentBookingScreen())),
-          child: const Text('Записатися на прийом'),
-        ),
         OutlinedButton(
           onPressed: () async {
             final result = await Navigator.of(context).push(MaterialPageRoute(builder: (_) => EditPetScreen(pet: pet)));
@@ -103,8 +102,20 @@ class _PetProfileContent extends StatelessWidget {
           child: const Text('Редагувати тварину'),
         ),
         OutlinedButton(
-          onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => DocumentsScreen(petId: pet.id, petName: pet.name))),
+          onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => PetRemindersScreen(petId: pet.id, petName: pet.name))),
+          child: const Text('Нагадування'),
+        ),
+        OutlinedButton(
+          onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => PetDocumentsScreen(petId: pet.id, petName: pet.name))),
           child: const Text('Документи'),
+        ),
+        OutlinedButton(
+          onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => PassportToolsScreen(petId: pet.id, petName: pet.name))),
+          child: const Text('QR / PDF картка'),
+        ),
+        OutlinedButton(
+          onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => VisitHistoryScreen(petId: pet.id, petName: pet.name))),
+          child: const Text('Історія лікування від клінік'),
         ),
       ],
     );
@@ -124,6 +135,11 @@ class _DetailGrid extends StatelessWidget {
       ('Вага', pet.weightKg == null ? 'Не вказано' : '${pet.weightKg} кг'),
       ('Колір', pet.color ?? 'Не вказано'),
       ('Мікрочип', pet.microchipNumber ?? 'Не вказано'),
+      ('Стерилізація', pet.sterilized == true ? 'Так' : 'Не вказано'),
+      ('Алергії', pet.allergies ?? 'Не вказано'),
+      ('Хронічні стани', pet.chronicConditions ?? 'Не вказано'),
+      ('Контакт власника', pet.ownerContactPhone ?? pet.ownerContactEmail ?? 'Не вказано'),
+      ('Екстрений контакт', pet.emergencyContact ?? 'Не вказано'),
       ('Нотатки', pet.notes ?? 'Нотаток поки немає'),
     ];
 
@@ -133,13 +149,13 @@ class _DetailGrid extends StatelessWidget {
           children: const [
             Expanded(child: _QuickCard(title: 'Останній візит', value: 'Поки немає даних')),
             SizedBox(width: 10),
-            Expanded(child: _QuickCard(title: 'Документи', value: 'Метадані')),
+            Expanded(child: _QuickCard(title: 'QR / PDF', value: 'Готово до налаштування')),
           ],
         ),
         const SizedBox(height: 10),
         Row(
           children: const [
-            Expanded(child: _QuickCard(title: 'Найближче', value: 'Розділ записів')),
+            Expanded(child: _QuickCard(title: 'Найближче', value: 'Нагадування')),
           ],
         ),
         const SizedBox(height: 12),

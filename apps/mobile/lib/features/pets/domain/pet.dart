@@ -11,6 +11,13 @@
     this.microchipNumber,
     this.avatarUrl,
     this.notes,
+    this.sterilized,
+    this.allergies,
+    this.chronicConditions,
+    this.ownerContactName,
+    this.ownerContactPhone,
+    this.ownerContactEmail,
+    this.emergencyContact,
     this.createdAt,
     this.updatedAt,
   });
@@ -26,6 +33,13 @@
   final String? microchipNumber;
   final String? avatarUrl;
   final String? notes;
+  final bool? sterilized;
+  final String? allergies;
+  final String? chronicConditions;
+  final String? ownerContactName;
+  final String? ownerContactPhone;
+  final String? ownerContactEmail;
+  final String? emergencyContact;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -86,6 +100,13 @@
       'notes': notes,
       'health_notes': notes,
       'photo_url': avatarUrl,
+      'sterilized': sterilized,
+      'allergies': allergies,
+      'chronic_conditions': chronicConditions,
+      'owner_contact_name': ownerContactName,
+      'owner_contact_phone': ownerContactPhone,
+      'owner_contact_email': ownerContactEmail,
+      'emergency_contact': emergencyContact,
     };
   }
 
@@ -102,6 +123,13 @@
       microchipNumber: json['microchip_number'] as String?,
       avatarUrl: json['avatar_url'] as String? ?? json['photo_url'] as String?,
       notes: json['notes'] as String? ?? json['health_notes'] as String?,
+      sterilized: json['sterilized'] as bool?,
+      allergies: json['allergies'] as String?,
+      chronicConditions: json['chronic_conditions'] as String?,
+      ownerContactName: json['owner_contact_name'] as String?,
+      ownerContactPhone: json['owner_contact_phone'] as String?,
+      ownerContactEmail: json['owner_contact_email'] as String?,
+      emergencyContact: json['emergency_contact'] as String?,
       createdAt: DateTime.tryParse(json['created_at'] as String? ?? ''),
       updatedAt: DateTime.tryParse(json['updated_at'] as String? ?? ''),
     );
@@ -119,6 +147,13 @@
     String? microchipNumber,
     String? avatarUrl,
     String? notes,
+    bool? sterilized,
+    String? allergies,
+    String? chronicConditions,
+    String? ownerContactName,
+    String? ownerContactPhone,
+    String? ownerContactEmail,
+    String? emergencyContact,
   }) {
     return Pet(
       id: id ?? this.id,
@@ -132,6 +167,13 @@
       microchipNumber: microchipNumber ?? this.microchipNumber,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       notes: notes ?? this.notes,
+      sterilized: sterilized ?? this.sterilized,
+      allergies: allergies ?? this.allergies,
+      chronicConditions: chronicConditions ?? this.chronicConditions,
+      ownerContactName: ownerContactName ?? this.ownerContactName,
+      ownerContactPhone: ownerContactPhone ?? this.ownerContactPhone,
+      ownerContactEmail: ownerContactEmail ?? this.ownerContactEmail,
+      emergencyContact: emergencyContact ?? this.emergencyContact,
       createdAt: createdAt,
       updatedAt: updatedAt,
     );

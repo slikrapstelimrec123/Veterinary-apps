@@ -23,9 +23,16 @@ class _PetFormScreenState extends State<PetFormScreen> {
   final microchipController = TextEditingController();
   final avatarController = TextEditingController();
   final notesController = TextEditingController();
+  final allergiesController = TextEditingController();
+  final chronicConditionsController = TextEditingController();
+  final ownerContactNameController = TextEditingController();
+  final ownerContactPhoneController = TextEditingController();
+  final ownerContactEmailController = TextEditingController();
+  final emergencyContactController = TextEditingController();
 
   String species = 'dog';
   String sex = 'unknown';
+  bool sterilized = false;
   String? error;
   bool isSaving = false;
 
@@ -69,6 +76,13 @@ class _PetFormScreenState extends State<PetFormScreen> {
       microchipController.text = pet.microchipNumber ?? '';
       avatarController.text = pet.avatarUrl ?? '';
       notesController.text = pet.notes ?? '';
+      sterilized = pet.sterilized ?? false;
+      allergiesController.text = pet.allergies ?? '';
+      chronicConditionsController.text = pet.chronicConditions ?? '';
+      ownerContactNameController.text = pet.ownerContactName ?? '';
+      ownerContactPhoneController.text = pet.ownerContactPhone ?? '';
+      ownerContactEmailController.text = pet.ownerContactEmail ?? '';
+      emergencyContactController.text = pet.emergencyContact ?? '';
     }
   }
 
@@ -82,6 +96,12 @@ class _PetFormScreenState extends State<PetFormScreen> {
     microchipController.dispose();
     avatarController.dispose();
     notesController.dispose();
+    allergiesController.dispose();
+    chronicConditionsController.dispose();
+    ownerContactNameController.dispose();
+    ownerContactPhoneController.dispose();
+    ownerContactEmailController.dispose();
+    emergencyContactController.dispose();
     super.dispose();
   }
 
@@ -134,6 +154,13 @@ class _PetFormScreenState extends State<PetFormScreen> {
       microchipNumber: microchipController.text.trim().isEmpty ? null : microchipController.text.trim(),
       avatarUrl: avatarController.text.trim().isEmpty ? null : avatarController.text.trim(),
       notes: notesController.text.trim().isEmpty ? null : notesController.text.trim(),
+      sterilized: sterilized,
+      allergies: allergiesController.text.trim().isEmpty ? null : allergiesController.text.trim(),
+      chronicConditions: chronicConditionsController.text.trim().isEmpty ? null : chronicConditionsController.text.trim(),
+      ownerContactName: ownerContactNameController.text.trim().isEmpty ? null : ownerContactNameController.text.trim(),
+      ownerContactPhone: ownerContactPhoneController.text.trim().isEmpty ? null : ownerContactPhoneController.text.trim(),
+      ownerContactEmail: ownerContactEmailController.text.trim().isEmpty ? null : ownerContactEmailController.text.trim(),
+      emergencyContact: emergencyContactController.text.trim().isEmpty ? null : emergencyContactController.text.trim(),
     );
 
     try {
@@ -186,6 +213,25 @@ class _PetFormScreenState extends State<PetFormScreen> {
         TextField(controller: microchipController, decoration: const InputDecoration(labelText: 'Номер мікрочипа')),
         const SizedBox(height: 12),
         TextField(controller: avatarController, decoration: const InputDecoration(labelText: 'URL фото (тимчасово)')),
+        const SizedBox(height: 12),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Стерилізовано'),
+          value: sterilized,
+          onChanged: (value) => setState(() => sterilized = value),
+        ),
+        const SizedBox(height: 12),
+        TextField(controller: allergiesController, minLines: 2, maxLines: 4, decoration: const InputDecoration(labelText: 'Алергії')),
+        const SizedBox(height: 12),
+        TextField(controller: chronicConditionsController, minLines: 2, maxLines: 4, decoration: const InputDecoration(labelText: 'Хронічні стани')),
+        const SizedBox(height: 12),
+        TextField(controller: ownerContactNameController, decoration: const InputDecoration(labelText: 'Контакт власника для QR')),
+        const SizedBox(height: 12),
+        TextField(controller: ownerContactPhoneController, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'Телефон власника для QR')),
+        const SizedBox(height: 12),
+        TextField(controller: ownerContactEmailController, keyboardType: TextInputType.emailAddress, decoration: const InputDecoration(labelText: 'Email власника для QR')),
+        const SizedBox(height: 12),
+        TextField(controller: emergencyContactController, decoration: const InputDecoration(labelText: 'Екстрений контакт')),
         const SizedBox(height: 12),
         TextField(controller: notesController, minLines: 3, maxLines: 5, decoration: const InputDecoration(labelText: 'Нотатки')),
         const SizedBox(height: 20),
