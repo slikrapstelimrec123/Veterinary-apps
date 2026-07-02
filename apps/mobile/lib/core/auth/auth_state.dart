@@ -85,7 +85,7 @@ class AuthState extends ChangeNotifier {
         errorMessage = 'Помилка: ${e.message}';
       }
     } catch (e) {
-      errorMessage = 'Не вдалося створити акаунт. Перевірте поля й спробуйте ще раз.';
+      errorMessage = 'Помилка: ${e.toString()}';
     } finally {
       isLoading = false;
       notifyListeners();
