@@ -84,8 +84,6 @@
       'microchip_number': microchipNumber,
       'avatar_url': avatarUrl,
       'notes': notes,
-      'health_notes': notes,
-      'photo_url': avatarUrl,
     };
   }
 

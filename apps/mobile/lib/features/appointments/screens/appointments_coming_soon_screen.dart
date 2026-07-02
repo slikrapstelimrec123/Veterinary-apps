@@ -20,7 +20,7 @@ class AppointmentsComingSoonScreen extends StatelessWidget {
               Text('Незабаром', style: Theme.of(context).textTheme.headlineMedium),
               const SizedBox(height: 12),
               const Text(
-                'Онлайн-запис на прийом до ветеринара буде доступний після підключення клінік до платформи.',
+                'Онлайн-запис на прийом до ветеринара з\'явиться у наступному оновленні.',
                 textAlign: TextAlign.center,
               ),
             ],

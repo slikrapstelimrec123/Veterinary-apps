@@ -1,8 +1,32 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/app_scaffold.dart';
 import '../data/pet_repository.dart';
 import '../domain/pet.dart';
+
+const _dogBreeds = [
+  'Лабрадор ретрівер', 'Німецька вівчарка', 'Золотистий ретрівер', 'Французький бульдог',
+  'Бульдог', 'Пудель', 'Бігль', 'Ротвейлер', 'Йоркширський тер\'єр', 'Боксер',
+  'Доберман', 'Сибірський хаскі', 'Австралійська вівчарка', 'Бордер-коллі',
+  'Кавалер кінг-чарлз спанієль', 'Шіба-іну', 'Джек рассел тер\'єр', 'Мальтезе',
+  'Чіхуахуа', 'Такса', 'Шотландський коллі', 'Самоєд', 'Акіта', 'Боксер',
+  'Далматинець', 'Вельш-коргі', 'Шпіц', 'Мопс', 'Бельгійська малінуа',
+  'Ірландський сеттер', 'Американський стаффордширський тер\'єр', 'Бернський зенненгунд',
+  'Великий шнауцер', 'Мінімальний шнауцер', 'Кане-корсо', 'Мастиф',
+  'Ньюфаундленд', 'Сенбернар', 'Веймаранер', 'Бассет-хаунд',
+  'Спанієль', 'Грейхаунд', 'Борзая', 'Афганська хортиця',
+  'Чау-чау', 'Шарпей', 'Бультер\'єр', 'Бедлінгтон-тер\'єр',
+  'Вірменська гавча', 'Левретка', 'Помераніан', 'Шпіц',
+  'Метис', 'Інша порода',
+];
+
+const _catBreeds = [
+  'Британська короткошерста', 'Шотландська висловуха', 'Мейн-кун', 'Перська',
+  'Регдол', 'Бенгальська', 'Сіамська', 'Абіссінська', 'Сфінкс', 'Бірманська',
+  'Норвезька лісова', 'Сибірська', 'Орієнтальна', 'Корніш рекс', 'Девон рекс',
+  'Балінезійська', 'Турецька ангора', 'Руська блакитна', 'Буrmанська',
+  'Американська короткошерста', 'Метиска', 'Інша порода',
+];
 
 class PetFormScreen extends StatefulWidget {
   const PetFormScreen({super.key, this.pet});
@@ -17,42 +41,43 @@ class _PetFormScreenState extends State<PetFormScreen> {
   final repository = PetRepository();
   final nameController = TextEditingController();
   final breedController = TextEditingController();
-  final birthDateController = TextEditingController();
   final weightController = TextEditingController();
   final colorController = TextEditingController();
   final microchipController = TextEditingController();
-  final avatarController = TextEditingController();
   final notesController = TextEditingController();
 
   String species = 'dog';
   String sex = 'unknown';
+  DateTime? birthDate;
   String? error;
   bool isSaving = false;
 
   static const speciesOptions = ['dog', 'cat', 'rabbit', 'bird', 'rodent', 'reptile', 'other'];
   static const sexOptions = ['male', 'female', 'unknown'];
 
-  String speciesLabel(String value) {
-    return switch (value) {
-      'dog' => 'Собака',
-      'cat' => 'Кіт',
-      'rabbit' => 'Кролик',
-      'bird' => 'Птах',
-      'rodent' => 'Гризун',
-      'reptile' => 'Рептилія',
-      'other' => 'Інше',
-      _ => value,
-    };
+  List<String> get _breedsForSpecies {
+    if (species == 'dog') return _dogBreeds;
+    if (species == 'cat') return _catBreeds;
+    return [];
   }
 
-  String sexLabel(String value) {
-    return switch (value) {
-      'male' => 'Самець',
-      'female' => 'Самка',
-      'unknown' => 'Не вказано',
-      _ => value,
-    };
-  }
+  String speciesLabel(String value) => switch (value) {
+    'dog' => 'Собака',
+    'cat' => 'Кіт',
+    'rabbit' => 'Кролик',
+    'bird' => 'Птах',
+    'rodent' => 'Гризун',
+    'reptile' => 'Рептилія',
+    'other' => 'Інше',
+    _ => value,
+  };
+
+  String sexLabel(String value) => switch (value) {
+    'male' => 'Самець',
+    'female' => 'Самка',
+    'unknown' => 'Не вказано',
+    _ => value,
+  };
 
   @override
   void initState() {
@@ -63,11 +88,10 @@ class _PetFormScreenState extends State<PetFormScreen> {
       species = pet.species.isEmpty ? 'dog' : pet.species;
       breedController.text = pet.breed ?? '';
       sex = pet.sex ?? 'unknown';
-      birthDateController.text = pet.birthDate?.toIso8601String().split('T').first ?? '';
+      birthDate = pet.birthDate;
       weightController.text = pet.weightKg?.toString() ?? '';
       colorController.text = pet.color ?? '';
       microchipController.text = pet.microchipNumber ?? '';
-      avatarController.text = pet.avatarUrl ?? '';
       notesController.text = pet.notes ?? '';
     }
   }
@@ -76,39 +100,41 @@ class _PetFormScreenState extends State<PetFormScreen> {
   void dispose() {
     nameController.dispose();
     breedController.dispose();
-    birthDateController.dispose();
     weightController.dispose();
     colorController.dispose();
     microchipController.dispose();
-    avatarController.dispose();
     notesController.dispose();
     super.dispose();
   }
 
+  Future<void> pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: birthDate ?? DateTime(DateTime.now().year - 1),
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
+      helpText: 'Дата народження',
+      cancelText: 'Скасувати',
+      confirmText: 'Обрати',
+      locale: const Locale('uk'),
+    );
+    if (picked != null) {
+      setState(() => birthDate = picked);
+    }
+  }
+
   Future<void> save() async {
     final name = nameController.text.trim();
-    final birthDateText = birthDateController.text.trim();
     final weightText = weightController.text.trim();
-    final parsedBirthDate = birthDateText.isEmpty ? null : DateTime.tryParse(birthDateText);
     final parsedWeight = weightText.isEmpty ? null : double.tryParse(weightText.replaceAll(',', '.'));
 
     if (name.isEmpty) {
-      setState(() => error = 'Вкажіть ім’я тварини.');
+      setState(() => error = "Вкажіть ім'я тварини.");
       return;
     }
 
     if (species.isEmpty) {
       setState(() => error = 'Оберіть вид тварини.');
-      return;
-    }
-
-    if (birthDateText.isNotEmpty && parsedBirthDate == null) {
-      setState(() => error = 'Дата народження має бути у форматі РРРР-ММ-ДД.');
-      return;
-    }
-
-    if (parsedBirthDate != null && parsedBirthDate.isAfter(DateTime.now())) {
-      setState(() => error = 'Дата народження не може бути в майбутньому.');
       return;
     }
 
@@ -128,71 +154,194 @@ class _PetFormScreenState extends State<PetFormScreen> {
       species: species,
       breed: breedController.text.trim().isEmpty ? null : breedController.text.trim(),
       sex: sex,
-      birthDate: parsedBirthDate,
+      birthDate: birthDate,
       weightKg: parsedWeight,
       color: colorController.text.trim().isEmpty ? null : colorController.text.trim(),
       microchipNumber: microchipController.text.trim().isEmpty ? null : microchipController.text.trim(),
-      avatarUrl: avatarController.text.trim().isEmpty ? null : avatarController.text.trim(),
+      avatarUrl: null,
       notes: notesController.text.trim().isEmpty ? null : notesController.text.trim(),
     );
 
     try {
-      final saved = widget.pet == null ? await repository.createPet(pet) : await repository.updatePet(pet);
+      final saved = widget.pet == null
+          ? await repository.createPet(pet)
+          : await repository.updatePet(pet);
       if (!mounted) return;
       Navigator.of(context).pop(saved);
-    } catch (_) {
-      setState(() => error = 'Не вдалося зберегти тварину. Спробуйте ще раз.');
+    } catch (e) {
+      setState(() => error = 'Помилка збереження: ${e.toString()}');
     } finally {
-      if (mounted) {
-        setState(() => isSaving = false);
-      }
+      if (mounted) setState(() => isSaving = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final breeds = _breedsForSpecies;
+
     return AppScaffold(
       title: widget.pet == null ? 'Додати тварину' : 'Редагувати тварину',
-      subtitle: 'Підтримуйте медичну картку зрозумілою. Деталі можна додати пізніше.',
+      subtitle: 'Деталі можна додати або змінити пізніше.',
       children: [
         if (error != null) ...[
           Text(error!, style: const TextStyle(color: Color(0xFF9F1239))),
           const SizedBox(height: 12),
         ],
-        TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Ім’я тварини *')),
+
+        // Name
+        TextField(
+          controller: nameController,
+          decoration: const InputDecoration(labelText: "Ім'я тварини *"),
+        ),
         const SizedBox(height: 12),
+
+        // Species
         DropdownButtonFormField<String>(
           value: species,
           decoration: const InputDecoration(labelText: 'Вид *'),
-          items: speciesOptions.map((value) => DropdownMenuItem(value: value, child: Text(speciesLabel(value)))).toList(),
-          onChanged: (value) => setState(() => species = value ?? 'dog'),
+          items: speciesOptions
+              .map((v) => DropdownMenuItem(value: v, child: Text(speciesLabel(v))))
+              .toList(),
+          onChanged: (v) => setState(() {
+            species = v ?? 'dog';
+            breedController.clear();
+          }),
         ),
         const SizedBox(height: 12),
-        TextField(controller: breedController, decoration: const InputDecoration(labelText: 'Порода')),
+
+        // Breed — searchable dropdown for dogs/cats, plain text otherwise
+        if (breeds.isNotEmpty)
+          _BreedAutocomplete(
+            controller: breedController,
+            breeds: breeds,
+          )
+        else
+          TextField(
+            controller: breedController,
+            decoration: const InputDecoration(labelText: 'Порода'),
+          ),
         const SizedBox(height: 12),
+
+        // Sex
         DropdownButtonFormField<String>(
           value: sex,
           decoration: const InputDecoration(labelText: 'Стать'),
-          items: sexOptions.map((value) => DropdownMenuItem(value: value, child: Text(sexLabel(value)))).toList(),
-          onChanged: (value) => setState(() => sex = value ?? 'unknown'),
+          items: sexOptions
+              .map((v) => DropdownMenuItem(value: v, child: Text(sexLabel(v))))
+              .toList(),
+          onChanged: (v) => setState(() => sex = v ?? 'unknown'),
         ),
         const SizedBox(height: 12),
-        TextField(controller: birthDateController, decoration: const InputDecoration(labelText: 'Дата народження РРРР-ММ-ДД')),
+
+        // Birth date — tap to open date picker
+        GestureDetector(
+          onTap: pickDate,
+          child: AbsorbPointer(
+            child: TextField(
+              controller: TextEditingController(
+                text: birthDate == null
+                    ? ''
+                    : '${birthDate!.day.toString().padLeft(2, '0')}.${birthDate!.month.toString().padLeft(2, '0')}.${birthDate!.year}',
+              ),
+              decoration: InputDecoration(
+                labelText: 'Дата народження',
+                hintText: 'Натисніть, щоб обрати дату',
+                suffixIcon: const Icon(Icons.calendar_today_outlined),
+              ),
+            ),
+          ),
+        ),
         const SizedBox(height: 12),
-        TextField(controller: weightController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Вага, кг')),
+
+        // Weight
+        TextField(
+          controller: weightController,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: const InputDecoration(labelText: 'Вага, кг'),
+        ),
         const SizedBox(height: 12),
-        TextField(controller: colorController, decoration: const InputDecoration(labelText: 'Колір')),
+
+        // Color
+        TextField(
+          controller: colorController,
+          decoration: const InputDecoration(labelText: 'Колір'),
+        ),
         const SizedBox(height: 12),
-        TextField(controller: microchipController, decoration: const InputDecoration(labelText: 'Номер мікрочипа')),
+
+        // Microchip
+        TextField(
+          controller: microchipController,
+          decoration: const InputDecoration(labelText: 'Номер мікрочипа'),
+        ),
         const SizedBox(height: 12),
-        TextField(controller: avatarController, decoration: const InputDecoration(labelText: 'URL фото (тимчасово)')),
+
+        // Photo placeholder
+        OutlinedButton.icon(
+          onPressed: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Завантаження фото буде доступне у наступному оновленні.'),
+              ),
+            );
+          },
+          icon: const Icon(Icons.photo_library_outlined),
+          label: const Text('Вибрати фото з галереї'),
+        ),
         const SizedBox(height: 12),
-        TextField(controller: notesController, minLines: 3, maxLines: 5, decoration: const InputDecoration(labelText: 'Нотатки')),
+
+        // Notes
+        TextField(
+          controller: notesController,
+          minLines: 3,
+          maxLines: 5,
+          decoration: const InputDecoration(labelText: 'Нотатки'),
+        ),
         const SizedBox(height: 20),
-        FilledButton(onPressed: isSaving ? null : save, child: Text(isSaving ? 'Збереження...' : 'Зберегти тварину')),
+
+        FilledButton(
+          onPressed: isSaving ? null : save,
+          child: Text(isSaving ? 'Збереження...' : 'Зберегти тварину'),
+        ),
         const SizedBox(height: 8),
-        OutlinedButton(onPressed: isSaving ? null : () => Navigator.of(context).pop(), child: const Text('Скасувати')),
+        OutlinedButton(
+          onPressed: isSaving ? null : () => Navigator.of(context).pop(),
+          child: const Text('Скасувати'),
+        ),
       ],
+    );
+  }
+}
+
+class _BreedAutocomplete extends StatelessWidget {
+  const _BreedAutocomplete({required this.controller, required this.breeds});
+
+  final TextEditingController controller;
+  final List<String> breeds;
+
+  @override
+  Widget build(BuildContext context) {
+    return Autocomplete<String>(
+      initialValue: TextEditingValue(text: controller.text),
+      optionsBuilder: (value) {
+        if (value.text.isEmpty) return breeds;
+        final query = value.text.toLowerCase();
+        return breeds.where((b) => b.toLowerCase().contains(query));
+      },
+      onSelected: (value) => controller.text = value,
+      optionsMaxHeight: 220,
+      fieldViewBuilder: (context, fieldController, focusNode, onSubmitted) {
+        // sync external controller
+        fieldController.addListener(() => controller.text = fieldController.text);
+        return TextField(
+          controller: fieldController,
+          focusNode: focusNode,
+          decoration: const InputDecoration(
+            labelText: 'Порода',
+            hintText: 'Почніть вводити породу...',
+            suffixIcon: Icon(Icons.arrow_drop_down),
+          ),
+        );
+      },
     );
   }
 }

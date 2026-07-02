@@ -179,7 +179,7 @@ class _SummaryCard extends StatelessWidget {
             const Expanded(
               child: _StatTile(
                 icon: Icons.history_outlined,
-                value: '—',
+                value: '0',
                 label: 'прийомів',
               ),
             ),
@@ -187,7 +187,7 @@ class _SummaryCard extends StatelessWidget {
             const Expanded(
               child: _StatTile(
                 icon: Icons.folder_outlined,
-                value: '—',
+                value: '0',
                 label: 'документів',
               ),
             ),

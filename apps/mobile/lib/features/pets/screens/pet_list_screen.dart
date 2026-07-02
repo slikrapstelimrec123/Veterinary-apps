@@ -41,9 +41,10 @@ class _PetListScreenState extends State<PetListScreen> {
         return AppScaffold(
           title: 'Мої тварини',
           subtitle: 'Зберігайте всі медичні картки в одному спокійному місці.',
+          actions: [
+            IconButton(onPressed: addPet, icon: const Icon(Icons.add), tooltip: 'Додати тварину'),
+          ],
           children: [
-            FilledButton(onPressed: addPet, child: const Text('Додати тварину')),
-            const SizedBox(height: 16),
             if (snapshot.connectionState == ConnectionState.waiting)
               const Center(child: CircularProgressIndicator())
             else if (snapshot.hasError)
