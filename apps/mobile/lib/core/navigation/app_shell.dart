@@ -145,14 +145,43 @@ class _HomeScreenState extends State<HomeScreen> {
                 FilledButton(onPressed: addPet, child: const Text('Додати тварину')),
               ],
               const SizedBox(height: 8),
-              OutlinedButton(
-                onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ClinicListScreen())),
-                child: const Text('Знайти клініку'),
-              ),
+              const _ClinicPilotCard(),
             ],
           ],
         );
       },
+    );
+  }
+}
+
+class _ClinicPilotCard extends StatelessWidget {
+  const _ClinicPilotCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.schedule_outlined, size: 18),
+                const SizedBox(width: 6),
+                Text('Клініки — скоро', style: Theme.of(context).textTheme.titleMedium),
+              ],
+            ),
+            const SizedBox(height: 6),
+            const Text('Незабаром ви зможете шукати клініки та записуватися на прийом прямо в застосунку.'),
+            const SizedBox(height: 10),
+            OutlinedButton(
+              onPressed: null,
+              child: const Text('Пошук клінік — незабаром'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

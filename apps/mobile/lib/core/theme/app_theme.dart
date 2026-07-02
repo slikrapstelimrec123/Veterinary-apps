@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  static const Color primary = Color(0xFF1F4E5F);
-  static const Color accent = Color(0xFF6FAF98);
-  static const Color background = Color(0xFFF8F6F1);
+  static const Color primary = Color(0xFF5C7CFA);
+  static const Color success = Color(0xFF4CAF50);
+  static const Color warning = Color(0xFFF4B740);
+  static const Color danger = Color(0xFFE35D6A);
+  static const Color background = Color(0xFFF8F7F5);
   static const Color surface = Color(0xFFFFFFFF);
-  static const Color text = Color(0xFF1F2933);
+  static const Color surfaceSoft = Color(0xFFFDFCFB);
+  static const Color textMain = Color(0xFF22252B);
+  static const Color textSecondary = Color(0xFF707784);
+  static const Color border = Color(0xFFE8EAEE);
 
   static ThemeData get light {
     return ThemeData(
@@ -13,14 +18,14 @@ class AppTheme {
       colorScheme: ColorScheme.fromSeed(
         seedColor: primary,
         primary: primary,
-        secondary: accent,
         surface: surface,
         background: background,
+        error: danger,
       ),
       scaffoldBackgroundColor: background,
       appBarTheme: const AppBarTheme(
         backgroundColor: background,
-        foregroundColor: text,
+        foregroundColor: textMain,
         centerTitle: false,
         elevation: 0,
       ),
@@ -28,8 +33,12 @@ class AppTheme {
         color: surface,
         elevation: 0,
         margin: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: const BorderSide(color: border),
+        ),
       ),
+      dividerTheme: const DividerThemeData(color: border),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: primary,
@@ -39,13 +48,22 @@ class AppTheme {
           textStyle: const TextStyle(fontWeight: FontWeight.w700),
         ),
       ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: primary,
+          side: const BorderSide(color: border),
+          minimumSize: const Size.fromHeight(52),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          textStyle: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+      ),
       textTheme: const TextTheme(
-        headlineMedium: TextStyle(fontWeight: FontWeight.w800, color: text),
-        titleLarge: TextStyle(fontWeight: FontWeight.w800, color: text),
-        titleMedium: TextStyle(fontWeight: FontWeight.w700, color: text),
-        bodyMedium: TextStyle(color: text, height: 1.35),
+        headlineMedium: TextStyle(fontWeight: FontWeight.w800, color: textMain),
+        titleLarge: TextStyle(fontWeight: FontWeight.w800, color: textMain),
+        titleMedium: TextStyle(fontWeight: FontWeight.w700, color: textMain),
+        bodyMedium: TextStyle(color: textMain, height: 1.35),
+        bodySmall: TextStyle(color: textSecondary),
       ),
     );
   }
 }
-
