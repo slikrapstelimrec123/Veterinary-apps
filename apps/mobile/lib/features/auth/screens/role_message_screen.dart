@@ -14,8 +14,8 @@ class RoleMessageScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = AuthScope.of(context);
     final message = user.isClinicRole
-        ? 'Clinic management is available in the web admin panel.'
-        : 'Platform administration is not part of the mobile MVP.';
+        ? 'Керування клінікою доступне у веб-панелі адміністратора.'
+        : 'Адміністрування платформи доступне лише через веб-інтерфейс.';
 
     return AppScaffold(
       title: 'Вхід виконано',

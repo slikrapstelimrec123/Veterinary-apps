@@ -166,6 +166,10 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
       }
 
       await Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => AppointmentConfirmationScreen(appointment: created)));
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Не вдалося створити запис. Спробуйте ще раз.')));
+      }
     } finally {
       if (mounted) {
         setState(() => isSubmitting = false);
