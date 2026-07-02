@@ -9,7 +9,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   supabase_flutter: ^2.6.0
+  qr_flutter: ^4.1.0
 
 dependency_overrides:
   supabase_flutter: 2.6.0

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../features/pets/domain/pet.dart';
 import '../../../features/pets/data/pet_repository.dart';
@@ -58,7 +59,7 @@ class _PassportContent extends StatelessWidget {
       children: [
         _PassportCard(pet: pet),
         const SizedBox(height: 16),
-        _QrPlaceholder(),
+        _QrSection(pet: pet),
         const SizedBox(height: 16),
         _InfoSection(pet: pet),
       ],
@@ -119,7 +120,24 @@ class _PassportCard extends StatelessWidget {
   }
 }
 
-class _QrPlaceholder extends StatelessWidget {
+class _QrSection extends StatelessWidget {
+  const _QrSection({required this.pet});
+  final Pet pet;
+
+  String _buildQrData() {
+    final parts = [
+      'Lappo Pet Passport',
+      'Name: ${pet.name}',
+      'Species: ${pet.speciesLabel}',
+      if (pet.breed != null) 'Breed: ${pet.breed}',
+      'Sex: ${pet.sexLabel}',
+      if (pet.microchipNumber != null) 'Microchip: ${pet.microchipNumber}',
+      if (pet.weightKg != null) 'Weight: ${pet.weightKg} kg',
+      'ID: ${pet.id}',
+    ];
+    return parts.join('\n');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -127,29 +145,19 @@ class _QrPlaceholder extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            Text('QR-код', style: Theme.of(context).textTheme.titleMedium),
+            Text('QR-код паспорта', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 12),
-            Container(
-              width: 160,
-              height: 160,
-              decoration: BoxDecoration(
-                border: Border.all(color: AppTheme.border, width: 2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.qr_code_2_outlined, size: 64, color: AppTheme.textSecondary),
-                  const SizedBox(height: 8),
-                  const Text('Незабаром', style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
-                ],
-              ),
+            QrImageView(
+              data: _buildQrData(),
+              version: QrVersions.auto,
+              size: 200,
+              backgroundColor: Colors.white,
             ),
             const SizedBox(height: 12),
             const Text(
-              'QR-код для швидкого доступу до паспорта тварини з\'явиться у наступному оновленні.',
+              'Відскануйте QR-код для перегляду даних тварини',
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppTheme.textSecondary),
+              style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
             ),
           ],
         ),
