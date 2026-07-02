@@ -5,6 +5,7 @@ import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/error_state.dart';
 import '../../../shared/widgets/pet_avatar.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../medications/screens/medications_screen.dart';
 import '../../passport/screens/pet_passport_screen.dart';
 import '../../visit_records/screens/documents_screen.dart';
 import '../../visit_records/screens/visit_history_screen.dart';
@@ -150,6 +151,16 @@ class _ActionGrid extends StatelessWidget {
           children: [
             Expanded(
               child: _ActionCard(
+                icon: Icons.medication_outlined,
+                title: 'Препарати',
+                onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => MedicationsScreen(petId: pet.id, petName: pet.name),
+                )),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _ActionCard(
                 icon: Icons.qr_code_outlined,
                 title: 'Паспорт / QR',
                 onTap: () => Navigator.of(context).push(MaterialPageRoute(
@@ -157,18 +168,28 @@ class _ActionGrid extends StatelessWidget {
                 )),
               ),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _ActionCard(
-                icon: Icons.calendar_month_outlined,
-                title: 'Записатись',
-                badge: 'Незабаром',
-                onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Онлайн-запис буде доступний після підключення клінік.')),
+          ],
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          width: double.infinity,
+          child: _ActionCard(
+            icon: Icons.calendar_month_outlined,
+            title: 'Записатись до ветеринара',
+            badge: 'Незабаром',
+            onTap: () => showDialog(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: const Text('Незабаром'),
+                content: const Text(
+                  'Онлайн-запис до ветеринара буде доступний після підключення клінік до платформи.\n\nТим часом ви можете самостійно додати запис про прийом у розділі "Прийоми".',
                 ),
+                actions: [
+                  FilledButton(onPressed: () => Navigator.pop(ctx), child: const Text('Зрозуміло')),
+                ],
               ),
             ),
-          ],
+          ),
         ),
       ],
     );
