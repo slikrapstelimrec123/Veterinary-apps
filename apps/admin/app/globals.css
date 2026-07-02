@@ -237,3 +237,42 @@ h1 {
   font-size: 12px;
   font-weight: 800;
 }
+
+.landing-hero {
+  min-height: min(640px, 70vh);
+  display: flex;
+  align-items: center;
+  border-radius: 8px;
+  background:
+    linear-gradient(rgba(31, 78, 95, 0.78), rgba(31, 78, 95, 0.5)),
+    url("https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=1600&q=80");
+  background-position: center;
+  background-size: cover;
+  color: white;
+  padding: clamp(28px, 6vw, 72px);
+}
+
+.landing-hero .eyebrow,
+.landing-hero .landing-lead {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.landing-hero h1 {
+  max-width: 760px;
+  font-size: clamp(38px, 7vw, 72px);
+}
+
+.landing-lead {
+  max-width: 680px;
+  font-size: 18px;
+  line-height: 1.55;
+}
+
+.landing-consent {
+  grid-column: 1 / -1;
+}
+
+.landing-consent input {
+  width: auto;
+  margin-right: 8px;
+}

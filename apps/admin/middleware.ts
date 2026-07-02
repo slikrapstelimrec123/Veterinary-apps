@@ -8,6 +8,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (
+    pathname === "/" ||
     publicPaths.some((path) => pathname.startsWith(path)) ||
     pathname.startsWith("/_next") ||
     pathname === "/favicon.ico"

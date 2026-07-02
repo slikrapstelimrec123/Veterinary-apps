@@ -37,11 +37,13 @@ export async function NotificationDropdown() {
           <Bell size={16} />
           Сповіщення
         </strong>
-        <Link className="status" href="/clinic/notifications">{unreadCount > 0 ? `${unreadCount} нових` : "Немає нових"}</Link>
+        <Link className="status" href="/clinic/notifications">
+          {unreadCount > 0 ? `${unreadCount} нових` : "Немає нових"}
+        </Link>
       </div>
       <div style={{ display: "grid", gap: 8, marginTop: 10 }}>
         {notifications.length === 0 ? (
-          <p className="muted" style={{ margin: 0 }}>Важливі оновлення з’являться тут.</p>
+          <p className="muted" style={{ margin: 0 }}>Важливі оновлення зʼявляться тут.</p>
         ) : (
           notifications.map((notification) => (
             <form key={notification.id} action={markNotificationAsReadAction} style={{ display: "grid", gap: 4 }}>

@@ -1,13 +1,13 @@
 import Link from "next/link";
 import {
+  Bell,
   CalendarDays,
   FileText,
   HeartPulse,
   LayoutDashboard,
-  PawPrint,
-  Bell,
-  Settings,
   LifeBuoy,
+  PawPrint,
+  Settings,
   Star,
   Stethoscope,
   Users,
@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 const links = [
+  { href: "/", label: "Лендінг", icon: LayoutDashboard },
   { href: "/dashboard", label: "Дашборд", icon: LayoutDashboard },
   { href: "/clinic/profile", label: "Профіль клініки", icon: HeartPulse },
   { href: "/clinic/services", label: "Послуги", icon: FileText },
@@ -37,7 +38,7 @@ export function AppSidebar() {
     <aside style={{ borderRight: "1px solid var(--border)", background: "var(--surface)", padding: 20 }}>
       <div style={{ marginBottom: 28 }}>
         <div style={{ fontWeight: 900, fontSize: 22 }}>VetCare</div>
-        <div className="muted" style={{ marginTop: 4 }}>Робочий простір клініки</div>
+        <div className="muted" style={{ marginTop: 4 }}>Кабінет клініки та пілотні модулі</div>
       </div>
       <nav style={{ display: "grid", gap: 6 }}>
         {links.map((link) => {
