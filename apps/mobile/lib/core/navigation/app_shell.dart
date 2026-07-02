@@ -51,6 +51,7 @@ class _AppShellState extends State<AppShell> {
           final unread = snapshot.data ?? 0;
           return NavigationBar(
             selectedIndex: _index,
+            labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
             onDestinationSelected: (value) {
               setState(() => _index = value);
               if (value == 4) {
