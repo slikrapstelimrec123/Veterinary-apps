@@ -7,6 +7,7 @@
 - Medical records and documents are private by default.
 - Never expose `SUPABASE_SERVICE_ROLE_KEY` to the mobile app or admin frontend.
 - Public users can see only published clinic, doctor, and service profiles.
+- Public QR pet cards must expose only owner-approved safe fields.
 
 ## Profiles
 
@@ -114,6 +115,16 @@ Signed URLs should be created only after checking database access.
 
 The mobile app can request a short-lived signed URL for owner-visible documents only. It does not expose public file URLs.
 
+## Digital Pet Passport
+
+Pet passport data is owner-private by default.
+
+Pet health events, owner-managed documents, reminders, and public profile settings use `owner_id = auth.uid()` and `public.owns_pet(pet_id)` checks.
+
+The public QR card is opt-in. The public table stores sharing flags and a note, not full medical history. Sensitive medical data must not be shown in public card UI.
+
+Waitlist leads can be inserted publicly only when consent is true. Waitlist management is platform-admin only.
+
 ## Reviews And Anti-Fake Rules
 
 Reviews are protected by Row Level Security plus database constraints.
@@ -187,3 +198,6 @@ Feedback should not include real sensitive medical details during local demo tes
 - Public user can read only published clinics, doctors, and services.
 - Public user can read only active public subscription plans.
 - Visit documents cannot be opened without authorized signed URL.
+- Pet health events, documents, and reminders are visible only to the pet owner.
+- Public QR profiles are readable only when `is_enabled = true`.
+- Waitlist insert fails without consent.

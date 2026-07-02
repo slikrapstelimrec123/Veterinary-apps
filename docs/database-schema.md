@@ -13,6 +13,7 @@ The implemented MVP schema lives in:
 - `supabase/migrations/20260630200000_clinic_subscriptions_module.sql`
 - `supabase/migrations/20260630210000_notifications_reminders_module.sql`
 - `supabase/migrations/20260630220000_beta_feedback_module.sql`
+- `supabase/migrations/20260702090000_b2c_pet_passport_pivot.sql`
 
 ## profiles
 
@@ -228,8 +229,13 @@ Fields:
 - `microchip_number text nullable`
 - `avatar_url text nullable`
 - `notes text nullable`
+- `sterilized boolean nullable`
 - `allergies text nullable`
 - `chronic_conditions text nullable`
+- `owner_contact_name text nullable`
+- `owner_contact_phone text nullable`
+- `owner_contact_email text nullable`
+- `emergency_contact text nullable`
 - `health_notes text nullable`
 - `created_at timestamptz`
 - `updated_at timestamptz`
@@ -240,6 +246,120 @@ Access:
 - Pet owners can read and update only their own pets.
 - Clinic members can read pets connected to their appointments or visit records.
 - Platform admins can read all when needed for support.
+
+## pet_health_events
+
+Owner-managed preventive care and health timeline.
+
+Fields:
+
+- `id uuid primary key`
+- `pet_id uuid references pets(id)`
+- `owner_id uuid references profiles(id)`
+- `type text`
+- `title text`
+- `date_done date`
+- `next_due_date date nullable`
+- `clinic_name text nullable`
+- `doctor_name text nullable`
+- `notes text nullable`
+- `document_id uuid nullable references pet_documents(id)`
+- `created_at timestamptz`
+- `updated_at timestamptz`
+
+Access:
+
+- Owners manage events only for pets they own.
+
+## pet_documents
+
+Owner-managed document metadata for the digital passport.
+
+Fields:
+
+- `id uuid primary key`
+- `pet_id uuid references pets(id)`
+- `owner_id uuid references profiles(id)`
+- `file_name text nullable`
+- `file_type text nullable`
+- `file_size integer nullable`
+- `storage_path text nullable`
+- `document_type text`
+- `title text`
+- `description text nullable`
+- `document_date date nullable`
+- `created_at timestamptz`
+- `updated_at timestamptz`
+
+Access:
+
+- Owners manage documents only for pets they own.
+
+## pet_reminders
+
+Owner-managed in-app reminders.
+
+Fields:
+
+- `id uuid primary key`
+- `pet_id uuid references pets(id)`
+- `owner_id uuid references profiles(id)`
+- `type text`
+- `title text`
+- `description text nullable`
+- `due_date date`
+- `repeat_rule text nullable`
+- `status text`
+- `created_at timestamptz`
+- `updated_at timestamptz`
+
+Access:
+
+- Owners manage reminders only for pets they own.
+
+## pet_public_profiles
+
+Safe public QR mini-card configuration.
+
+Fields:
+
+- `id uuid primary key`
+- `pet_id uuid references pets(id)`
+- `owner_id uuid references profiles(id)`
+- `public_slug text unique`
+- `is_enabled boolean`
+- `show_owner_name boolean`
+- `show_phone boolean`
+- `show_email boolean`
+- `show_emergency_contact boolean`
+- `public_note text nullable`
+- `created_at timestamptz`
+- `updated_at timestamptz`
+
+Access:
+
+- Owners manage public profiles only for pets they own.
+- Public users can read enabled public profile rows.
+
+## waitlist_leads
+
+Public pet-owner landing page leads.
+
+Fields:
+
+- `id uuid primary key`
+- `email text`
+- `name text nullable`
+- `phone text nullable`
+- `pet_type text nullable`
+- `source text nullable`
+- `consent boolean`
+- `created_at timestamptz`
+
+Access:
+
+- Public insert is allowed only with consent.
+- Platform admins can manage waitlist leads.
 
 ## pet_owners
 

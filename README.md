@@ -2,6 +2,18 @@
 
 Premium MVP platform for veterinary clinics, veterinarians, and pet owners.
 
+## Current Product Direction
+
+The MVP is now B2C-first: the main product is a digital pet passport for pet owners. Clinic search, appointment booking, reviews, subscriptions, and clinic CRM remain in the repository as pilot or later-stage modules, but they are not the primary mobile experience.
+
+Start here:
+
+- `docs/product-pivot.md`
+- `docs/mvp-scope.md`
+- `docs/clinic-pilot.md`
+- `docs/pivot-testing-checklist.md`
+- `docs/metrics.md`
+
 The product helps clinics manage profiles, doctors, services, schedules, appointments, clients, pets, visit records, medical documents, reviews, clinic subscription limits, and in-app notifications. Pet owners can create pet profiles, book appointments, receive updates, and keep treatment history in one trusted place.
 
 ## Tech Stack
@@ -121,7 +133,7 @@ With Supabase:
 flutter run --dart-define=SUPABASE_URL=your-url --dart-define=SUPABASE_ANON_KEY=your-anon-key
 ```
 
-Pet owner mobile routes currently support home, pet list, add/edit pet, pet profile, treatment history, visit details, private document metadata, clinic discovery, doctor profiles, appointment booking, owner appointment details/cancellation, settings, and logout.
+Pet owner mobile routes now prioritize home, pet passports, reminders, owner-managed documents, QR/PDF, settings, and logout. Clinic discovery and booking are kept as pilot flows, not primary navigation.
 
 ## Run Admin Panel
 
@@ -131,6 +143,8 @@ npm run dev
 ```
 
 Open `http://localhost:3000`.
+
+The root page is now a public pet-owner landing page and waitlist. The clinic cabinet starts from `/login` and protected clinic routes.
 
 The admin panel includes Supabase-backed authentication and clinic management modules for profile, services, doctors, schedules, appointment management, visit records, private visit documents, reviews, subscription limits, and notifications.
 
@@ -333,4 +347,4 @@ After applying migrations:
 
 ## Next Recommended Task
 
-Prepare the MVP for beta testing: onboarding, demo accounts, QA checklist, privacy pages, terms, and release readiness.
+Prepare the first public landing page and beta onboarding flow for pet owners, focused on digital pet passport acquisition.

@@ -1,5 +1,18 @@
 # Veterinary Platform Roadmap
 
+## Current Pivot
+
+Status: active as of 2026-07-02.
+
+The roadmap is pivoting from clinic marketplace first to B2C digital pet passport first. Stages for clinic profile, appointments, reviews, subscriptions, and notifications remain useful for controlled B2B pilots, but the current MVP success path is:
+
+1. Pet owner creates a digital pet passport.
+2. Owner records preventive care and vaccinations.
+3. Owner stores documents.
+4. Owner uses reminders.
+5. Owner prepares QR/PDF sharing.
+6. Clinics join later as verified pilot partners.
+
 ## Stage 1: Documentation And Project Setup
 
 Goal: align product, architecture, and scope before code.
@@ -421,4 +434,4 @@ Scope:
 
 ## Next Recommended Task
 
-Prepare production deployment, hosting, domains, environment configuration, monitoring, backups, and app store readiness.
+Prepare the first public landing page and beta onboarding flow for pet owners, focused on digital pet passport acquisition.
