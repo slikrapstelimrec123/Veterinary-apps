@@ -19,7 +19,7 @@ class VisitRecordRepository {
         .from('visit_records')
         .select('*, clinics(name), doctors(full_name)')
         .eq('pet_id', petId)
-        .eq('status', 'published')
+        .inFilter('status', ['published', 'self_reported'])
         .order('visit_date', ascending: false);
 
     return (rows as List<dynamic>).whereType<Map<String, dynamic>>().map(VisitRecord.fromJson).toList();

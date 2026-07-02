@@ -1,7 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
-import '../../features/appointments/screens/my_appointments_screen.dart';
-import '../../features/clinics/screens/clinic_list_screen.dart';
+import '../../features/appointments/screens/appointments_coming_soon_screen.dart';
+import '../../features/clinics/screens/clinic_coming_soon_screen.dart';
 import '../../features/notifications/data/notification_repository.dart';
 import '../../features/notifications/screens/notifications_screen.dart';
 import '../../features/pets/data/pet_repository.dart';
@@ -15,6 +15,7 @@ import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/error_state.dart';
 import '../../shared/widgets/pet_avatar.dart';
 import '../auth/auth_state.dart';
+import '../theme/app_theme.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
@@ -37,8 +38,8 @@ class _AppShellState extends State<AppShell> {
     final tabs = [
       HomeScreen(onOpenPets: () => setState(() => _index = 1)),
       const PetListScreen(),
-      const ClinicListScreen(),
-      const MyAppointmentsScreen(),
+      const ClinicComingSoonScreen(),
+      const AppointmentsComingSoonScreen(),
       const NotificationsScreen(),
       const SettingsScreen(),
     ];
@@ -54,9 +55,7 @@ class _AppShellState extends State<AppShell> {
             labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
             onDestinationSelected: (value) {
               setState(() => _index = value);
-              if (value == 4) {
-                refreshUnreadCount();
-              }
+              if (value == 4) refreshUnreadCount();
             },
             destinations: [
               const NavigationDestination(icon: Icon(Icons.home_outlined), label: 'Головна'),
@@ -99,9 +98,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> addPet() async {
     final result = await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AddPetScreen()));
-    if (result != null) {
-      refresh();
-    }
+    if (result != null) refresh();
   }
 
   @override
@@ -115,21 +112,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
         return AppScaffold(
           title: 'Вітаємо, ${user?.fullName.split(' ').first ?? 'друже'}',
-          subtitle: 'Історія здоров’я ваших тварин в одному спокійному місці.',
+          subtitle: 'Медична картка ваших тварин завжди під рукою.',
           children: [
             if (snapshot.connectionState == ConnectionState.waiting)
               const Center(child: CircularProgressIndicator())
             else if (snapshot.hasError)
               ErrorState(message: 'Не вдалося завантажити головну сторінку.', onRetry: refresh)
             else ...[
-              const _BetaWelcomeCard(),
-              const SizedBox(height: 12),
               _SummaryCard(petCount: pets.length),
               const SizedBox(height: 12),
               if (pets.isEmpty)
                 EmptyState(
-                  title: 'Створіть медичну картку',
-                  message: 'Додайте тварину, щоб почати вести її медичну історію.',
+                  title: 'Додайте першу тварину',
+                  message: 'Створіть медичну картку, щоб зберігати всю інформацію про здоров\'я вашого улюбленця.',
                   icon: Icons.pets_outlined,
                   action: FilledButton(onPressed: addPet, child: const Text('Додати тварину')),
                 )
@@ -141,71 +136,21 @@ class _HomeScreenState extends State<HomeScreen> {
                     TextButton(onPressed: widget.onOpenPets, child: const Text('Переглянути всі')),
                   ],
                 ),
-                ...pets.take(2).map((pet) => _HomePetPreview(pet: pet, onChanged: refresh)),
-                const SizedBox(height: 12),
-                FilledButton(onPressed: addPet, child: const Text('Додати тварину')),
+                const SizedBox(height: 4),
+                ...pets.take(3).map((pet) => _HomePetPreview(pet: pet, onChanged: refresh)),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: addPet,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Додати тварину'),
+                ),
               ],
-              const SizedBox(height: 8),
-              const _ClinicPilotCard(),
+              const SizedBox(height: 12),
+              const _ClinicComingSoonCard(),
             ],
           ],
         );
       },
-    );
-  }
-}
-
-class _ClinicPilotCard extends StatelessWidget {
-  const _ClinicPilotCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.schedule_outlined, size: 18),
-                const SizedBox(width: 6),
-                Text('Клініки — скоро', style: Theme.of(context).textTheme.titleMedium),
-              ],
-            ),
-            const SizedBox(height: 6),
-            const Text('Незабаром ви зможете шукати клініки та записуватися на прийом прямо в застосунку.'),
-            const SizedBox(height: 10),
-            OutlinedButton(
-              onPressed: null,
-              child: const Text('Пошук клінік — незабаром'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _BetaWelcomeCard extends StatelessWidget {
-  const _BetaWelcomeCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Card(
-      child: Padding(
-        padding: EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Beta-тестування VetCare', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-            SizedBox(height: 8),
-            Text('Зберігайте медичну історію тварини в одному місці, знаходьте клініку та бронюйте прийом.'),
-            SizedBox(height: 10),
-            Text('Кроки: додайте тварину → знайдіть клініку → створіть запис.'),
-          ],
-        ),
-      ),
     );
   }
 }
@@ -220,16 +165,80 @@ class _SummaryCard extends StatelessWidget {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(18),
+        child: Row(
+          children: [
+            Expanded(
+              child: _StatTile(
+                icon: Icons.pets_outlined,
+                value: '$petCount',
+                label: petCount == 1 ? 'тварина' : petCount < 5 ? 'тварини' : 'тварин',
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Expanded(
+              child: _StatTile(
+                icon: Icons.history_outlined,
+                value: '—',
+                label: 'прийомів',
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Expanded(
+              child: _StatTile(
+                icon: Icons.folder_outlined,
+                value: '—',
+                label: 'документів',
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StatTile extends StatelessWidget {
+  const _StatTile({required this.icon, required this.value, required this.label});
+  final IconData icon;
+  final String value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Icon(icon, size: 22, color: AppTheme.primary),
+        const SizedBox(height: 4),
+        Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppTheme.textMain)),
+        Text(label, style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary), textAlign: TextAlign.center),
+      ],
+    );
+  }
+}
+
+class _ClinicComingSoonCard extends StatelessWidget {
+  const _ClinicComingSoonCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Підсумок здоров’я', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 12),
-            Text('Тварин: $petCount'),
+            Row(
+              children: [
+                const Icon(Icons.schedule_outlined, size: 18, color: AppTheme.textSecondary),
+                const SizedBox(width: 6),
+                Text('Клініки — незабаром', style: Theme.of(context).textTheme.titleMedium),
+              ],
+            ),
             const SizedBox(height: 6),
-            const Text('Найближчий запис: у розділі записів'),
-            const SizedBox(height: 6),
-            const Text('Останній візит: поки немає даних'),
+            const Text(
+              'Незабаром ви зможете знаходити клініки та записуватися на прийом прямо в застосунку.',
+              style: TextStyle(color: AppTheme.textSecondary),
+            ),
           ],
         ),
       ),
@@ -246,18 +255,18 @@ class _HomePetPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Card(
         child: ListTile(
           leading: PetAvatar(name: pet.name),
-          title: Text(pet.name),
+          title: Text(pet.name, style: const TextStyle(fontWeight: FontWeight.w700)),
           subtitle: Text('${pet.speciesLabel} · ${pet.breed ?? 'Породу не вказано'}'),
           trailing: const Icon(Icons.chevron_right),
           onTap: () async {
-            final result = await Navigator.of(context).push(MaterialPageRoute(builder: (_) => PetProfileScreen(petId: pet.id)));
-            if (result != null) {
-              onChanged();
-            }
+            final result = await Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => PetProfileScreen(petId: pet.id),
+            ));
+            if (result != null) onChanged();
           },
         ),
       ),

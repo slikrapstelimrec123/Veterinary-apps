@@ -26,7 +26,7 @@ class AuthRepository {
 
     final profile = await _client
         .from('profiles')
-        .select('id,email,full_name,role')
+        .select('id,email,full_name,role,phone')
         .eq('id', user.id)
         .maybeSingle();
 
@@ -39,6 +39,7 @@ class AuthRepository {
       email: profile['email'] as String? ?? user.email ?? '',
       fullName: profile['full_name'] as String? ?? 'Pet owner',
       role: CurrentUser.roleFromString(profile['role'] as String?),
+      phone: profile['phone'] as String?,
     );
   }
 

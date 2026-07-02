@@ -13,12 +13,14 @@ class CurrentUser {
     required this.email,
     required this.fullName,
     required this.role,
+    this.phone,
   });
 
   final String id;
   final String email;
   final String fullName;
   final UserRole role;
+  final String? phone;
 
   bool get isPetOwner => role == UserRole.petOwner;
   bool get isClinicRole => role == UserRole.clinicOwner || role == UserRole.veterinarian || role == UserRole.clinicManager;
