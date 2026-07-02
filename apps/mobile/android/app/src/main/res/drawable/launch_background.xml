@@ -3,7 +3,7 @@
     <item android:drawable="@color/lappo_splash_bg" />
     <item>
         <bitmap
-            android:gravity="center"
+            android:gravity="fill"
             android:src="@drawable/lappo_splash" />
     </item>
 </layer-list>

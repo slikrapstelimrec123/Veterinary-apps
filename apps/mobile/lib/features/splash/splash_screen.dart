@@ -22,12 +22,10 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0D1B3E),
-      body: Center(
+      body: SizedBox.expand(
         child: Image.asset(
           'assets/lappo_splash_dark_1080x1920.png',
           fit: BoxFit.cover,
-          width: double.infinity,
-          height: double.infinity,
         ),
       ),
     );
