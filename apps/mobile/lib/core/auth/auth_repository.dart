@@ -3,6 +3,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/supabase_config.dart';
 import 'current_user.dart';
 
+enum RegisterResult { success, confirmationRequired, failed }
+
 class AuthRepository {
   bool get isConfigured => SupabaseConfig.isConfigured;
   bool get useMockData => SupabaseConfig.useMockData;
@@ -52,14 +54,14 @@ class AuthRepository {
     return getCurrentUser();
   }
 
-  Future<CurrentUser?> registerPetOwner({
+  Future<RegisterResult> registerPetOwner({
     required String email,
     required String password,
     required String fullName,
     String? phone,
   }) async {
     if (!isConfigured) {
-      return getCurrentUser();
+      return RegisterResult.success;
     }
 
     final response = await _client.auth.signUp(
@@ -68,23 +70,28 @@ class AuthRepository {
       data: {
         'full_name': fullName,
         'role': 'pet_owner',
+        'phone': phone,
       },
     );
 
-    final user = response.user;
-    if (user == null) {
-      return null;
+    if (response.user == null) {
+      return RegisterResult.failed;
     }
 
-    await _client.from('profiles').insert({
-      'id': user.id,
-      'email': email,
-      'full_name': fullName,
-      'phone': phone,
-      'role': 'pet_owner',
-    });
+    // If session is null, Supabase requires email confirmation
+    if (response.session == null) {
+      return RegisterResult.confirmationRequired;
+    }
 
-    return getCurrentUser();
+    // Update phone in profile if provided (trigger may not capture it)
+    if (phone != null && phone.isNotEmpty) {
+      await _client
+          .from('profiles')
+          .update({'phone': phone})
+          .eq('id', response.user!.id);
+    }
+
+    return RegisterResult.success;
   }
 
   Future<void> signInWithGoogle() async {

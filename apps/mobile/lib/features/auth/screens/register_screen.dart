@@ -55,7 +55,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       phone: phoneController.text.trim().isEmpty ? null : phoneController.text.trim(),
     );
 
-    if (mounted && AuthScope.of(context).currentUser != null) {
+    if (!mounted) return;
+    final auth = AuthScope.of(context);
+    if (auth.currentUser != null) {
       Navigator.of(context).pop();
     }
   }
@@ -64,25 +66,44 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     final auth = AuthScope.of(context);
 
+    if (auth.registrationPendingConfirmation) {
+      return AppScaffold(
+        title: ‘Підтвердьте пошту’,
+        children: [
+          const Icon(Icons.mark_email_unread_outlined, size: 64, color: Color(0xFF0D1B3E)),
+          const SizedBox(height: 16),
+          const Text(
+            ‘Ми надіслали вам лист з підтвердженням. Перейдіть за посиланням у листі, щоб активувати акаунт.’,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text(‘Зрозуміло’),
+          ),
+        ],
+      );
+    }
+
     return AppScaffold(
-      title: 'Створити акаунт',
-      subtitle: 'Реєстрація створює профіль власника тварини.',
+      title: ‘Створити акаунт’,
+      subtitle: ‘Реєстрація створює профіль власника тварини.’,
       children: [
         if (localError != null || auth.errorMessage != null) ...[
           Text(localError ?? auth.errorMessage!, style: const TextStyle(color: Color(0xFF9F1239))),
           const SizedBox(height: 12),
         ],
-        TextField(controller: fullNameController, decoration: const InputDecoration(labelText: 'Повне ім’я')),
+        TextField(controller: fullNameController, decoration: const InputDecoration(labelText: ‘Повне ім’я’)),
         const SizedBox(height: 12),
-        TextField(controller: emailController, decoration: const InputDecoration(labelText: 'Електронна пошта')),
+        TextField(controller: emailController, keyboardType: TextInputType.emailAddress, decoration: const InputDecoration(labelText: ‘Електронна пошта’)),
         const SizedBox(height: 12),
-        TextField(controller: phoneController, decoration: const InputDecoration(labelText: 'Телефон')),
+        TextField(controller: phoneController, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: ‘Телефон’)),
         const SizedBox(height: 12),
-        TextField(controller: passwordController, obscureText: true, decoration: const InputDecoration(labelText: 'Пароль')),
+        TextField(controller: passwordController, obscureText: true, decoration: const InputDecoration(labelText: ‘Пароль’)),
         const SizedBox(height: 20),
         FilledButton(
           onPressed: auth.isLoading ? null : submit,
-          child: Text(auth.isLoading ? 'Створення акаунта...' : 'Створити акаунт'),
+          child: Text(auth.isLoading ? ‘Створення акаунта...’ : ‘Створити акаунт’),
         ),
       ],
     );
