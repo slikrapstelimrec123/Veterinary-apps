@@ -5,6 +5,8 @@ import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/error_state.dart';
 import '../../../shared/widgets/pet_avatar.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../medications/data/medication_repository.dart';
+import '../../medications/domain/pet_medication.dart';
 import '../../medications/screens/medications_screen.dart';
 import '../../passport/screens/pet_passport_screen.dart';
 import '../../visit_records/screens/documents_screen.dart';
@@ -228,12 +230,37 @@ class _ActionCard extends StatelessWidget {
   }
 }
 
-class _DetailSection extends StatelessWidget {
+class _DetailSection extends StatefulWidget {
   const _DetailSection({required this.pet});
   final Pet pet;
 
   @override
+  State<_DetailSection> createState() => _DetailSectionState();
+}
+
+class _DetailSectionState extends State<_DetailSection> {
+  final _medRepo = MedicationRepository();
+  PetMedication? _lastMed;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLastMed();
+  }
+
+  Future<void> _loadLastMed() async {
+    final meds = await _medRepo.getMedications(widget.pet.id);
+    if (meds.isNotEmpty && mounted) {
+      setState(() => _lastMed = meds.first);
+    }
+  }
+
+  String _fmt(DateTime d) =>
+      '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}.${d.year}';
+
+  @override
   Widget build(BuildContext context) {
+    final pet = widget.pet;
     final details = <(String, String)>[
       ('Стать', pet.sexLabel),
       ('Вага', pet.weightKg == null ? 'Не вказано' : '${pet.weightKg} кг'),
@@ -265,6 +292,29 @@ class _DetailSection extends StatelessWidget {
                 ),
               ),
             ),
+            if (_lastMed != null) ...[
+              const Divider(height: 20),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(
+                    width: 110,
+                    child: Text('Останній препарат', style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(_lastMed!.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        if (_lastMed!.dosage != null)
+                          Text(_lastMed!.dosage!, style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                        Text(_fmt(_lastMed!.givenDate), style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),
