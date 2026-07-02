@@ -87,6 +87,22 @@ class AuthRepository {
     return getCurrentUser();
   }
 
+  Future<void> signInWithGoogle() async {
+    if (!isConfigured) return;
+    await _client.auth.signInWithOAuth(
+      OAuthProvider.google,
+      redirectTo: 'lappo://auth/callback',
+    );
+  }
+
+  Future<void> signInWithApple() async {
+    if (!isConfigured) return;
+    await _client.auth.signInWithOAuth(
+      OAuthProvider.apple,
+      redirectTo: 'lappo://auth/callback',
+    );
+  }
+
   Future<void> logout() async {
     if (!isConfigured) {
       return;

@@ -71,6 +71,28 @@ class AuthState extends ChangeNotifier {
     }
   }
 
+  Future<void> signInWithGoogle() async {
+    errorMessage = null;
+    notifyListeners();
+    try {
+      await _repository.signInWithGoogle();
+    } catch (_) {
+      errorMessage = 'Не вдалося увійти через Google. Спробуйте ще раз.';
+      notifyListeners();
+    }
+  }
+
+  Future<void> signInWithApple() async {
+    errorMessage = null;
+    notifyListeners();
+    try {
+      await _repository.signInWithApple();
+    } catch (_) {
+      errorMessage = 'Не вдалося увійти через Apple. Спробуйте ще раз.';
+      notifyListeners();
+    }
+  }
+
   Future<void> logout() async {
     await _repository.logout();
     currentUser = null;

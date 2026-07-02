@@ -1,6 +1,8 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 
 import '../../../core/auth/auth_state.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import 'forgot_password_screen.dart';
 import 'register_screen.dart';
@@ -72,7 +74,68 @@ class _LoginScreenState extends State<LoginScreen> {
           onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ForgotPasswordScreen())),
           child: const Text('Забули пароль?'),
         ),
+        if (!auth.useMockData) ...[
+          const SizedBox(height: 8),
+          const Row(children: [
+            Expanded(child: Divider()),
+            Padding(padding: EdgeInsets.symmetric(horizontal: 12), child: Text('або', style: TextStyle(color: AppTheme.textSecondary))),
+            Expanded(child: Divider()),
+          ]),
+          const SizedBox(height: 8),
+          _SocialButton(
+            label: 'Увійти через Google',
+            icon: _GoogleIcon(),
+            onPressed: auth.isLoading ? null : () => auth.signInWithGoogle(),
+          ),
+          if (defaultTargetPlatform == TargetPlatform.iOS) ...[
+            const SizedBox(height: 10),
+            _SocialButton(
+              label: 'Увійти через Apple',
+              icon: const Icon(Icons.apple, size: 20),
+              onPressed: auth.isLoading ? null : () => auth.signInWithApple(),
+            ),
+          ],
+        ],
       ],
+    );
+  }
+}
+
+class _SocialButton extends StatelessWidget {
+  const _SocialButton({required this.label, required this.icon, required this.onPressed});
+  final String label;
+  final Widget icon;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: onPressed,
+      icon: icon,
+      label: Text(label),
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size.fromHeight(48),
+        side: const BorderSide(color: AppTheme.border),
+      ),
+    );
+  }
+}
+
+class _GoogleIcon extends StatelessWidget {
+  const _GoogleIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SizedBox(
+      width: 20,
+      height: 20,
+      child: Stack(
+        children: [
+          Center(
+            child: Text('G', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF4285F4))),
+          ),
+        ],
+      ),
     );
   }
 }
