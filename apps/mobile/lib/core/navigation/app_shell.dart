@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../features/clinics/screens/clinic_coming_soon_screen.dart';
+import '../../features/medications/data/medication_repository.dart';
+import '../../features/medications/domain/pet_medication.dart';
 import '../../features/notifications/data/notification_repository.dart';
 import '../../features/notifications/screens/notifications_screen.dart';
 import '../../features/pets/data/pet_repository.dart';
@@ -147,6 +149,8 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
               const SizedBox(height: 12),
               const _ClinicComingSoonCard(),
+              const SizedBox(height: 12),
+              _UpcomingEventsCard(pets: pets),
             ],
           ],
         );
@@ -274,6 +278,149 @@ class _ComingSoonPlaceholder extends StatelessWidget {
     );
   }
 }
+
+// ─── Upcoming Events ─────────────────────────────────────────────────────────
+
+class _UpcomingEvent {
+  const _UpcomingEvent({required this.title, required this.petName, required this.date, required this.isOverdue});
+  final String title;
+  final String petName;
+  final DateTime date;
+  final bool isOverdue;
+}
+
+class _UpcomingEventsCard extends StatefulWidget {
+  const _UpcomingEventsCard({required this.pets});
+  final List<Pet> pets;
+
+  @override
+  State<_UpcomingEventsCard> createState() => _UpcomingEventsCardState();
+}
+
+class _UpcomingEventsCardState extends State<_UpcomingEventsCard> {
+  final _medRepo = MedicationRepository();
+  List<_UpcomingEvent> _events = [];
+  bool _loaded = false;
+
+  @override
+  void didUpdateWidget(_UpcomingEventsCard old) {
+    super.didUpdateWidget(old);
+    if (old.pets != widget.pets) _load();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    if (widget.pets.isEmpty) {
+      if (mounted) setState(() { _events = []; _loaded = true; });
+      return;
+    }
+
+    final now = DateTime.now();
+    final threshold = now.add(const Duration(days: 5));
+    final events = <_UpcomingEvent>[];
+
+    for (final pet in widget.pets) {
+      try {
+        final meds = await _medRepo.getMedications(pet.id);
+        for (final med in meds) {
+          final d = med.nextDoseDate;
+          if (d == null) continue;
+          if (d.isBefore(now.subtract(const Duration(days: 1))) && !med.nextDoseOverdue) continue;
+          if (d.isAfter(threshold)) continue;
+          events.add(_UpcomingEvent(
+            title: med.name,
+            petName: pet.name,
+            date: d,
+            isOverdue: med.nextDoseOverdue,
+          ));
+        }
+      } catch (_) {}
+    }
+
+    events.sort((a, b) => a.date.compareTo(b.date));
+
+    if (mounted) setState(() { _events = events; _loaded = true; });
+  }
+
+  String _formatDate(DateTime d) {
+    final now = DateTime.now();
+    final diff = d.difference(DateTime(now.year, now.month, now.day)).inDays;
+    if (diff < 0) return 'Протерміновано';
+    if (diff == 0) return 'Сьогодні';
+    if (diff == 1) return 'Завтра';
+    return 'Через $diff дн.';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_loaded || _events.isEmpty) return const SizedBox.shrink();
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.event_outlined, size: 18, color: AppTheme.primary),
+                const SizedBox(width: 6),
+                Text('Найближчі події', style: Theme.of(context).textTheme.titleMedium),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ..._events.map((e) {
+              final overdue = e.isOverdue;
+              final color = overdue ? AppTheme.danger : AppTheme.warning;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        overdue ? Icons.warning_amber_rounded : Icons.medication_outlined,
+                        size: 20,
+                        color: color,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(e.title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                          Text('${e.petName} · ${_formatDate(e.date)}',
+                              style: TextStyle(fontSize: 12, color: overdue ? color : AppTheme.textSecondary)),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      _formatDate(e.date),
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: color),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _HomePetPreview extends StatelessWidget {
   const _HomePetPreview({required this.pet, required this.onChanged});
