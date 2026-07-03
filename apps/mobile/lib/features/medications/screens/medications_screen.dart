@@ -17,11 +17,89 @@ class MedicationsScreen extends StatefulWidget {
   State<MedicationsScreen> createState() => _MedicationsScreenState();
 }
 
+enum _SortOption { dateDesc, dateAsc, nameAsc, nameDesc, category }
+
 class _MedicationsScreenState extends State<MedicationsScreen> {
   final _repo = MedicationRepository();
   List<PetMedication>? _meds;
   bool _loading = true;
   String? _error;
+  _SortOption _sort = _SortOption.dateDesc;
+
+  List<PetMedication> get _sorted {
+    final list = List<PetMedication>.from(_meds ?? []);
+    switch (_sort) {
+      case _SortOption.dateDesc:
+        list.sort((a, b) => b.givenDate.compareTo(a.givenDate));
+      case _SortOption.dateAsc:
+        list.sort((a, b) => a.givenDate.compareTo(b.givenDate));
+      case _SortOption.nameAsc:
+        list.sort((a, b) => a.name.compareTo(b.name));
+      case _SortOption.nameDesc:
+        list.sort((a, b) => b.name.compareTo(a.name));
+      case _SortOption.category:
+        list.sort((a, b) => (a.category ?? '').compareTo(b.category ?? ''));
+    }
+    return list;
+  }
+
+  String get _sortLabel => switch (_sort) {
+    _SortOption.dateDesc => 'Нові спочатку',
+    _SortOption.dateAsc => 'Старі спочатку',
+    _SortOption.nameAsc => 'Назва А→Я',
+    _SortOption.nameDesc => 'Назва Я→А',
+    _SortOption.category => 'За категорією',
+  };
+
+  void _showSortSheet() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text('Сортування', style: Theme.of(context).textTheme.titleMedium),
+            ),
+            const SizedBox(height: 8),
+            ..._SortOption.values.map((opt) {
+              final label = switch (opt) {
+                _SortOption.dateDesc => 'Нові спочатку',
+                _SortOption.dateAsc => 'Старі спочатку',
+                _SortOption.nameAsc => 'Назва А→Я',
+                _SortOption.nameDesc => 'Назва Я→А',
+                _SortOption.category => 'За категорією',
+              };
+              final icon = switch (opt) {
+                _SortOption.dateDesc => Icons.arrow_downward,
+                _SortOption.dateAsc => Icons.arrow_upward,
+                _SortOption.nameAsc => Icons.sort_by_alpha,
+                _SortOption.nameDesc => Icons.sort_by_alpha,
+                _SortOption.category => Icons.category_outlined,
+              };
+              return ListTile(
+                leading: Icon(icon, color: _sort == opt ? AppTheme.primary : null),
+                title: Text(label),
+                trailing: _sort == opt ? const Icon(Icons.check, color: AppTheme.primary) : null,
+                onTap: () {
+                  setState(() => _sort = opt);
+                  Navigator.pop(context);
+                },
+              );
+            }),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -79,11 +157,19 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final meds = _meds ?? [];
+    final meds = _sorted;
     return AppScaffold(
       title: 'Препарати та лікування',
       subtitle: widget.petName,
-      actions: [IconButton(icon: const Icon(Icons.add), tooltip: 'Додати', onPressed: _add)],
+      actions: [
+        if (_meds != null && _meds!.isNotEmpty)
+          TextButton.icon(
+            onPressed: _showSortSheet,
+            icon: const Icon(Icons.swap_vert, size: 18),
+            label: Text(_sortLabel, style: const TextStyle(fontSize: 12)),
+          ),
+        IconButton(icon: const Icon(Icons.add), tooltip: 'Додати', onPressed: _add),
+      ],
       children: [
         if (_loading)
           const Center(child: CircularProgressIndicator())
