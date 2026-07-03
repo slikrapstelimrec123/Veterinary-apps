@@ -60,24 +60,37 @@ class _AppShellState extends State<AppShell> {
               if (value == 3) refreshUnreadCount();
             },
             destinations: [
-              const NavigationDestination(icon: AppIcon(AppIcons.home, size: 26), label: 'Головна'),
-              const NavigationDestination(icon: AppIcon(AppIcons.paw, size: 26), label: 'Тварини'),
-              const NavigationDestination(icon: AppIcon(AppIcons.calendarPlus, size: 26), label: 'Клініки'),
+              _navItem(context, AppIcons.home, 'Головна'),
+              _navItem(context, AppIcons.paw, 'Тварини'),
+              _navItem(context, AppIcons.calendarPlus, 'Клініки'),
               NavigationDestination(
                 icon: Badge(
                   isLabelVisible: unread > 0,
                   label: Text(unread > 9 ? '9+' : '$unread'),
-                  child: const AppIcon(AppIcons.bell, size: 26),
+                  child: AppIcon(AppIcons.bell, size: 26, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                ),
+                selectedIcon: Badge(
+                  isLabelVisible: unread > 0,
+                  label: Text(unread > 9 ? '9+' : '$unread'),
+                  child: AppIcon(AppIcons.bell, size: 26, color: Theme.of(context).colorScheme.onSecondaryContainer),
                 ),
                 label: 'Сповіщення',
               ),
-              const NavigationDestination(icon: AppIcon(AppIcons.settings, size: 26), label: 'Налаштування'),
+              _navItem(context, AppIcons.settings, 'Налаштування'),
             ],
           );
         },
       ),
     );
   }
+}
+
+NavigationDestination _navItem(BuildContext context, String iconName, String label) {
+  return NavigationDestination(
+    icon: AppIcon(iconName, size: 26, color: Theme.of(context).colorScheme.onSurfaceVariant),
+    selectedIcon: AppIcon(iconName, size: 26, color: Theme.of(context).colorScheme.onSecondaryContainer),
+    label: label,
+  );
 }
 
 class HomeScreen extends StatefulWidget {

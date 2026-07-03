@@ -10,7 +10,10 @@ class AppIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = color ?? IconTheme.of(context).color ?? Theme.of(context).colorScheme.onSurface;
+    final iconColor = IconTheme.of(context).color;
+    final fallback = Theme.of(context).colorScheme.onSurfaceVariant;
+    // Use iconColor only if it's not fully transparent
+    final c = color ?? ((iconColor != null && iconColor.alpha > 0) ? iconColor : fallback);
     return SvgPicture.asset(
       'assets/icons/$name.svg',
       width: size,
