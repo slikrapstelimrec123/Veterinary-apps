@@ -17,6 +17,7 @@ class SettingsScreen extends StatelessWidget {
     return AppScaffold(
       title: 'Налаштування',
       subtitle: 'Керування акаунтом та застосунком.',
+      showLogo: true,
       children: [
         Card(
           child: Column(
