@@ -14,8 +14,10 @@ class AppTheme {
   static const Color border = Color(0xFFE8EAEE);
 
   static ThemeData get light {
+    final base = GoogleFonts.montserrat();
     return ThemeData(
       useMaterial3: true,
+      fontFamily: base.fontFamily,
       colorScheme: ColorScheme.fromSeed(
         seedColor: primary,
         primary: primary,
