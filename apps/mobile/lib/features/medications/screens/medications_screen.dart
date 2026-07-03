@@ -122,6 +122,18 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
     }
   }
 
+  Future<void> _edit(PetMedication med) async {
+    final result = await Navigator.of(context).push<PetMedication>(MaterialPageRoute(
+      builder: (_) => EditMedicationScreen(medication: med),
+    ));
+    if (result != null && mounted) {
+      setState(() => _meds = _meds?.map((m) => m.id == result.id ? result : m).toList());
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Запис оновлено.')),
+      );
+    }
+  }
+
   Future<void> _delete(PetMedication med) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -177,7 +189,7 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
           )
         else ...[
           ..._buildReminders(meds, context),
-          ...meds.map((m) => _MedicationCard(med: m, onDelete: () => _delete(m))),
+          ...meds.map((m) => _MedicationCard(med: m, onDelete: () => _delete(m), onEdit: () => _edit(m))),
           const SizedBox(height: 4),
           OutlinedButton.icon(
             onPressed: _add,
@@ -232,9 +244,10 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
 }
 
 class _MedicationCard extends StatelessWidget {
-  const _MedicationCard({required this.med, required this.onDelete});
+  const _MedicationCard({required this.med, required this.onDelete, required this.onEdit});
   final PetMedication med;
   final VoidCallback onDelete;
+  final VoidCallback onEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -257,6 +270,12 @@ class _MedicationCard extends StatelessWidget {
                         Text(med.categoryLabel, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
                       ],
                     ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.edit_outlined, size: 20),
+                    color: AppTheme.textSecondary,
+                    onPressed: onEdit,
+                    visualDensity: VisualDensity.compact,
                   ),
                   IconButton(
                     icon: const Icon(Icons.delete_outline, size: 20),
@@ -548,4 +567,211 @@ class _Label extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Text(text, style: Theme.of(context).textTheme.titleMedium);
+}
+
+// ─── Edit form ────────────────────────────────────────────────────────────────
+
+class EditMedicationScreen extends StatefulWidget {
+  const EditMedicationScreen({super.key, required this.medication});
+  final PetMedication medication;
+
+  @override
+  State<EditMedicationScreen> createState() => _EditMedicationScreenState();
+}
+
+class _EditMedicationScreenState extends State<EditMedicationScreen> {
+  final _formKey = GlobalKey<FormState>();
+  late final _nameController = TextEditingController(text: widget.medication.name);
+  late final _dosageController = TextEditingController(text: widget.medication.dosage ?? '');
+  late final _notesController = TextEditingController(text: widget.medication.notes ?? '');
+
+  late String _category = widget.medication.category ?? 'other';
+  late DateTime _givenDate = widget.medication.givenDate;
+  late DateTime? _nextDoseDate = widget.medication.nextDoseDate;
+  late bool _reminderEnabled = widget.medication.reminderEnabled;
+  bool _saving = false;
+
+  static const _categories = [
+    ('tick_flea', 'Від кліщів / бліх'),
+    ('deworming', 'Дегельмінтизація'),
+    ('vitamin', 'Вітаміни / добавки'),
+    ('antibiotic', 'Антибіотик'),
+    ('other', 'Інше'),
+  ];
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _dosageController.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickGivenDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _givenDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null) setState(() => _givenDate = picked);
+  }
+
+  Future<void> _pickNextDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _nextDoseDate ?? DateTime.now().add(const Duration(days: 30)),
+      firstDate: DateTime.now().subtract(const Duration(days: 365)),
+      lastDate: DateTime.now().add(const Duration(days: 365 * 3)),
+    );
+    if (picked != null) setState(() => _nextDoseDate = picked);
+  }
+
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _saving = true);
+
+    try {
+      final updated = PetMedication(
+        id: widget.medication.id,
+        petId: widget.medication.petId,
+        name: _nameController.text.trim(),
+        givenDate: _givenDate,
+        dosage: _dosageController.text.trim().isEmpty ? null : _dosageController.text.trim(),
+        category: _category,
+        notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+        nextDoseDate: _nextDoseDate,
+        reminderEnabled: _reminderEnabled,
+        createdAt: widget.medication.createdAt,
+      );
+
+      final saved = await MedicationRepository().updateMedication(updated);
+
+      if (mounted) Navigator.of(context).pop(saved);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Не вдалося зберегти. Спробуйте ще раз.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Редагувати препарат'),
+        actions: [
+          if (_saving)
+            const Padding(padding: EdgeInsets.all(16), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)))
+          else
+            TextButton(onPressed: _save, child: const Text('Зберегти')),
+        ],
+      ),
+      body: Form(
+        key: _formKey,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            _Label('Основна інформація'),
+            const SizedBox(height: 8),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Column(
+                  children: [
+                    TextFormField(
+                      controller: _nameController,
+                      decoration: const InputDecoration(labelText: 'Назва препарату *', border: InputBorder.none),
+                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Вкажіть назву' : null,
+                    ),
+                    const Divider(),
+                    TextFormField(
+                      controller: _dosageController,
+                      decoration: const InputDecoration(labelText: 'Дозування (необов\'язково)', border: InputBorder.none),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            _Label('Категорія'),
+            const SizedBox(height: 8),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                child: DropdownButtonFormField<String>(
+                  value: _category,
+                  decoration: const InputDecoration(border: InputBorder.none),
+                  items: _categories.map((c) => DropdownMenuItem(value: c.$1, child: Text(c.$2))).toList(),
+                  onChanged: (v) => setState(() => _category = v ?? 'other'),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            _Label('Дати'),
+            const SizedBox(height: 8),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.calendar_today_outlined),
+                      title: const Text('Дата прийому *'),
+                      subtitle: Text(_formatDate(_givenDate)),
+                      onTap: _pickGivenDate,
+                      trailing: const Icon(Icons.chevron_right),
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: const Icon(Icons.event_outlined),
+                      title: const Text('Наступний прийом'),
+                      subtitle: Text(_nextDoseDate != null ? _formatDate(_nextDoseDate!) : 'Не вказано'),
+                      onTap: _pickNextDate,
+                      trailing: const Icon(Icons.chevron_right),
+                    ),
+                    if (_nextDoseDate != null) ...[
+                      const Divider(height: 1),
+                      ListTile(
+                        leading: const Icon(Icons.close),
+                        title: const Text('Прибрати дату наступного прийому'),
+                        onTap: () => setState(() { _nextDoseDate = null; _reminderEnabled = false; }),
+                      ),
+                      const Divider(height: 1),
+                      SwitchListTile(
+                        secondary: const Icon(Icons.notifications_outlined),
+                        title: const Text('Нагадування'),
+                        value: _reminderEnabled,
+                        onChanged: (v) => setState(() => _reminderEnabled = v),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            _Label('Нотатки'),
+            const SizedBox(height: 8),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: TextFormField(
+                  controller: _notesController,
+                  decoration: const InputDecoration(labelText: 'Нотатки (необов\'язково)', border: InputBorder.none),
+                  maxLines: 3,
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            FilledButton(onPressed: _saving ? null : _save, child: const Text('Зберегти зміни')),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
 }

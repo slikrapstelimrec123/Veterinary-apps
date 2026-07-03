@@ -55,6 +55,23 @@ class MedicationRepository {
     return PetMedication.fromJson(row);
   }
 
+  Future<PetMedication> updateMedication(PetMedication medication) async {
+    if (_useMock) {
+      final idx = _mockData.indexWhere((m) => m.id == medication.id);
+      if (idx != -1) _mockData[idx] = medication;
+      return medication;
+    }
+
+    final row = await _client
+        .from('pet_medications')
+        .update(medication.toInsertJson())
+        .eq('id', medication.id)
+        .select()
+        .single();
+
+    return PetMedication.fromJson(row);
+  }
+
   Future<void> deleteMedication(String id) async {
     if (_useMock) {
       _mockData.removeWhere((m) => m.id == id);
