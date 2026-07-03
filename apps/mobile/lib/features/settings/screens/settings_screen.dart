@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/auth/auth_state.dart';
+import '../../../shared/widgets/app_icon.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../notifications/screens/notification_preferences_screen.dart';
 import 'edit_profile_screen.dart';
@@ -45,7 +46,7 @@ class SettingsScreen extends StatelessWidget {
         const SizedBox(height: 12),
         Card(
           child: ListTile(
-            leading: const Icon(Icons.notifications_none_outlined),
+            leading: const AppIcon(AppIcons.bell),
             title: const Text('Сповіщення'),
             subtitle: const Text('Нагадування та оновлення.'),
             trailing: const Icon(Icons.chevron_right),
@@ -59,7 +60,7 @@ class SettingsScreen extends StatelessWidget {
           child: Column(
             children: [
               ListTile(
-                leading: const Icon(Icons.support_agent_outlined),
+                leading: const AppIcon(AppIcons.support),
                 title: const Text('Служба підтримки'),
                 subtitle: const Text('Написати нам із запитанням або проблемою.'),
                 trailing: const Icon(Icons.chevron_right),
@@ -110,19 +111,19 @@ class SettingsScreen extends StatelessWidget {
           child: Column(
             children: [
               _SettingsLink(
-                icon: Icons.privacy_tip_outlined,
+                iconName: AppIcons.shieldLock,
                 title: 'Політика конфіденційності',
                 screen: LegalTextScreen.privacy(),
               ),
               const Divider(height: 1),
               _SettingsLink(
-                icon: Icons.description_outlined,
+                iconName: AppIcons.terms,
                 title: 'Умови використання',
                 screen: LegalTextScreen.terms(),
               ),
               const Divider(height: 1),
               _SettingsLink(
-                icon: Icons.download_outlined,
+                iconName: AppIcons.export_,
                 title: 'Запит на експорт даних',
                 screen: LegalTextScreen.placeholder(
                   title: 'Запит на експорт даних',
@@ -131,7 +132,7 @@ class SettingsScreen extends StatelessWidget {
               ),
               const Divider(height: 1),
               _SettingsLink(
-                icon: Icons.delete_outline,
+                iconName: AppIcons.trash,
                 title: 'Видалення акаунта',
                 screen: LegalTextScreen.placeholder(
                   title: 'Видалення акаунта',
@@ -231,7 +232,7 @@ class _InviteCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: ListTile(
-        leading: const Icon(Icons.person_add_outlined),
+        leading: const AppIcon(AppIcons.invite),
         title: const Text('Запросити друзів'),
         subtitle: const Text('Поділіться Lappo з іншими власниками тварин.'),
         trailing: const Icon(Icons.chevron_right),
@@ -242,16 +243,16 @@ class _InviteCard extends StatelessWidget {
 }
 
 class _SettingsLink extends StatelessWidget {
-  const _SettingsLink({required this.icon, required this.title, required this.screen});
+  const _SettingsLink({required this.iconName, required this.title, required this.screen});
 
-  final IconData icon;
+  final String iconName;
   final String title;
   final Widget screen;
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: Icon(icon),
+      leading: AppIcon(iconName),
       title: Text(title),
       trailing: const Icon(Icons.chevron_right),
       onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen)),
