@@ -94,10 +94,10 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
           const SnackBar(content: Text('Запис про прийом збережено.')),
         );
       }
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Не вдалося зберегти запис. Спробуйте ще раз.')),
+          SnackBar(content: Text('Помилка: $e'), duration: const Duration(seconds: 10)),
         );
       }
     } finally {
