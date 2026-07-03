@@ -41,7 +41,6 @@ class _AppShellState extends State<AppShell> {
       HomeScreen(onOpenPets: () => setState(() => _index = 1)),
       const PetListScreen(),
       const ClinicComingSoonScreen(),
-      const _ComingSoonPlaceholder(),
       const NotificationsScreen(),
       const SettingsScreen(),
     ];
@@ -57,13 +56,12 @@ class _AppShellState extends State<AppShell> {
             labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
             onDestinationSelected: (value) {
               setState(() => _index = value);
-              if (value == 4) refreshUnreadCount();
+              if (value == 3) refreshUnreadCount();
             },
             destinations: [
               const NavigationDestination(icon: Icon(Icons.home_outlined), label: 'Головна'),
               const NavigationDestination(icon: Icon(Icons.pets_outlined), label: 'Тварини'),
               const NavigationDestination(icon: Icon(Icons.local_hospital_outlined), label: 'Клініки'),
-              const NavigationDestination(icon: Icon(Icons.add_box_outlined), label: 'Незабаром'),
               NavigationDestination(
                 icon: Badge(
                   isLabelVisible: unread > 0,
