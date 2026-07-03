@@ -5,6 +5,8 @@ import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/error_state.dart';
 import '../../../shared/widgets/pet_avatar.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../achievements/screens/achievements_screen.dart';
+import '../../feeding/screens/feeding_screen.dart';
 import '../../medications/screens/medications_screen.dart';
 import '../../passport/screens/pet_passport_screen.dart';
 import '../../visit_records/screens/documents_screen.dart';
@@ -173,6 +175,30 @@ class _ActionGrid extends StatelessWidget {
                 title: 'Паспорт / QR',
                 onTap: () => Navigator.of(context).push(MaterialPageRoute(
                   builder: (_) => PetPassportScreen(petId: pet.id, petName: pet.name),
+                )),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: _ActionCard(
+                icon: Icons.restaurant_outlined,
+                title: 'Харчування',
+                onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => FeedingScreen(petId: pet.id, petName: pet.name),
+                )),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _ActionCard(
+                icon: Icons.emoji_events_outlined,
+                title: 'Досягнення',
+                onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => AchievementsScreen(petId: pet.id, petName: pet.name),
                 )),
               ),
             ),
