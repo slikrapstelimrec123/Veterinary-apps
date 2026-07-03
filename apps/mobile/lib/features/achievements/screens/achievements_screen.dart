@@ -24,7 +24,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
   @override
   void initState() {
     super.initState();
-    _load();
+    _future = _repo.getAchievements(widget.petId);
   }
 
   void _load() {

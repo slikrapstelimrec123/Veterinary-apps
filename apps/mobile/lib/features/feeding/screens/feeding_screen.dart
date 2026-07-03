@@ -27,11 +27,11 @@ class _FeedingScreenState extends State<FeedingScreen> {
   @override
   void initState() {
     super.initState();
-    _load();
+    _load(showLoading: false);
   }
 
-  Future<void> _load() async {
-    setState(() { _loading = true; _error = null; });
+  Future<void> _load({bool showLoading = true}) async {
+    if (showLoading && mounted) setState(() { _loading = true; _error = null; });
     try {
       final data = await _repo.getFeedings(widget.petId);
       if (mounted) setState(() { _feedings = data; _loading = false; });
