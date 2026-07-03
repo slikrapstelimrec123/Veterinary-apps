@@ -98,17 +98,25 @@ class _PetCard extends StatelessWidget {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
-        child: Column(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             PetAvatar(name: pet.name, size: 82),
-            const SizedBox(height: 12),
-            Text(pet.name, style: Theme.of(context).textTheme.headlineMedium, textAlign: TextAlign.center),
-            const SizedBox(height: 4),
-            Text('${pet.speciesLabel} · ${pet.ageLabel}', textAlign: TextAlign.center, style: const TextStyle(color: AppTheme.textSecondary)),
-            if (pet.breed != null) ...[
-              const SizedBox(height: 2),
-              Text(pet.breed!, textAlign: TextAlign.center, style: const TextStyle(color: AppTheme.textSecondary)),
-            ],
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(pet.name, style: Theme.of(context).textTheme.headlineMedium),
+                  const SizedBox(height: 4),
+                  Text('${pet.speciesLabel} · ${pet.ageLabel}', style: const TextStyle(color: AppTheme.textSecondary)),
+                  if (pet.breed != null) ...[
+                    const SizedBox(height: 2),
+                    Text(pet.breed!, style: const TextStyle(color: AppTheme.textSecondary)),
+                  ],
+                ],
+              ),
+            ),
           ],
         ),
       ),
