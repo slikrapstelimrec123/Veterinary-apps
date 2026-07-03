@@ -1,5 +1,10 @@
-import 'package:flutter/material.dart';
+import 'dart:io';
 
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../../core/config/supabase_config.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../data/pet_repository.dart';
 import '../domain/pet.dart';
@@ -50,6 +55,8 @@ class _PetFormScreenState extends State<PetFormScreen> {
   String sex = 'unknown';
   bool isNeutered = false;
   DateTime? birthDate;
+  File? avatarFile;
+  String? existingAvatarUrl;
   String? error;
   bool isSaving = false;
 
@@ -91,6 +98,7 @@ class _PetFormScreenState extends State<PetFormScreen> {
       sex = pet.sex ?? 'unknown';
       isNeutered = pet.isNeutered ?? false;
       birthDate = pet.birthDate;
+      existingAvatarUrl = pet.avatarUrl;
       weightController.text = pet.weightKg?.toString() ?? '';
       colorController.text = pet.color ?? '';
       microchipController.text = pet.microchipNumber ?? '';
@@ -125,6 +133,44 @@ class _PetFormScreenState extends State<PetFormScreen> {
     }
   }
 
+  Future<void> _pickAvatar() async {
+    final picker = ImagePicker();
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined),
+              title: const Text('Зробити фото'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Вибрати з галереї'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source == null) return;
+    final picked = await picker.pickImage(source: source, imageQuality: 85);
+    if (picked != null) setState(() => avatarFile = File(picked.path));
+  }
+
+  Future<String?> _uploadAvatar(String petId) async {
+    if (avatarFile == null) return existingAvatarUrl;
+    if (SupabaseConfig.useMockData) return null;
+    final ext = avatarFile!.path.split('.').last;
+    final path = 'avatars/$petId.$ext';
+    final client = Supabase.instance.client;
+    await client.storage.from('pet-documents').upload(path, avatarFile!,
+        fileOptions: const FileOptions(upsert: true));
+    return client.storage.from('pet-documents').getPublicUrl(path);
+  }
+
   Future<void> save() async {
     final name = nameController.text.trim();
     final weightText = weightController.text.trim();
@@ -150,22 +196,25 @@ class _PetFormScreenState extends State<PetFormScreen> {
       isSaving = true;
     });
 
-    final pet = Pet(
-      id: widget.pet?.id ?? '',
-      name: name,
-      species: species,
-      breed: breedController.text.trim().isEmpty ? null : breedController.text.trim(),
-      sex: sex,
-      isNeutered: isNeutered,
-      birthDate: birthDate,
-      weightKg: parsedWeight,
-      color: colorController.text.trim().isEmpty ? null : colorController.text.trim(),
-      microchipNumber: microchipController.text.trim().isEmpty ? null : microchipController.text.trim(),
-      avatarUrl: null,
-      notes: notesController.text.trim().isEmpty ? null : notesController.text.trim(),
-    );
-
     try {
+      final petId = widget.pet?.id ?? DateTime.now().millisecondsSinceEpoch.toString();
+      final avatarUrl = await _uploadAvatar(petId);
+
+      final pet = Pet(
+        id: petId,
+        name: name,
+        species: species,
+        breed: breedController.text.trim().isEmpty ? null : breedController.text.trim(),
+        sex: sex,
+        isNeutered: isNeutered,
+        birthDate: birthDate,
+        weightKg: parsedWeight,
+        color: colorController.text.trim().isEmpty ? null : colorController.text.trim(),
+        microchipNumber: microchipController.text.trim().isEmpty ? null : microchipController.text.trim(),
+        avatarUrl: avatarUrl,
+        notes: notesController.text.trim().isEmpty ? null : notesController.text.trim(),
+      );
+
       final saved = widget.pet == null
           ? await repository.createPet(pet)
           : await repository.updatePet(pet);
@@ -287,18 +336,36 @@ class _PetFormScreenState extends State<PetFormScreen> {
         ),
         const SizedBox(height: 12),
 
-        // Photo placeholder
-        OutlinedButton.icon(
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Завантаження фото буде доступне у наступному оновленні.'),
-              ),
-            );
-          },
-          icon: const Icon(Icons.photo_library_outlined),
-          label: const Text('Вибрати фото з галереї'),
-        ),
+        // Photo
+        if (avatarFile != null) ...[
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.file(avatarFile!, height: 160, width: double.infinity, fit: BoxFit.cover),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: _pickAvatar,
+            icon: const Icon(Icons.edit_outlined),
+            label: const Text('Змінити фото'),
+          ),
+        ] else if (existingAvatarUrl != null) ...[
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.network(existingAvatarUrl!, height: 160, width: double.infinity, fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const SizedBox.shrink()),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: _pickAvatar,
+            icon: const Icon(Icons.edit_outlined),
+            label: const Text('Змінити фото'),
+          ),
+        ] else
+          OutlinedButton.icon(
+            onPressed: _pickAvatar,
+            icon: const Icon(Icons.photo_library_outlined),
+            label: const Text('Додати фото тварини'),
+          ),
         const SizedBox(height: 12),
 
         // Notes
