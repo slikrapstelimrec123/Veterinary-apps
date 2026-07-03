@@ -29,15 +29,20 @@ class AppScaffold extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text(title), actions: allActions.isEmpty ? null : allActions),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            if (subtitle != null) ...[
-              Text(subtitle!, style: Theme.of(context).textTheme.bodyMedium),
-              const SizedBox(height: 20),
-            ],
-            ...children,
-          ],
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: ListView(
+              padding: const EdgeInsets.all(20),
+              children: [
+                if (subtitle != null) ...[
+                  Text(subtitle!, style: Theme.of(context).textTheme.bodyMedium),
+                  const SizedBox(height: 20),
+                ],
+                ...children,
+              ],
+            ),
+          ),
         ),
       ),
     );

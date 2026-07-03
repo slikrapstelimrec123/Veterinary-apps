@@ -428,11 +428,15 @@ class _InfoTile extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 120,
+          Flexible(
+            flex: 2,
             child: Text(label, style: const TextStyle(color: AppTheme.textSecondary)),
           ),
-          Expanded(child: Text(value, style: const TextStyle(fontWeight: FontWeight.w600))),
+          const SizedBox(width: 8),
+          Flexible(
+            flex: 3,
+            child: Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
+          ),
         ],
       ),
     );

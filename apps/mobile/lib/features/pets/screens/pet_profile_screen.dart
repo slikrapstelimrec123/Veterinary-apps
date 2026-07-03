@@ -280,11 +280,15 @@ class _DetailSectionState extends State<_DetailSection> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(
-                      width: 110,
+                    Flexible(
+                      flex: 2,
                       child: Text(item.$1, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
                     ),
-                    Expanded(child: Text(item.$2, style: const TextStyle(fontWeight: FontWeight.w600))),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      flex: 3,
+                      child: Text(item.$2, style: const TextStyle(fontWeight: FontWeight.w600)),
+                    ),
                   ],
                 ),
               ),
