@@ -28,7 +28,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       final user = AuthScope.of(context).currentUser;
       _nameController.text = user?.fullName ?? '';
       _phoneController.text = user?.phone ?? '';
-      _currentEmail = Supabase.instance.client.auth.currentUser?.email ?? '';
+      if (!SupabaseConfig.useMockData) {
+        _currentEmail = Supabase.instance.client.auth.currentUser?.email ?? '';
+      } else {
+        _currentEmail = user?.email ?? '';
+      }
       _emailController.text = _currentEmail;
     }
   }
