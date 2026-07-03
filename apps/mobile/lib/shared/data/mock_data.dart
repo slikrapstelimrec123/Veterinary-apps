@@ -24,7 +24,9 @@ class MockData {
       weightKg: 11.8,
       color: 'Соболиний',
       microchipNumber: '990000000001',
+      avatarUrl: 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&q=80',
       notes: 'Чутливе травлення. Краще реагує на спокійне поводження.',
+      isNeutered: true,
     ),
     Pet(
       id: 'mock_pet_milo',
@@ -35,7 +37,9 @@ class MockData {
       birthDate: DateTime(2020, 9, 5),
       weightKg: 6.2,
       color: 'Блакитно-сірий',
+      avatarUrl: 'https://images.unsplash.com/photo-1526336024174-e58f5cdd8e13?w=400&q=80',
       notes: 'Домашній кіт. Незабаром планова щорічна вакцинація.',
+      isNeutered: false,
     ),
   ];
 

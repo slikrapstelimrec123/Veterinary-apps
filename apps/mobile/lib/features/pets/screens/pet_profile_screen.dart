@@ -101,7 +101,7 @@ class _PetCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            PetAvatar(name: pet.name, size: 82),
+            PetAvatar(name: pet.name, avatarUrl: pet.avatarUrl, size: 82),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
