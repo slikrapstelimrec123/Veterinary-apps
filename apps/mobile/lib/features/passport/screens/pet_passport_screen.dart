@@ -1,12 +1,17 @@
-import 'package:flutter/material.dart';
-import 'package:qr_flutter/qr_flutter.dart';
+import 'dart:io';
 
-import '../../../features/pets/domain/pet.dart';
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../../core/config/supabase_config.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../features/pets/data/pet_repository.dart';
+import '../../../features/pets/domain/pet.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/error_state.dart';
-import '../../../core/theme/app_theme.dart';
 
 class PetPassportScreen extends StatefulWidget {
   const PetPassportScreen({super.key, required this.petId, required this.petName});
@@ -41,7 +46,7 @@ class _PetPassportScreenState extends State<PetPassportScreen> {
             else if (pet == null)
               const EmptyState(title: 'Тварину не знайдено', message: 'Профіль тварини недоступний.', icon: Icons.search_off_outlined)
             else
-              _PassportContent(pet: pet),
+              _PassportContent(pet: pet, onChanged: _refresh),
           ],
         );
       },
@@ -50,14 +55,17 @@ class _PetPassportScreenState extends State<PetPassportScreen> {
 }
 
 class _PassportContent extends StatelessWidget {
-  const _PassportContent({required this.pet});
+  const _PassportContent({required this.pet, required this.onChanged});
   final Pet pet;
+  final VoidCallback onChanged;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         _PassportCard(pet: pet),
+        const SizedBox(height: 16),
+        _PassportPhotoSection(pet: pet, onChanged: onChanged),
         const SizedBox(height: 16),
         _QrSection(pet: pet),
         const SizedBox(height: 16),
@@ -66,6 +74,203 @@ class _PassportContent extends StatelessWidget {
     );
   }
 }
+
+// ─── Passport Photo ───────────────────────────────────────────────────────────
+
+class _PassportPhotoSection extends StatefulWidget {
+  const _PassportPhotoSection({required this.pet, required this.onChanged});
+  final Pet pet;
+  final VoidCallback onChanged;
+
+  @override
+  State<_PassportPhotoSection> createState() => _PassportPhotoSectionState();
+}
+
+class _PassportPhotoSectionState extends State<_PassportPhotoSection> {
+  bool _uploading = false;
+
+  Future<void> _pick() async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined),
+              title: const Text('Зробити фото'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Вибрати з галереї'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source == null) return;
+
+    final picked = await ImagePicker().pickImage(source: source, imageQuality: 90);
+    if (picked == null) return;
+
+    setState(() => _uploading = true);
+    try {
+      if (!SupabaseConfig.useMockData) {
+        final file = File(picked.path);
+        final ext = picked.path.split('.').last;
+        final path = 'passports/${widget.pet.id}.$ext';
+        final client = Supabase.instance.client;
+        await client.storage.from('pet-documents').upload(path, file,
+            fileOptions: const FileOptions(upsert: true));
+        final url = client.storage.from('pet-documents').getPublicUrl(path);
+        await client.from('pets').update({'passport_photo_url': url}).eq('id', widget.pet.id);
+      }
+      if (mounted) {
+        widget.onChanged();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Фото паспорта збережено.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Помилка: $e'), duration: const Duration(seconds: 8)),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _uploading = false);
+    }
+  }
+
+  void _view() {
+    final url = widget.pet.passportPhotoUrl;
+    if (url == null) return;
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => _PassportPhotoViewer(url: url, petName: widget.pet.name),
+    ));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hasPhoto = widget.pet.passportPhotoUrl != null;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.badge_outlined, size: 18, color: AppTheme.textSecondary),
+                const SizedBox(width: 8),
+                Text('Фото паспорта', style: Theme.of(context).textTheme.titleMedium),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (hasPhoto) ...[
+              GestureDetector(
+                onTap: _view,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.network(
+                    widget.pet.passportPhotoUrl!,
+                    height: 180,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      height: 180,
+                      color: Colors.grey.shade200,
+                      child: const Icon(Icons.broken_image_outlined, color: Colors.grey, size: 40),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _view,
+                      icon: const Icon(Icons.fullscreen, size: 18),
+                      label: const Text('Переглянути'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _uploading ? null : _pick,
+                      icon: _uploading
+                          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                          : const Icon(Icons.upload_outlined, size: 18),
+                      label: const Text('Замінити'),
+                    ),
+                  ),
+                ],
+              ),
+            ] else
+              GestureDetector(
+                onTap: _uploading ? null : _pick,
+                child: Container(
+                  height: 110,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+                  ),
+                  child: _uploading
+                      ? const Center(child: CircularProgressIndicator())
+                      : Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.add_photo_alternate_outlined, size: 34, color: AppTheme.textSecondary),
+                            const SizedBox(height: 6),
+                            const Text('Завантажити фото паспорта',
+                                style: TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
+                          ],
+                        ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PassportPhotoViewer extends StatelessWidget {
+  const _PassportPhotoViewer({required this.url, required this.petName});
+  final String url;
+  final String petName;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: Text('Паспорт — $petName', style: const TextStyle(color: Colors.white)),
+      ),
+      body: Center(
+        child: InteractiveViewer(
+          minScale: 0.5,
+          maxScale: 4,
+          child: Image.network(
+            url,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) =>
+                const Icon(Icons.broken_image_outlined, color: Colors.white, size: 64),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Passport Card ────────────────────────────────────────────────────────────
 
 class _PassportCard extends StatelessWidget {
   const _PassportCard({required this.pet});
@@ -108,7 +313,7 @@ class _PassportCard extends StatelessWidget {
                 children: [
                   const Icon(Icons.memory_outlined, size: 16, color: AppTheme.textSecondary),
                   const SizedBox(width: 6),
-                  Text('Мікрочип: ', style: const TextStyle(color: AppTheme.textSecondary)),
+                  const Text('Мікрочип: ', style: TextStyle(color: AppTheme.textSecondary)),
                   Text(pet.microchipNumber!, style: const TextStyle(fontWeight: FontWeight.w600)),
                 ],
               ),
@@ -119,6 +324,8 @@ class _PassportCard extends StatelessWidget {
     );
   }
 }
+
+// ─── QR ───────────────────────────────────────────────────────────────────────
 
 class _QrSection extends StatelessWidget {
   const _QrSection({required this.pet});
@@ -165,6 +372,8 @@ class _QrSection extends StatelessWidget {
   }
 }
 
+// ─── Info ─────────────────────────────────────────────────────────────────────
+
 class _InfoSection extends StatelessWidget {
   const _InfoSection({required this.pet});
   final Pet pet;
@@ -173,6 +382,7 @@ class _InfoSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final rows = <_InfoRow>[
       _InfoRow('Стать', pet.sexLabel),
+      if (pet.isNeutered != null) _InfoRow('Кастровано', pet.isNeutered! ? 'Так' : 'Ні'),
       if (pet.birthDate != null) _InfoRow('Дата народження', _formatDate(pet.birthDate!)),
       if (pet.weightKg != null) _InfoRow('Вага', '${pet.weightKg} кг'),
       if (pet.color != null) _InfoRow('Колір', pet.color!),
@@ -196,7 +406,8 @@ class _InfoSection extends StatelessWidget {
     );
   }
 
-  String _formatDate(DateTime d) => '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}.${d.year}';
+  String _formatDate(DateTime d) =>
+      '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}.${d.year}';
 }
 
 class _InfoRow {
