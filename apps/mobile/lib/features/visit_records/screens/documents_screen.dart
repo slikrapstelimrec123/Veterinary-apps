@@ -46,7 +46,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
             else if (documents.isEmpty)
               const EmptyState(
                 title: 'Документів ще немає',
-                message: ‘Медичні документи з’являться тут.’,
+                message: "Медичні документи з’являться тут.",
                 icon: Icons.folder_open_outlined,
               )
             else
