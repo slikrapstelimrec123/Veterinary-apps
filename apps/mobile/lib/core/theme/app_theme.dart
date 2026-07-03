@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   static const Color primary = Color(0xFF5C7CFA);
@@ -57,12 +58,14 @@ class AppTheme {
           textStyle: const TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
-      textTheme: const TextTheme(
-        headlineMedium: TextStyle(fontWeight: FontWeight.w800, color: textMain),
-        titleLarge: TextStyle(fontWeight: FontWeight.w800, color: textMain),
-        titleMedium: TextStyle(fontWeight: FontWeight.w700, color: textMain),
-        bodyMedium: TextStyle(color: textMain, height: 1.35),
-        bodySmall: TextStyle(color: textSecondary),
+      textTheme: GoogleFonts.montserratTextTheme(
+        const TextTheme(
+          headlineMedium: TextStyle(fontWeight: FontWeight.w800, color: textMain),
+          titleLarge: TextStyle(fontWeight: FontWeight.w800, color: textMain),
+          titleMedium: TextStyle(fontWeight: FontWeight.w700, color: textMain),
+          bodyMedium: TextStyle(color: textMain, height: 1.35),
+          bodySmall: TextStyle(color: textSecondary),
+        ),
       ),
     );
   }
