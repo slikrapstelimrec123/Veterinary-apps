@@ -259,8 +259,14 @@ class _DetailSectionState extends State<_DetailSection> {
   @override
   Widget build(BuildContext context) {
     final pet = widget.pet;
+    final neuteredLabel = pet.isNeutered == null
+        ? 'Не вказано'
+        : pet.isNeutered!
+            ? 'Так'
+            : 'Ні';
     final details = <(String, String)>[
       ('Стать', pet.sexLabel),
+      ('Кастровано', neuteredLabel),
       ('Вага', pet.weightKg == null ? 'Не вказано' : '${pet.weightKg} кг'),
       ('Колір', pet.color ?? 'Не вказано'),
       ('Мікрочип', pet.microchipNumber ?? 'Не вказано'),

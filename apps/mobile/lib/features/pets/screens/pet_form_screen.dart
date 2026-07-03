@@ -48,6 +48,7 @@ class _PetFormScreenState extends State<PetFormScreen> {
 
   String species = 'dog';
   String sex = 'unknown';
+  bool isNeutered = false;
   DateTime? birthDate;
   String? error;
   bool isSaving = false;
@@ -88,6 +89,7 @@ class _PetFormScreenState extends State<PetFormScreen> {
       species = pet.species.isEmpty ? 'dog' : pet.species;
       breedController.text = pet.breed ?? '';
       sex = pet.sex ?? 'unknown';
+      isNeutered = pet.isNeutered ?? false;
       birthDate = pet.birthDate;
       weightController.text = pet.weightKg?.toString() ?? '';
       colorController.text = pet.color ?? '';
@@ -154,6 +156,7 @@ class _PetFormScreenState extends State<PetFormScreen> {
       species: species,
       breed: breedController.text.trim().isEmpty ? null : breedController.text.trim(),
       sex: sex,
+      isNeutered: isNeutered,
       birthDate: birthDate,
       weightKg: parsedWeight,
       color: colorController.text.trim().isEmpty ? null : colorController.text.trim(),
@@ -231,7 +234,16 @@ class _PetFormScreenState extends State<PetFormScreen> {
               .toList(),
           onChanged: (v) => setState(() => sex = v ?? 'unknown'),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 4),
+
+        // Neutered
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Кастровано / стерилізовано'),
+          value: isNeutered,
+          onChanged: (v) => setState(() => isNeutered = v),
+        ),
+        const SizedBox(height: 4),
 
         // Birth date — tap to open date picker
         GestureDetector(

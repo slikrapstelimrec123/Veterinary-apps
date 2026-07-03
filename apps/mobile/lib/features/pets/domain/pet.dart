@@ -11,6 +11,7 @@
     this.microchipNumber,
     this.avatarUrl,
     this.notes,
+    this.isNeutered,
     this.createdAt,
     this.updatedAt,
   });
@@ -26,6 +27,7 @@
   final String? microchipNumber;
   final String? avatarUrl;
   final String? notes;
+  final bool? isNeutered;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -84,6 +86,7 @@
       'microchip_number': microchipNumber,
       'avatar_url': avatarUrl,
       'notes': notes,
+      'is_neutered': isNeutered,
     };
   }
 
@@ -100,6 +103,7 @@
       microchipNumber: json['microchip_number'] as String?,
       avatarUrl: json['avatar_url'] as String? ?? json['photo_url'] as String?,
       notes: json['notes'] as String? ?? json['health_notes'] as String?,
+      isNeutered: json['is_neutered'] as bool?,
       createdAt: DateTime.tryParse(json['created_at'] as String? ?? ''),
       updatedAt: DateTime.tryParse(json['updated_at'] as String? ?? ''),
     );
@@ -117,6 +121,7 @@
     String? microchipNumber,
     String? avatarUrl,
     String? notes,
+    bool? isNeutered,
   }) {
     return Pet(
       id: id ?? this.id,
@@ -130,6 +135,7 @@
       microchipNumber: microchipNumber ?? this.microchipNumber,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       notes: notes ?? this.notes,
+      isNeutered: isNeutered ?? this.isNeutered,
       createdAt: createdAt,
       updatedAt: updatedAt,
     );
