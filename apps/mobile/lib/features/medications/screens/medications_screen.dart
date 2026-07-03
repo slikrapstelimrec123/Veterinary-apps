@@ -78,16 +78,25 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
               child: Text('Фільтр', style: Theme.of(context).textTheme.titleMedium),
             ),
             const SizedBox(height: 8),
-            ...options.map((opt) => ListTile(
-              leading: Icon(_filterIcon(opt), color: _filter == opt ? AppTheme.primary : null),
-              title: Text(_filterLabel(opt)),
-              trailing: _filter == opt ? const Icon(Icons.check, color: AppTheme.primary) : null,
-              onTap: () {
-                setState(() => _filter = opt);
-                Navigator.pop(context);
-              },
-            )),
-            const SizedBox(height: 8),
+            Flexible(
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ...options.map((opt) => ListTile(
+                      leading: Icon(_filterIcon(opt), color: _filter == opt ? AppTheme.primary : null),
+                      title: Text(_filterLabel(opt)),
+                      trailing: _filter == opt ? const Icon(Icons.check, color: AppTheme.primary) : null,
+                      onTap: () {
+                        setState(() => _filter = opt);
+                        Navigator.pop(context);
+                      },
+                    )),
+                    const SizedBox(height: 8),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
