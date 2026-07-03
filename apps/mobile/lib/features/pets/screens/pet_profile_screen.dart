@@ -180,27 +180,6 @@ class _ActionGrid extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 10),
-        SizedBox(
-          width: double.infinity,
-          child: _ActionCard(
-            icon: Icons.calendar_month_outlined,
-            title: 'Записатись до ветеринара',
-            badge: 'Незабаром',
-            onTap: () => showDialog(
-              context: context,
-              builder: (ctx) => AlertDialog(
-                title: const Text('Незабаром'),
-                content: const Text(
-                  'Онлайн-запис до ветеринара буде доступний після підключення клінік до платформи.\n\nТим часом ви можете самостійно додати запис про прийом у розділі "Прийоми".',
-                ),
-                actions: [
-                  FilledButton(onPressed: () => Navigator.pop(ctx), child: const Text('Зрозуміло')),
-                ],
-              ),
-            ),
-          ),
-        ),
       ],
     );
   }
