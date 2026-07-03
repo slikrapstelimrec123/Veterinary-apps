@@ -40,6 +40,7 @@ class AchievementRepository {
         result: achievement.result,
         awardTitle: achievement.awardTitle,
         awardImageUrl: achievement.awardImageUrl,
+        eventPhotoUrl: achievement.eventPhotoUrl,
         notes: achievement.notes,
         createdAt: DateTime.now(),
       );

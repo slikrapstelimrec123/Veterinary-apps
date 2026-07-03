@@ -9,6 +9,7 @@ class PetAchievement {
     this.result,
     this.awardTitle,
     this.awardImageUrl,
+    this.eventPhotoUrl,
     this.notes,
     this.endDate,
     this.createdAt,
@@ -24,6 +25,7 @@ class PetAchievement {
   final String? result;
   final String? awardTitle;
   final String? awardImageUrl;
+  final String? eventPhotoUrl;
   final String? notes;
   final DateTime? createdAt;
 
@@ -47,6 +49,7 @@ class PetAchievement {
       result: json['result'] as String?,
       awardTitle: json['award_title'] as String?,
       awardImageUrl: json['award_image_url'] as String?,
+      eventPhotoUrl: json['event_photo_url'] as String?,
       notes: json['notes'] as String?,
       createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at'] as String) : null,
     );
@@ -62,6 +65,7 @@ class PetAchievement {
     'result': result,
     'award_title': awardTitle,
     'award_image_url': awardImageUrl,
+    'event_photo_url': eventPhotoUrl,
     'notes': notes,
   };
 }

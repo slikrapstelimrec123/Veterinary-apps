@@ -1,5 +1,10 @@
-import 'package:flutter/material.dart';
+import 'dart:io';
 
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../../core/config/supabase_config.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/empty_state.dart';
@@ -156,13 +161,26 @@ class _AchievementCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 10),
-              _Row(Icons.calendar_today_outlined, _dateRange(a)),
-              if (a.location != null) _Row(Icons.location_on_outlined, a.location!),
-              if (a.result != null) _Row(Icons.leaderboard_outlined, a.result!),
-              if (a.awardTitle != null) _Row(Icons.military_tech_outlined, a.awardTitle!),
+              _InfoRow(Icons.calendar_today_outlined, _dateRange(a)),
+              if (a.location != null) _InfoRow(Icons.location_on_outlined, a.location!),
+              if (a.result != null) _InfoRow(Icons.leaderboard_outlined, a.result!),
+              if (a.awardTitle != null) _InfoRow(Icons.military_tech_outlined, a.awardTitle!),
               if (a.notes != null) ...[
                 const Divider(height: 16),
                 Text(a.notes!, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+              ],
+              if (a.eventPhotoUrl != null || a.awardImageUrl != null) ...[
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    if (a.eventPhotoUrl != null)
+                      Expanded(child: _PhotoThumbnail(url: a.eventPhotoUrl!, label: 'Фото з події')),
+                    if (a.eventPhotoUrl != null && a.awardImageUrl != null)
+                      const SizedBox(width: 8),
+                    if (a.awardImageUrl != null)
+                      Expanded(child: _PhotoThumbnail(url: a.awardImageUrl!, label: 'Фото нагороди')),
+                  ],
+                ),
               ],
             ],
           ),
@@ -181,8 +199,39 @@ class _AchievementCard extends StatelessWidget {
       '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}.${d.year}';
 }
 
-class _Row extends StatelessWidget {
-  const _Row(this.icon, this.text);
+class _PhotoThumbnail extends StatelessWidget {
+  const _PhotoThumbnail({required this.url, required this.label});
+  final String url;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+        const SizedBox(height: 4),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.network(
+            url,
+            height: 120,
+            width: double.infinity,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Container(
+              height: 120,
+              color: Colors.grey.shade200,
+              child: const Icon(Icons.broken_image_outlined, color: Colors.grey),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  const _InfoRow(this.icon, this.text);
   final IconData icon;
   final String text;
 
@@ -254,6 +303,14 @@ class _AchievementFormState extends State<_AchievementForm> {
   DateTime? _endDate;
   bool _saving = false;
 
+  // photos
+  File? _eventPhotoFile;
+  File? _awardPhotoFile;
+  String? _eventPhotoUrl;
+  String? _awardPhotoUrl;
+
+  final _picker = ImagePicker();
+
   static const _types = [
     ('competition', 'Змагання'),
     ('exhibition', 'Виставка'),
@@ -274,6 +331,8 @@ class _AchievementFormState extends State<_AchievementForm> {
       _eventType = a.eventType;
       _eventDate = a.eventDate;
       _endDate = a.endDate;
+      _eventPhotoUrl = a.eventPhotoUrl;
+      _awardPhotoUrl = a.awardImageUrl;
     }
   }
 
@@ -285,6 +344,27 @@ class _AchievementFormState extends State<_AchievementForm> {
     _awardCtrl.dispose();
     _notesCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickPhoto(bool isEvent) async {
+    final picked = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    if (picked == null) return;
+    setState(() {
+      if (isEvent) {
+        _eventPhotoFile = File(picked.path);
+      } else {
+        _awardPhotoFile = File(picked.path);
+      }
+    });
+  }
+
+  Future<String?> _uploadPhoto(File file, String folder) async {
+    if (SupabaseConfig.useMockData) return null;
+    final client = Supabase.instance.client;
+    final ext = file.path.split('.').last;
+    final path = '$folder/${DateTime.now().millisecondsSinceEpoch}.$ext';
+    await client.storage.from('achievement-photos').upload(path, file);
+    return client.storage.from('achievement-photos').getPublicUrl(path);
   }
 
   Future<void> _pickDate(bool isEnd) async {
@@ -311,6 +391,16 @@ class _AchievementFormState extends State<_AchievementForm> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
     try {
+      String? eventUrl = _eventPhotoUrl;
+      String? awardUrl = _awardPhotoUrl;
+
+      if (_eventPhotoFile != null) {
+        eventUrl = await _uploadPhoto(_eventPhotoFile!, 'events');
+      }
+      if (_awardPhotoFile != null) {
+        awardUrl = await _uploadPhoto(_awardPhotoFile!, 'awards');
+      }
+
       final a = PetAchievement(
         id: widget.initial?.id ?? '',
         petId: widget.petId,
@@ -321,6 +411,8 @@ class _AchievementFormState extends State<_AchievementForm> {
         location: _locationCtrl.text.trim().isEmpty ? null : _locationCtrl.text.trim(),
         result: _resultCtrl.text.trim().isEmpty ? null : _resultCtrl.text.trim(),
         awardTitle: _awardCtrl.text.trim().isEmpty ? null : _awardCtrl.text.trim(),
+        awardImageUrl: awardUrl,
+        eventPhotoUrl: eventUrl,
         notes: _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
       );
       await widget.onSave(a);
@@ -461,6 +553,30 @@ class _AchievementFormState extends State<_AchievementForm> {
               ),
             ),
             const SizedBox(height: 16),
+            _Label('Фото'),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(child: _PhotoPicker(
+                  label: 'Фото з події',
+                  icon: Icons.photo_camera_outlined,
+                  file: _eventPhotoFile,
+                  existingUrl: _eventPhotoUrl,
+                  onPick: () => _pickPhoto(true),
+                  onRemove: () => setState(() { _eventPhotoFile = null; _eventPhotoUrl = null; }),
+                )),
+                const SizedBox(width: 10),
+                Expanded(child: _PhotoPicker(
+                  label: 'Фото нагороди',
+                  icon: Icons.military_tech_outlined,
+                  file: _awardPhotoFile,
+                  existingUrl: _awardPhotoUrl,
+                  onPick: () => _pickPhoto(false),
+                  onRemove: () => setState(() { _awardPhotoFile = null; _awardPhotoUrl = null; }),
+                )),
+              ],
+            ),
+            const SizedBox(height: 16),
             _Label('Нотатки'),
             const SizedBox(height: 8),
             Card(
@@ -484,6 +600,84 @@ class _AchievementFormState extends State<_AchievementForm> {
             const SizedBox(height: 24),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _PhotoPicker extends StatelessWidget {
+  const _PhotoPicker({
+    required this.label,
+    required this.icon,
+    required this.onPick,
+    required this.onRemove,
+    this.file,
+    this.existingUrl,
+  });
+
+  final String label;
+  final IconData icon;
+  final File? file;
+  final String? existingUrl;
+  final VoidCallback onPick;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasPhoto = file != null || existingUrl != null;
+
+    return GestureDetector(
+      onTap: onPick,
+      child: Container(
+        height: 130,
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outlineVariant,
+            width: 1,
+          ),
+        ),
+        child: hasPhoto
+            ? Stack(
+                fit: StackFit.expand,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(11),
+                    child: file != null
+                        ? Image.file(file!, fit: BoxFit.cover)
+                        : Image.network(existingUrl!, fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => const Icon(Icons.broken_image_outlined)),
+                  ),
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: GestureDetector(
+                      onTap: onRemove,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.black54,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        padding: const EdgeInsets.all(4),
+                        child: const Icon(Icons.close, size: 16, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, size: 32, color: AppTheme.textSecondary),
+                  const SizedBox(height: 6),
+                  Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                  ),
+                ],
+              ),
       ),
     );
   }
