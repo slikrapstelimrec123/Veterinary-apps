@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../features/clinics/screens/clinic_coming_soon_screen.dart';
 import '../../features/medications/data/medication_repository.dart';
 import '../../features/medications/domain/pet_medication.dart';
+import '../../features/medications/screens/medications_screen.dart';
 import '../../features/notifications/data/notification_repository.dart';
 import '../../features/notifications/screens/notifications_screen.dart';
 import '../../features/pets/data/pet_repository.dart';
@@ -282,11 +283,13 @@ class _ComingSoonPlaceholder extends StatelessWidget {
 // ─── Upcoming Events ─────────────────────────────────────────────────────────
 
 class _UpcomingEvent {
-  const _UpcomingEvent({required this.title, required this.petName, required this.date, required this.isOverdue});
+  const _UpcomingEvent({required this.title, required this.pet, required this.date, required this.isOverdue});
   final String title;
-  final String petName;
+  final Pet pet;
   final DateTime date;
   final bool isOverdue;
+
+  String get petName => pet.name;
 }
 
 class _UpcomingEventsCard extends StatefulWidget {
@@ -334,7 +337,7 @@ class _UpcomingEventsCardState extends State<_UpcomingEventsCard> {
           if (d.isAfter(threshold)) continue;
           events.add(_UpcomingEvent(
             title: med.name,
-            petName: pet.name,
+            pet: pet,
             date: d,
             isOverdue: med.nextDoseOverdue,
           ));
@@ -377,39 +380,47 @@ class _UpcomingEventsCardState extends State<_UpcomingEventsCard> {
             ..._events.map((e) {
               final overdue = e.isOverdue;
               final color = overdue ? AppTheme.danger : AppTheme.warning;
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: color.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(10),
+              return InkWell(
+                borderRadius: BorderRadius.circular(10),
+                onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => MedicationsScreen(petId: e.pet.id, petName: e.pet.name),
+                )),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: color.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          overdue ? Icons.warning_amber_rounded : Icons.medication_outlined,
+                          size: 20,
+                          color: color,
+                        ),
                       ),
-                      child: Icon(
-                        overdue ? Icons.warning_amber_rounded : Icons.medication_outlined,
-                        size: 20,
-                        color: color,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(e.title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                            Text('${e.petName} · ${_formatDate(e.date)}',
+                                style: TextStyle(fontSize: 12, color: overdue ? color : AppTheme.textSecondary)),
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(e.title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
-                          Text('${e.petName} · ${_formatDate(e.date)}',
-                              style: TextStyle(fontSize: 12, color: overdue ? color : AppTheme.textSecondary)),
-                        ],
+                      Text(
+                        _formatDate(e.date),
+                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: color),
                       ),
-                    ),
-                    Text(
-                      _formatDate(e.date),
-                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: color),
-                    ),
-                  ],
+                      const SizedBox(width: 4),
+                      Icon(Icons.chevron_right, size: 16, color: AppTheme.textSecondary),
+                    ],
+                  ),
                 ),
               );
             }),
