@@ -49,9 +49,9 @@ class ClinicComingSoonScreen extends StatelessWidget {
         Center(
           child: Column(
             children: [
-              Icon(Icons.calendar_month_outlined, size: 56, color: Theme.of(context).colorScheme.primary.withOpacity(0.4)),
-              const SizedBox(height: 16),
-              Text('Записи на прийом', style: Theme.of(context).textTheme.titleLarge),
+              Icon(Icons.calendar_month_outlined, size: 72, color: Theme.of(context).colorScheme.primary.withOpacity(0.4)),
+              const SizedBox(height: 20),
+              Text('Записи на прийом', style: Theme.of(context).textTheme.headlineMedium),
               const SizedBox(height: 8),
               const Text(
                 'Онлайн-запис на прийом до ветеринара з\'явиться у наступному оновленні.',
