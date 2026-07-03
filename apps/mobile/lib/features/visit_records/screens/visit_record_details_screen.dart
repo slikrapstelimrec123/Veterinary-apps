@@ -1,6 +1,3 @@
-﻿import 'dart:io';
-
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/app_scaffold.dart';
@@ -36,7 +33,7 @@ class _VisitRecordDetailsScreenState extends State<VisitRecordDetailsScreen> {
     setState(() => future = load());
   }
 
-  Future<void> _showUploadSheet(String visitRecordId, String petId) async {
+  void _showUploadSheet(String visitRecordId, String petId) {
     final titleController = TextEditingController();
     String selectedType = 'analysis';
 
@@ -48,10 +45,7 @@ class _VisitRecordDetailsScreenState extends State<VisitRecordDetailsScreen> {
       'other': 'Інше',
     };
 
-    File? pickedFile;
-    String? pickedFileName;
-
-    await showModalBottomSheet(
+    showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
@@ -79,60 +73,30 @@ class _VisitRecordDetailsScreenState extends State<VisitRecordDetailsScreen> {
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 value: selectedType,
-                decoration: const InputDecoration(labelText: 'Тип документа', border: OutlineInputBorder()),
-                items: types.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value))).toList(),
+                decoration: const InputDecoration(
+                  labelText: 'Тип документа',
+                  border: OutlineInputBorder(),
+                ),
+                items: types.entries
+                    .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
+                    .toList(),
                 onChanged: (v) => setSheet(() => selectedType = v ?? selectedType),
               ),
               const SizedBox(height: 12),
-              OutlinedButton.icon(
-                icon: const Icon(Icons.attach_file),
-                label: Text(pickedFileName ?? 'Обрати файл'),
-                onPressed: () async {
-                  final result = await FilePicker.platform.pickFiles(
-                    type: FileType.custom,
-                    allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx'],
-                  );
-                  if (result != null && result.files.single.path != null) {
-                    setSheet(() {
-                      pickedFile = File(result.files.single.path!);
-                      pickedFileName = result.files.single.name;
-                    });
-                  }
-                },
-              ),
-              const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
-                child: FilledButton(
-                  onPressed: pickedFile == null || titleController.text.trim().isEmpty
-                      ? null
-                      : () async {
-                          Navigator.pop(ctx);
-                          try {
-                            await repository.uploadDocument(
-                              visitRecordId: visitRecordId,
-                              petId: petId,
-                              file: pickedFile!,
-                              title: titleController.text.trim(),
-                              documentType: selectedType,
-                            );
-                            refresh();
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Документ завантажено.')),
-                              );
-                            }
-                          } catch (e) {
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Помилка завантаження: $e')),
-                              );
-                            }
-                          }
-                        },
-                  child: const Text('Завантажити'),
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.attach_file),
+                  label: const Text('Обрати файл'),
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Завантаження файлів буде доступне у наступному оновленні.')),
+                    );
+                  },
                 ),
               ),
+              const SizedBox(height: 8),
             ],
           ),
         ),
@@ -170,7 +134,8 @@ class _VisitRecordDetailsScreenState extends State<VisitRecordDetailsScreen> {
               _RecordSection(title: 'Препарати', body: record.prescribedMedications ?? 'Препарати не додано.'),
               _RecordSection(title: 'Рекомендації', body: record.recommendations ?? 'Рекомендації не додано.'),
               _RecordSection(title: 'Наступний візит', body: _nextVisitLabel(record)),
-              if (record.appointmentId != null && record.clinicId != null) _VisitReviewAction(record: record, repository: reviewRepository, onChanged: refresh),
+              if (record.appointmentId != null && record.clinicId != null)
+                _VisitReviewAction(record: record, repository: reviewRepository, onChanged: refresh),
               const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -191,7 +156,7 @@ class _VisitRecordDetailsScreenState extends State<VisitRecordDetailsScreen> {
                   icon: Icons.attach_file_outlined,
                 )
               else
-                ...documents.map((document) => _DocumentTile(document: document, repository: repository)),
+                ...documents.map((doc) => _DocumentTile(document: doc, repository: repository)),
             ],
           ],
         );
@@ -200,10 +165,7 @@ class _VisitRecordDetailsScreenState extends State<VisitRecordDetailsScreen> {
   }
 
   String _nextVisitLabel(VisitRecord record) {
-    if (!record.nextVisitRecommended) {
-      return 'Дату повторного візиту не вказано.';
-    }
-
+    if (!record.nextVisitRecommended) return 'Дату повторного візиту не вказано.';
     return record.nextVisitDate?.toIso8601String().split('T').first ?? 'Рекомендовано, але дату не вказано.';
   }
 }
@@ -220,36 +182,25 @@ class _VisitReviewAction extends StatelessWidget {
     return FutureBuilder(
       future: repository.getReviewForAppointment(record.appointmentId!),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SizedBox.shrink();
-        }
-
+        if (snapshot.connectionState == ConnectionState.waiting) return const SizedBox.shrink();
         if (snapshot.data != null) {
-          return const Card(
-            child: Padding(
-              padding: EdgeInsets.all(14),
-              child: Text('Цей візит уже оцінено.'),
-            ),
-          );
+          return const Card(child: Padding(padding: EdgeInsets.all(14), child: Text('Цей візит уже оцінено.')));
         }
-
         return Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: OutlinedButton.icon(
             onPressed: () async {
-              await Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => LeaveReviewScreen(
-                    clinicId: record.clinicId!,
-                    clinicName: record.clinicName ?? 'Клініка',
-                    appointmentId: record.appointmentId!,
-                    visitRecordId: record.id,
-                    petId: record.petId,
-                    doctorId: record.doctorId,
-                    doctorName: record.doctorName,
-                  ),
+              await Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => LeaveReviewScreen(
+                  clinicId: record.clinicId!,
+                  clinicName: record.clinicName ?? 'Клініка',
+                  appointmentId: record.appointmentId!,
+                  visitRecordId: record.id,
+                  petId: record.petId,
+                  doctorId: record.doctorId,
+                  doctorName: record.doctorName,
                 ),
-              );
+              ));
               onChanged();
             },
             icon: const Icon(Icons.star_border),
@@ -263,14 +214,12 @@ class _VisitReviewAction extends StatelessWidget {
 
 class _VisitDetailsData {
   const _VisitDetailsData({required this.record, required this.documents});
-
   final VisitRecord? record;
   final List<VisitDocument> documents;
 }
 
 class _RecordSection extends StatelessWidget {
   const _RecordSection({required this.title, required this.body});
-
   final String title;
   final String body;
 
@@ -297,7 +246,6 @@ class _RecordSection extends StatelessWidget {
 
 class _DocumentTile extends StatelessWidget {
   const _DocumentTile({required this.document, required this.repository});
-
   final VisitDocument document;
   final VisitRecordRepository repository;
 
@@ -307,16 +255,13 @@ class _DocumentTile extends StatelessWidget {
       child: ListTile(
         leading: const Icon(Icons.description_outlined),
         title: Text(document.title),
-        subtitle: Text('${document.type} - ${document.fileSizeLabel} - ${document.createdAt.toIso8601String().split('T').first}'),
+        subtitle: Text('${document.type} · ${document.fileSizeLabel} · ${document.createdAt.toIso8601String().split('T').first}'),
         trailing: const Icon(Icons.lock_outline),
         onTap: () async {
           final url = await repository.getSignedDocumentUrl(document);
-          if (!context.mounted) {
-            return;
-          }
-
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(url == null ? 'Безпечний перегляд файлу поки недоступний у демо-режимі.' : 'Приватне посилання для цього сеансу створено.')),
+            SnackBar(content: Text(url == null ? 'Перегляд файлу поки недоступний.' : 'Посилання створено.')),
           );
         },
       ),
