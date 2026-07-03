@@ -76,17 +76,14 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
         await Supabase.instance.client.from('visit_records').insert({
           'pet_id': widget.petId,
           'visit_date': _visitDate.toIso8601String().split('T').first,
-          'clinic_name_manual': _clinicNameController.text.trim().isEmpty ? null : _clinicNameController.text.trim(),
-          'reason_for_visit': _reasonController.text.trim().isEmpty ? null : _reasonController.text.trim(),
+          'reason': _reasonController.text.trim().isEmpty ? null : _reasonController.text.trim(),
           'symptoms': _symptomsController.text.trim().isEmpty ? null : _symptomsController.text.trim(),
           'diagnosis': _diagnosisController.text.trim().isEmpty ? null : _diagnosisController.text.trim(),
-          'treatment_notes': _treatmentController.text.trim().isEmpty ? null : _treatmentController.text.trim(),
-          'prescribed_medications': _medicationsController.text.trim().isEmpty ? null : _medicationsController.text.trim(),
+          'treatment': _treatmentController.text.trim().isEmpty ? null : _treatmentController.text.trim(),
+          'medications_given': _medicationsController.text.trim().isEmpty ? null : _medicationsController.text.trim(),
           'recommendations': _recommendationsController.text.trim().isEmpty ? null : _recommendationsController.text.trim(),
-          'next_visit_recommended': _nextVisitRecommended,
           'next_visit_date': _nextVisitDate?.toIso8601String().split('T').first,
           'status': 'self_reported',
-          'source': 'owner',
         });
       }
 
