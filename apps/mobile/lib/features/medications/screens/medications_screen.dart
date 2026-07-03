@@ -19,15 +19,36 @@ class MedicationsScreen extends StatefulWidget {
 
 class _MedicationsScreenState extends State<MedicationsScreen> {
   final _repo = MedicationRepository();
-  late Future<List<PetMedication>> _future = _repo.getMedications(widget.petId);
+  List<PetMedication>? _meds;
+  bool _loading = true;
+  String? _error;
 
-  void _refresh() => setState(() => _future = _repo.getMedications(widget.petId));
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() { _loading = true; _error = null; });
+    try {
+      final data = await _repo.getMedications(widget.petId);
+      if (mounted) setState(() { _meds = data; _loading = false; });
+    } catch (e) {
+      if (mounted) setState(() { _error = e.toString(); _loading = false; });
+    }
+  }
 
   Future<void> _add() async {
-    final result = await Navigator.of(context).push(MaterialPageRoute(
+    final result = await Navigator.of(context).push<PetMedication>(MaterialPageRoute(
       builder: (_) => AddMedicationScreen(petId: widget.petId, petName: widget.petName),
     ));
-    if (result != null) _refresh();
+    if (result != null && mounted) {
+      setState(() => _meds = [result, ...?_meds]);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Запис про препарат збережено.')),
+      );
+    }
   }
 
   Future<void> _delete(PetMedication med) async {
@@ -46,47 +67,46 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
       ),
     );
     if (confirmed == true) {
-      await _repo.deleteMedication(med.id);
-      _refresh();
+      // Optimistic remove
+      setState(() => _meds = _meds?.where((m) => m.id != med.id).toList());
+      try {
+        await _repo.deleteMedication(med.id);
+      } catch (_) {
+        _load(); // revert on error
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<PetMedication>>(
-      future: _future,
-      builder: (context, snapshot) {
-        final meds = snapshot.data ?? [];
-        return AppScaffold(
-          title: 'Препарати та лікування',
-          subtitle: widget.petName,
-          actions: [IconButton(icon: const Icon(Icons.add), tooltip: 'Додати', onPressed: _add)],
-          children: [
-            if (snapshot.connectionState == ConnectionState.waiting)
-              const Center(child: CircularProgressIndicator())
-            else if (snapshot.hasError)
-              ErrorState(message: 'Не вдалося завантажити дані.', onRetry: _refresh)
-            else if (meds.isEmpty)
-              EmptyState(
-                title: 'Записів про препарати немає',
-                message: 'Додайте перший запис — від кліщів, дегельмінтизацію або будь-які інші препарати.',
-                icon: Icons.medication_outlined,
-                action: FilledButton(onPressed: _add, child: const Text('Додати препарат')),
-              )
-            else ...[
-              // Show upcoming/overdue reminders first
-              ..._buildReminders(meds, context),
-              ...meds.map((m) => _MedicationCard(med: m, onDelete: () => _delete(m))),
-              const SizedBox(height: 4),
-              OutlinedButton.icon(
-                onPressed: _add,
-                icon: const Icon(Icons.add),
-                label: const Text('Додати препарат'),
-              ),
-            ],
-          ],
-        );
-      },
+    final meds = _meds ?? [];
+    return AppScaffold(
+      title: 'Препарати та лікування',
+      subtitle: widget.petName,
+      actions: [IconButton(icon: const Icon(Icons.add), tooltip: 'Додати', onPressed: _add)],
+      children: [
+        if (_loading)
+          const Center(child: CircularProgressIndicator())
+        else if (_error != null)
+          ErrorState(message: 'Не вдалося завантажити дані.', onRetry: _load)
+        else if (meds.isEmpty)
+          EmptyState(
+            title: 'Записів про препарати немає',
+            message: 'Додайте перший запис — від кліщів, дегельмінтизацію або будь-які інші препарати.',
+            icon: Icons.medication_outlined,
+            action: FilledButton(onPressed: _add, child: const Text('Додати препарат')),
+          )
+        else ...[
+          ..._buildReminders(meds, context),
+          ...meds.map((m) => _MedicationCard(med: m, onDelete: () => _delete(m))),
+          const SizedBox(height: 4),
+          OutlinedButton.icon(
+            onPressed: _add,
+            icon: const Icon(Icons.add),
+            label: const Text('Додати препарат'),
+          ),
+        ],
+      ],
     );
   }
 
@@ -303,13 +323,10 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
         reminderEnabled: _reminderEnabled,
       );
 
-      await MedicationRepository().addMedication(med);
+      final saved = await MedicationRepository().addMedication(med);
 
       if (mounted) {
-        Navigator.of(context).pop(true);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Запис про препарат збережено.')),
-        );
+        Navigator.of(context).pop(saved);
       }
     } catch (_) {
       if (mounted) {
