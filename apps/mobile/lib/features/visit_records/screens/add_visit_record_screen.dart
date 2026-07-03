@@ -75,6 +75,7 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
       if (!SupabaseConfig.useMockData) {
         await Supabase.instance.client.from('visit_records').insert({
           'pet_id': widget.petId,
+          'owner_id': Supabase.instance.client.auth.currentUser!.id,
           'visit_date': _visitDate.toIso8601String().split('T').first,
           'reason': _reasonController.text.trim().isEmpty ? null : _reasonController.text.trim(),
           'symptoms': _symptomsController.text.trim().isEmpty ? null : _symptomsController.text.trim(),
