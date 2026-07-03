@@ -12,6 +12,7 @@
     this.avatarUrl,
     this.notes,
     this.isNeutered,
+    this.passportPhotoUrl,
     this.createdAt,
     this.updatedAt,
   });
@@ -28,6 +29,7 @@
   final String? avatarUrl;
   final String? notes;
   final bool? isNeutered;
+  final String? passportPhotoUrl;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -87,6 +89,7 @@
       'avatar_url': avatarUrl,
       'notes': notes,
       'is_neutered': isNeutered,
+      'passport_photo_url': passportPhotoUrl,
     };
   }
 
@@ -104,6 +107,7 @@
       avatarUrl: json['avatar_url'] as String? ?? json['photo_url'] as String?,
       notes: json['notes'] as String? ?? json['health_notes'] as String?,
       isNeutered: json['is_neutered'] as bool?,
+      passportPhotoUrl: json['passport_photo_url'] as String?,
       createdAt: DateTime.tryParse(json['created_at'] as String? ?? ''),
       updatedAt: DateTime.tryParse(json['updated_at'] as String? ?? ''),
     );
@@ -122,6 +126,7 @@
     String? avatarUrl,
     String? notes,
     bool? isNeutered,
+    String? passportPhotoUrl,
   }) {
     return Pet(
       id: id ?? this.id,
@@ -136,6 +141,7 @@
       avatarUrl: avatarUrl ?? this.avatarUrl,
       notes: notes ?? this.notes,
       isNeutered: isNeutered ?? this.isNeutered,
+      passportPhotoUrl: passportPhotoUrl ?? this.passportPhotoUrl,
       createdAt: createdAt,
       updatedAt: updatedAt,
     );
