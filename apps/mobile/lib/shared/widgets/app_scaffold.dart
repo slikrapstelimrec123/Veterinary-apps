@@ -22,7 +22,7 @@ class AppScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final logoWidget = const _LappoLogo();
     final allActions = [
-      if (showLogo) ...[logoWidget, const SizedBox(width: 8)],
+      if (showLogo) ...[logoWidget, const SizedBox(width: 16)],
       ...?actions,
     ];
 
