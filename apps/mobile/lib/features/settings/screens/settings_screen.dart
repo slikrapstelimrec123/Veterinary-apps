@@ -55,6 +55,57 @@ class SettingsScreen extends StatelessWidget {
         Card(
           child: Column(
             children: [
+              ListTile(
+                leading: const Icon(Icons.support_agent_outlined),
+                title: const Text('Служба підтримки'),
+                subtitle: const Text('Написати нам із запитанням або проблемою.'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => showModalBottomSheet(
+                  context: context,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                  ),
+                  builder: (_) => SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Служба підтримки', style: Theme.of(context).textTheme.titleLarge),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Якщо у вас виникли питання або проблеми — зв\'яжіться з нами зручним способом.',
+                            style: TextStyle(color: Color(0xFF707784)),
+                          ),
+                          const SizedBox(height: 20),
+                          ListTile(
+                            leading: const Icon(Icons.email_outlined),
+                            title: const Text('Написати на email'),
+                            subtitle: const Text('support@lappo.app'),
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                          const Divider(height: 1),
+                          ListTile(
+                            leading: const Icon(Icons.chat_bubble_outline),
+                            title: const Text('Telegram'),
+                            subtitle: const Text('@lappo_support'),
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                          const SizedBox(height: 8),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        Card(
+          child: Column(
+            children: [
               _SettingsLink(
                 icon: Icons.privacy_tip_outlined,
                 title: 'Політика конфіденційності',
