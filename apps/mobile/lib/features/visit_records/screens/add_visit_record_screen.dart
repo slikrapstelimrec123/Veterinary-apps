@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase_config.dart';
@@ -29,6 +32,8 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
   bool _nextVisitRecommended = false;
   DateTime? _nextVisitDate;
 
+  final List<File> _photos = [];
+  final _picker = ImagePicker();
   bool _saving = false;
 
   @override
@@ -50,9 +55,7 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
       firstDate: DateTime(2000),
       lastDate: DateTime.now(),
     );
-    if (picked != null) {
-      setState(() => _visitDate = picked);
-    }
+    if (picked != null) setState(() => _visitDate = picked);
   }
 
   Future<void> _pickNextVisitDate() async {
@@ -62,14 +65,52 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
     );
-    if (picked != null) {
-      setState(() => _nextVisitDate = picked);
+    if (picked != null) setState(() => _nextVisitDate = picked);
+  }
+
+  Future<void> _pickPhoto(ImageSource source) async {
+    final picked = await _picker.pickImage(source: source, imageQuality: 85);
+    if (picked != null) setState(() => _photos.add(File(picked.path)));
+  }
+
+  void _showPhotoOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined),
+              title: const Text('Зробити фото'),
+              onTap: () { Navigator.pop(context); _pickPhoto(ImageSource.camera); },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Вибрати з галереї'),
+              onTap: () { Navigator.pop(context); _pickPhoto(ImageSource.gallery); },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<List<String>> _uploadPhotos(String recordId) async {
+    final client = Supabase.instance.client;
+    final urls = <String>[];
+    for (final file in _photos) {
+      final ext = file.path.split('.').last;
+      final path = 'visit-records/$recordId/${DateTime.now().millisecondsSinceEpoch}.$ext';
+      await client.storage.from('visit-documents').upload(path, file);
+      final url = client.storage.from('visit-documents').getPublicUrl(path);
+      urls.add(url);
     }
+    return urls;
   }
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _saving = true);
 
     try {
@@ -89,6 +130,19 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
           'status': 'self_reported',
         }).select('id').single();
         newRecordId = row['id'] as String?;
+
+        // upload photos and save as documents
+        if (newRecordId != null && _photos.isNotEmpty) {
+          final urls = await _uploadPhotos(newRecordId);
+          for (final url in urls) {
+            await Supabase.instance.client.from('visit_documents').insert({
+              'visit_record_id': newRecordId,
+              'file_url': url,
+              'file_type': 'image',
+              'title': 'Фото з прийому',
+            });
+          }
+        }
       }
 
       if (mounted) {
@@ -98,7 +152,7 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
             content: const Text('Запис про прийом збережено.'),
             action: newRecordId != null
                 ? SnackBarAction(
-                    label: 'Додати документ',
+                    label: 'Переглянути',
                     onPressed: () {
                       Navigator.of(context).push(MaterialPageRoute(
                         builder: (_) => VisitRecordDetailsScreen(recordId: newRecordId!),
@@ -274,7 +328,51 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: 16),
+            _SectionLabel('Документи та фото'),
             const SizedBox(height: 8),
+            if (_photos.isNotEmpty) ...[
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 8,
+                ),
+                itemCount: _photos.length,
+                itemBuilder: (_, i) => Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.file(_photos[i], fit: BoxFit.cover),
+                    ),
+                    Positioned(
+                      top: 2,
+                      right: 2,
+                      child: GestureDetector(
+                        onTap: () => setState(() => _photos.removeAt(i)),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          padding: const EdgeInsets.all(3),
+                          child: const Icon(Icons.close, size: 14, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+            OutlinedButton.icon(
+              onPressed: _showPhotoOptions,
+              icon: const Icon(Icons.add_photo_alternate_outlined),
+              label: Text(_photos.isEmpty ? 'Додати фото документа або аналізів' : 'Додати ще фото'),
+            ),
             if (SupabaseConfig.useMockData)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
@@ -284,7 +382,7 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
                   textAlign: TextAlign.center,
                 ),
               ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
             FilledButton(
               onPressed: _saving ? null : _save,
               child: const Text('Зберегти запис'),
