@@ -15,8 +15,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController = TextEditingController();
   late final TextEditingController _phoneController = TextEditingController();
+  late final TextEditingController _emailController = TextEditingController();
   bool _saving = false;
   bool _initialized = false;
+  String _currentEmail = '';
 
   @override
   void didChangeDependencies() {
@@ -26,6 +28,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       final user = AuthScope.of(context).currentUser;
       _nameController.text = user?.fullName ?? '';
       _phoneController.text = user?.phone ?? '';
+      _currentEmail = Supabase.instance.client.auth.currentUser?.email ?? '';
+      _emailController.text = _currentEmail;
     }
   }
 
@@ -33,6 +37,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
+    _emailController.dispose();
     super.dispose();
   }
 
@@ -56,6 +61,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     setState(() => _saving = true);
 
     try {
+      final newEmail = _emailController.text.trim();
+      final emailChanged = newEmail.isNotEmpty && newEmail != _currentEmail;
+
       if (!SupabaseConfig.useMockData) {
         final uid = Supabase.instance.client.auth.currentUser?.id;
         if (uid != null) {
@@ -64,18 +72,33 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             'phone': _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
           }).eq('id', uid);
         }
+
+        if (emailChanged) {
+          await Supabase.instance.client.auth.updateUser(
+            UserAttributes(email: newEmail),
+          );
+        }
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Профіль оновлено.')),
-        );
+        if (emailChanged) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Профіль оновлено. На нову адресу надіслано лист для підтвердження.'),
+              duration: Duration(seconds: 6),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Профіль оновлено.')),
+          );
+        }
         Navigator.of(context).pop(true);
       }
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Не вдалося зберегти. Спробуйте ще раз.')),
+          SnackBar(content: Text('Помилка: $e'), duration: const Duration(seconds: 8)),
         );
       }
     } finally {
@@ -130,6 +153,47 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: 16),
+            Text('Електронна адреса', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: TextFormField(
+                  controller: _emailController,
+                  decoration: const InputDecoration(
+                    labelText: 'Email',
+                    border: InputBorder.none,
+                    prefixIcon: Icon(Icons.email_outlined),
+                  ),
+                  keyboardType: TextInputType.emailAddress,
+                  autocorrect: false,
+                  onChanged: (_) => setState(() {}),
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) return 'Введіть email';
+                    final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+                    if (!emailRegex.hasMatch(v.trim())) return 'Некоректний email';
+                    return null;
+                  },
+                ),
+              ),
+            ),
+            if (_emailController.text.trim() != _currentEmail && _emailController.text.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 6, left: 4),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline, size: 14, color: Colors.orange),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Після збереження на нову адресу буде надіслано лист для підтвердження.',
+                        style: TextStyle(fontSize: 12, color: Colors.orange.shade700),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             const SizedBox(height: 24),
             FilledButton(
               onPressed: _saving ? null : _save,
