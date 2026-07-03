@@ -17,9 +17,8 @@ class VisitRecordRepository {
 
     final rows = await _client
         .from('visit_records')
-        .select('*, clinics(name), doctors(full_name)')
+        .select('*')
         .eq('pet_id', petId)
-        .inFilter('status', ['published', 'self_reported'])
         .order('visit_date', ascending: false);
 
     return (rows as List<dynamic>).whereType<Map<String, dynamic>>().map(VisitRecord.fromJson).toList();
@@ -28,18 +27,15 @@ class VisitRecordRepository {
   Future<VisitRecord?> getVisitRecord(String id) async {
     if (_useMockData) {
       for (final record in MockData.visitRecords) {
-        if (record.id == id && record.status == 'published') {
-          return record;
-        }
+        if (record.id == id) return record;
       }
       return null;
     }
 
     final row = await _client
         .from('visit_records')
-        .select('*, clinics(name), doctors(full_name)')
+        .select('*')
         .eq('id', id)
-        .eq('status', 'published')
         .maybeSingle();
 
     return row == null ? null : VisitRecord.fromJson(row);
@@ -48,18 +44,15 @@ class VisitRecordRepository {
   Future<VisitRecord?> getVisitRecordForAppointment(String appointmentId) async {
     if (_useMockData) {
       for (final record in MockData.visitRecords) {
-        if (record.appointmentId == appointmentId && record.status == 'published') {
-          return record;
-        }
+        if (record.appointmentId == appointmentId) return record;
       }
       return null;
     }
 
     final row = await _client
         .from('visit_records')
-        .select('*, clinics(name), doctors(full_name)')
+        .select('*')
         .eq('appointment_id', appointmentId)
-        .eq('status', 'published')
         .maybeSingle();
 
     return row == null ? null : VisitRecord.fromJson(row);
