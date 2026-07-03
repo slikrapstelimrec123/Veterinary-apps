@@ -36,7 +36,7 @@ class _PetPassportScreenState extends State<PetPassportScreen> {
       builder: (context, snapshot) {
         final pet = snapshot.data;
         return AppScaffold(
-          title: 'Цифровий паспорт',
+          title: 'Історія лікування',
           subtitle: widget.petName,
           children: [
             if (snapshot.connectionState == ConnectionState.waiting)
@@ -351,7 +351,7 @@ class _QrSection extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            Text('QR-код паспорта', style: Theme.of(context).textTheme.titleMedium),
+            Text('QR-код історії лікування', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 12),
             QrImageView(
               data: _buildQrData(),
@@ -397,7 +397,7 @@ class _InfoSection extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Дані паспорта', style: Theme.of(context).textTheme.titleMedium),
+            Text('Дані тварини', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 12),
             ...rows.map((r) => _InfoTile(label: r.label, value: r.value)),
           ],
