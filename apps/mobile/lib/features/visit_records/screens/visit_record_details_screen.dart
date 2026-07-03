@@ -1,4 +1,7 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/empty_state.dart';
@@ -33,6 +36,110 @@ class _VisitRecordDetailsScreenState extends State<VisitRecordDetailsScreen> {
     setState(() => future = load());
   }
 
+  Future<void> _showUploadSheet(String visitRecordId, String petId) async {
+    final titleController = TextEditingController();
+    String selectedType = 'analysis';
+
+    const types = {
+      'analysis': 'Аналіз',
+      'xray': 'Рентген / УЗД',
+      'prescription': 'Рецепт',
+      'vaccination': 'Вакцинація',
+      'other': 'Інше',
+    };
+
+    File? pickedFile;
+    String? pickedFileName;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheet) => Padding(
+          padding: EdgeInsets.only(
+            left: 24, right: 24, top: 24,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Додати документ', style: Theme.of(ctx).textTheme.titleLarge),
+              const SizedBox(height: 16),
+              TextField(
+                controller: titleController,
+                decoration: const InputDecoration(
+                  labelText: 'Назва документа',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: selectedType,
+                decoration: const InputDecoration(labelText: 'Тип документа', border: OutlineInputBorder()),
+                items: types.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value))).toList(),
+                onChanged: (v) => setSheet(() => selectedType = v ?? selectedType),
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                icon: const Icon(Icons.attach_file),
+                label: Text(pickedFileName ?? 'Обрати файл'),
+                onPressed: () async {
+                  final result = await FilePicker.platform.pickFiles(
+                    type: FileType.custom,
+                    allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx'],
+                  );
+                  if (result != null && result.files.single.path != null) {
+                    setSheet(() {
+                      pickedFile = File(result.files.single.path!);
+                      pickedFileName = result.files.single.name;
+                    });
+                  }
+                },
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: pickedFile == null || titleController.text.trim().isEmpty
+                      ? null
+                      : () async {
+                          Navigator.pop(ctx);
+                          try {
+                            await repository.uploadDocument(
+                              visitRecordId: visitRecordId,
+                              petId: petId,
+                              file: pickedFile!,
+                              title: titleController.text.trim(),
+                              documentType: selectedType,
+                            );
+                            refresh();
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Документ завантажено.')),
+                              );
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Помилка завантаження: $e')),
+                              );
+                            }
+                          }
+                        },
+                  child: const Text('Завантажити'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<_VisitDetailsData>(
@@ -65,7 +172,17 @@ class _VisitRecordDetailsScreenState extends State<VisitRecordDetailsScreen> {
               _RecordSection(title: 'Наступний візит', body: _nextVisitLabel(record)),
               if (record.appointmentId != null && record.clinicId != null) _VisitReviewAction(record: record, repository: reviewRepository, onChanged: refresh),
               const SizedBox(height: 8),
-              Text('Документи', style: Theme.of(context).textTheme.titleLarge),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Документи', style: Theme.of(context).textTheme.titleLarge),
+                  TextButton.icon(
+                    onPressed: () => _showUploadSheet(record.id, record.petId),
+                    icon: const Icon(Icons.upload_file_outlined, size: 18),
+                    label: const Text('Додати'),
+                  ),
+                ],
+              ),
               const SizedBox(height: 8),
               if (documents.isEmpty)
                 const EmptyState(
