@@ -13,16 +13,20 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _nameController;
-  late final TextEditingController _phoneController;
+  late final TextEditingController _nameController = TextEditingController();
+  late final TextEditingController _phoneController = TextEditingController();
   bool _saving = false;
+  bool _initialized = false;
 
   @override
-  void initState() {
-    super.initState();
-    final user = AuthScope.of(context).currentUser;
-    _nameController = TextEditingController(text: user?.fullName ?? '');
-    _phoneController = TextEditingController(text: user?.phone ?? '');
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      _initialized = true;
+      final user = AuthScope.of(context).currentUser;
+      _nameController.text = user?.fullName ?? '';
+      _phoneController.text = user?.phone ?? '';
+    }
   }
 
   @override
