@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../shared/widgets/app_icon.dart';
 import '../../features/clinics/screens/clinic_coming_soon_screen.dart';
 import '../../features/medications/data/medication_repository.dart';
 import '../../features/medications/domain/pet_medication.dart';
@@ -60,37 +59,24 @@ class _AppShellState extends State<AppShell> {
               if (value == 3) refreshUnreadCount();
             },
             destinations: [
-              _navItem(context, AppIcons.home, 'Головна'),
-              _navItem(context, AppIcons.paw, 'Тварини'),
-              _navItem(context, AppIcons.calendarPlus, 'Клініки'),
+              const NavigationDestination(icon: Icon(Icons.home_outlined), label: 'Головна'),
+              const NavigationDestination(icon: Icon(Icons.pets_outlined), label: 'Тварини'),
+              const NavigationDestination(icon: Icon(Icons.local_hospital_outlined), label: 'Клініки'),
               NavigationDestination(
                 icon: Badge(
                   isLabelVisible: unread > 0,
                   label: Text(unread > 9 ? '9+' : '$unread'),
-                  child: AppIcon(AppIcons.bell, size: 26, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                ),
-                selectedIcon: Badge(
-                  isLabelVisible: unread > 0,
-                  label: Text(unread > 9 ? '9+' : '$unread'),
-                  child: AppIcon(AppIcons.bell, size: 26, color: Theme.of(context).colorScheme.onSecondaryContainer),
+                  child: const Icon(Icons.notifications_none_outlined),
                 ),
                 label: 'Сповіщення',
               ),
-              _navItem(context, AppIcons.settings, 'Налаштування'),
+              const NavigationDestination(icon: Icon(Icons.settings_outlined), label: 'Налаштування'),
             ],
           );
         },
       ),
     );
   }
-}
-
-NavigationDestination _navItem(BuildContext context, String iconName, String label) {
-  return NavigationDestination(
-    icon: AppIcon(iconName, size: 26, color: Theme.of(context).colorScheme.onSurfaceVariant),
-    selectedIcon: AppIcon(iconName, size: 26, color: Theme.of(context).colorScheme.onSecondaryContainer),
-    label: label,
-  );
 }
 
 class HomeScreen extends StatefulWidget {
@@ -137,7 +123,12 @@ class _HomeScreenState extends State<HomeScreen> {
               _SummaryCard(petCount: pets.length),
               const SizedBox(height: 12),
               if (pets.isEmpty)
-                _EmptyPetsState(onAdd: addPet)
+                EmptyState(
+                  title: 'Додайте першу тварину',
+                  message: 'Створіть медичну картку, щоб зберігати всю інформацію про здоров\'я вашого улюбленця.',
+                  icon: Icons.pets_outlined,
+                  action: FilledButton(onPressed: addPet, child: const Text('Додати тварину')),
+                )
               else ...[
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -167,31 +158,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class _EmptyPetsState extends StatelessWidget {
-  const _EmptyPetsState({required this.onAdd});
-  final VoidCallback onAdd;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(22),
-        child: Column(
-          children: [
-            AppIcon(AppIcons.paw, size: 44, color: Theme.of(context).colorScheme.primary),
-            const SizedBox(height: 12),
-            Text('Додайте першу тварину', style: Theme.of(context).textTheme.titleMedium, textAlign: TextAlign.center),
-            const SizedBox(height: 8),
-            const Text('Створіть медичну картку, щоб зберігати всю інформацію про здоров\'я вашого улюбленця.', textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            FilledButton(onPressed: onAdd, child: const Text('Додати тварину')),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _SummaryCard extends StatelessWidget {
   const _SummaryCard({required this.petCount});
 
@@ -206,7 +172,7 @@ class _SummaryCard extends StatelessWidget {
           children: [
             Expanded(
               child: _StatTile(
-                iconName: AppIcons.paw,
+                icon: Icons.pets_outlined,
                 value: '$petCount',
                 label: petCount == 1 ? 'тварина' : petCount < 5 ? 'тварини' : 'тварин',
               ),
@@ -214,7 +180,7 @@ class _SummaryCard extends StatelessWidget {
             const SizedBox(width: 8),
             const Expanded(
               child: _StatTile(
-                iconName: AppIcons.doctor,
+                icon: Icons.history_outlined,
                 value: '0',
                 label: 'прийомів',
               ),
@@ -222,7 +188,7 @@ class _SummaryCard extends StatelessWidget {
             const SizedBox(width: 8),
             const Expanded(
               child: _StatTile(
-                iconName: AppIcons.document,
+                icon: Icons.folder_outlined,
                 value: '0',
                 label: 'документів',
               ),
@@ -235,8 +201,8 @@ class _SummaryCard extends StatelessWidget {
 }
 
 class _StatTile extends StatelessWidget {
-  const _StatTile({required this.iconName, required this.value, required this.label});
-  final String iconName;
+  const _StatTile({required this.icon, required this.value, required this.label});
+  final IconData icon;
   final String value;
   final String label;
 
@@ -244,7 +210,7 @@ class _StatTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        AppIcon(iconName, size: 22, color: AppTheme.primary),
+        Icon(icon, size: 22, color: AppTheme.primary),
         const SizedBox(height: 4),
         Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppTheme.textMain)),
         Text(label, style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary), textAlign: TextAlign.center),
@@ -266,7 +232,7 @@ class _ClinicComingSoonCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                const AppIcon(AppIcons.calendarPlus, size: 18, color: AppTheme.textSecondary),
+                const Icon(Icons.schedule_outlined, size: 18, color: AppTheme.textSecondary),
                 const SizedBox(width: 6),
                 Text('Клініки — незабаром', style: Theme.of(context).textTheme.titleMedium),
               ],
@@ -403,7 +369,7 @@ class _UpcomingEventsCardState extends State<_UpcomingEventsCard> {
           children: [
             Row(
               children: [
-                AppIcon(AppIcons.calendar, size: 18, color: AppTheme.primary),
+                Icon(Icons.event_outlined, size: 18, color: AppTheme.primary),
                 const SizedBox(width: 6),
                 Text('Найближчі події', style: Theme.of(context).textTheme.titleMedium),
               ],
@@ -428,8 +394,8 @@ class _UpcomingEventsCardState extends State<_UpcomingEventsCard> {
                           color: color.withOpacity(0.12),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: AppIcon(
-                          overdue ? AppIcons.check : AppIcons.medicine,
+                        child: Icon(
+                          overdue ? Icons.warning_amber_rounded : Icons.medication_outlined,
                           size: 20,
                           color: color,
                         ),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../shared/widgets/app_icon.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/error_state.dart';
@@ -138,7 +137,7 @@ class _ActionGrid extends StatelessWidget {
           children: [
             Expanded(
               child: _ActionCard(
-                iconName: AppIcons.doctor,
+                icon: Icons.history_outlined,
                 title: 'Прийоми',
                 onTap: () => Navigator.of(context).push(MaterialPageRoute(
                   builder: (_) => VisitHistoryScreen(petId: pet.id, petName: pet.name),
@@ -148,7 +147,7 @@ class _ActionGrid extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: _ActionCard(
-                iconName: AppIcons.document,
+                icon: Icons.folder_outlined,
                 title: 'Документи',
                 onTap: () => Navigator.of(context).push(MaterialPageRoute(
                   builder: (_) => DocumentsScreen(petId: pet.id, petName: pet.name),
@@ -162,7 +161,7 @@ class _ActionGrid extends StatelessWidget {
           children: [
             Expanded(
               child: _ActionCard(
-                iconName: AppIcons.medicine,
+                icon: Icons.medication_outlined,
                 title: 'Препарати',
                 onTap: () => Navigator.of(context).push(MaterialPageRoute(
                   builder: (_) => MedicationsScreen(petId: pet.id, petName: pet.name),
@@ -172,7 +171,7 @@ class _ActionGrid extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: _ActionCard(
-                iconName: AppIcons.qr,
+                icon: Icons.qr_code_outlined,
                 title: 'Іст. лікування',
                 onTap: () => Navigator.of(context).push(MaterialPageRoute(
                   builder: (_) => PetPassportScreen(petId: pet.id, petName: pet.name),
@@ -186,7 +185,7 @@ class _ActionGrid extends StatelessWidget {
           children: [
             Expanded(
               child: _ActionCard(
-                iconName: AppIcons.feeding,
+                icon: Icons.restaurant_outlined,
                 title: 'Харчування',
                 onTap: () => Navigator.of(context).push(MaterialPageRoute(
                   builder: (_) => FeedingScreen(petId: pet.id, petName: pet.name),
@@ -196,7 +195,7 @@ class _ActionGrid extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: _ActionCard(
-                iconName: AppIcons.trophy,
+                icon: Icons.emoji_events_outlined,
                 title: 'Досягнення',
                 onTap: () => Navigator.of(context).push(MaterialPageRoute(
                   builder: (_) => AchievementsScreen(petId: pet.id, petName: pet.name),
@@ -211,8 +210,8 @@ class _ActionGrid extends StatelessWidget {
 }
 
 class _ActionCard extends StatelessWidget {
-  const _ActionCard({required this.iconName, required this.title, required this.onTap, this.badge});
-  final String iconName;
+  const _ActionCard({required this.icon, required this.title, required this.onTap, this.badge});
+  final IconData icon;
   final String title;
   final VoidCallback onTap;
   final String? badge;
@@ -227,7 +226,7 @@ class _ActionCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
           child: Column(
             children: [
-              AppIcon(iconName, size: 28),
+              Icon(icon, size: 28),
               const SizedBox(height: 6),
               Text(title, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
               if (badge != null) ...[
