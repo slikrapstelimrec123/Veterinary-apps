@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase_config.dart';
 import '../../../core/theme/app_theme.dart';
+import 'visit_record_details_screen.dart';
 
 class AddVisitRecordScreen extends StatefulWidget {
   const AddVisitRecordScreen({super.key, required this.petId, required this.petName});
@@ -72,8 +73,9 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
     setState(() => _saving = true);
 
     try {
+      String? newRecordId;
       if (!SupabaseConfig.useMockData) {
-        await Supabase.instance.client.from('visit_records').insert({
+        final row = await Supabase.instance.client.from('visit_records').insert({
           'pet_id': widget.petId,
           'owner_id': Supabase.instance.client.auth.currentUser!.id,
           'visit_date': _visitDate.toIso8601String().split('T').first,
@@ -85,13 +87,26 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
           'recommendations': _recommendationsController.text.trim().isEmpty ? null : _recommendationsController.text.trim(),
           'next_visit_date': _nextVisitDate?.toIso8601String().split('T').first,
           'status': 'self_reported',
-        });
+        }).select('id').single();
+        newRecordId = row['id'] as String?;
       }
 
       if (mounted) {
         Navigator.of(context).pop(true);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Запис про прийом збережено.')),
+          SnackBar(
+            content: const Text('Запис про прийом збережено.'),
+            action: newRecordId != null
+                ? SnackBarAction(
+                    label: 'Додати документ',
+                    onPressed: () {
+                      Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => VisitRecordDetailsScreen(recordId: newRecordId!),
+                      ));
+                    },
+                  )
+                : null,
+          ),
         );
       }
     } catch (e) {
