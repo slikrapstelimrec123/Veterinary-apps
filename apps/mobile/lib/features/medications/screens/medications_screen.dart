@@ -17,41 +17,50 @@ class MedicationsScreen extends StatefulWidget {
   State<MedicationsScreen> createState() => _MedicationsScreenState();
 }
 
-enum _SortOption { dateDesc, dateAsc, nameAsc, nameDesc, category }
-
+// null means "all", 'active' / 'inactive' are special, others match category field
 class _MedicationsScreenState extends State<MedicationsScreen> {
   final _repo = MedicationRepository();
   List<PetMedication>? _meds;
   bool _loading = true;
   String? _error;
-  _SortOption _sort = _SortOption.dateDesc;
+  String? _filter; // null = all
 
-  List<PetMedication> get _sorted {
-    final list = List<PetMedication>.from(_meds ?? []);
-    switch (_sort) {
-      case _SortOption.dateDesc:
-        list.sort((a, b) => b.givenDate.compareTo(a.givenDate));
-      case _SortOption.dateAsc:
-        list.sort((a, b) => a.givenDate.compareTo(b.givenDate));
-      case _SortOption.nameAsc:
-        list.sort((a, b) => a.name.compareTo(b.name));
-      case _SortOption.nameDesc:
-        list.sort((a, b) => b.name.compareTo(a.name));
-      case _SortOption.category:
-        list.sort((a, b) => (a.category ?? '').compareTo(b.category ?? ''));
-    }
-    return list;
+  static const _categories = ['tick_flea', 'deworming', 'vitamin', 'antibiotic', 'other'];
+
+  List<PetMedication> get _filtered {
+    final all = List<PetMedication>.from(_meds ?? [])
+      ..sort((a, b) => b.givenDate.compareTo(a.givenDate));
+    if (_filter == null) return all;
+    if (_filter == 'active') return all.where((m) => m.nextDoseDate != null && !m.nextDoseOverdue).toList();
+    if (_filter == 'inactive') return all.where((m) => m.nextDoseDate == null || m.nextDoseOverdue).toList();
+    return all.where((m) => m.category == _filter).toList();
   }
 
-  String get _sortLabel => switch (_sort) {
-    _SortOption.dateDesc => 'Нові спочатку',
-    _SortOption.dateAsc => 'Старі спочатку',
-    _SortOption.nameAsc => 'Назва А→Я',
-    _SortOption.nameDesc => 'Назва Я→А',
-    _SortOption.category => 'За категорією',
+  String _filterLabel(String? f) => switch (f) {
+    null => 'Всі',
+    'active' => 'Активні',
+    'inactive' => 'Неактивні',
+    'tick_flea' => 'Від кліщів / бліх',
+    'deworming' => 'Дегельмінтизація',
+    'vitamin' => 'Вітаміни / добавки',
+    'antibiotic' => 'Антибіотик',
+    'other' => 'Інше',
+    _ => f,
   };
 
-  void _showSortSheet() {
+  IconData _filterIcon(String? f) => switch (f) {
+    null => Icons.list_outlined,
+    'active' => Icons.check_circle_outline,
+    'inactive' => Icons.cancel_outlined,
+    'tick_flea' => Icons.bug_report_outlined,
+    'deworming' => Icons.sanitizer_outlined,
+    'vitamin' => Icons.local_pharmacy_outlined,
+    'antibiotic' => Icons.medication_outlined,
+    _ => Icons.category_outlined,
+  };
+
+  void _showFilterSheet() {
+    final options = [null, 'active', 'inactive', ..._categories];
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -66,34 +75,18 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
             const SizedBox(height: 12),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text('Сортування', style: Theme.of(context).textTheme.titleMedium),
+              child: Text('Фільтр', style: Theme.of(context).textTheme.titleMedium),
             ),
             const SizedBox(height: 8),
-            ..._SortOption.values.map((opt) {
-              final label = switch (opt) {
-                _SortOption.dateDesc => 'Нові спочатку',
-                _SortOption.dateAsc => 'Старі спочатку',
-                _SortOption.nameAsc => 'Назва А→Я',
-                _SortOption.nameDesc => 'Назва Я→А',
-                _SortOption.category => 'За категорією',
-              };
-              final icon = switch (opt) {
-                _SortOption.dateDesc => Icons.arrow_downward,
-                _SortOption.dateAsc => Icons.arrow_upward,
-                _SortOption.nameAsc => Icons.sort_by_alpha,
-                _SortOption.nameDesc => Icons.sort_by_alpha,
-                _SortOption.category => Icons.category_outlined,
-              };
-              return ListTile(
-                leading: Icon(icon, color: _sort == opt ? AppTheme.primary : null),
-                title: Text(label),
-                trailing: _sort == opt ? const Icon(Icons.check, color: AppTheme.primary) : null,
-                onTap: () {
-                  setState(() => _sort = opt);
-                  Navigator.pop(context);
-                },
-              );
-            }),
+            ...options.map((opt) => ListTile(
+              leading: Icon(_filterIcon(opt), color: _filter == opt ? AppTheme.primary : null),
+              title: Text(_filterLabel(opt)),
+              trailing: _filter == opt ? const Icon(Icons.check, color: AppTheme.primary) : null,
+              onTap: () {
+                setState(() => _filter = opt);
+                Navigator.pop(context);
+              },
+            )),
             const SizedBox(height: 8),
           ],
         ),
@@ -157,16 +150,16 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final meds = _sorted;
+    final meds = _filtered;
     return AppScaffold(
       title: 'Препарати та лікування',
       subtitle: widget.petName,
       actions: [
         if (_meds != null && _meds!.isNotEmpty)
           TextButton.icon(
-            onPressed: _showSortSheet,
-            icon: const Icon(Icons.swap_vert, size: 18),
-            label: Text(_sortLabel, style: const TextStyle(fontSize: 12)),
+            onPressed: _showFilterSheet,
+            icon: const Icon(Icons.filter_list, size: 18),
+            label: Text(_filterLabel(_filter), style: const TextStyle(fontSize: 12)),
           ),
         IconButton(icon: const Icon(Icons.add), tooltip: 'Додати', onPressed: _add),
       ],
