@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../features/appointments/screens/appointments_coming_soon_screen.dart';
 import '../../features/clinics/screens/clinic_coming_soon_screen.dart';
 import '../../features/notifications/data/notification_repository.dart';
 import '../../features/notifications/screens/notifications_screen.dart';
@@ -39,7 +38,7 @@ class _AppShellState extends State<AppShell> {
       HomeScreen(onOpenPets: () => setState(() => _index = 1)),
       const PetListScreen(),
       const ClinicComingSoonScreen(),
-      const AppointmentsComingSoonScreen(),
+      const _ComingSoonPlaceholder(),
       const NotificationsScreen(),
       const SettingsScreen(),
     ];
@@ -61,7 +60,7 @@ class _AppShellState extends State<AppShell> {
               const NavigationDestination(icon: Icon(Icons.home_outlined), label: 'Головна'),
               const NavigationDestination(icon: Icon(Icons.pets_outlined), label: 'Тварини'),
               const NavigationDestination(icon: Icon(Icons.local_hospital_outlined), label: 'Клініки'),
-              const NavigationDestination(icon: Icon(Icons.calendar_month_outlined), label: 'Записи'),
+              const NavigationDestination(icon: Icon(Icons.add_box_outlined), label: 'Незабаром'),
               NavigationDestination(
                 icon: Badge(
                   isLabelVisible: unread > 0,
@@ -243,6 +242,35 @@ class _ClinicComingSoonCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _ComingSoonPlaceholder extends StatelessWidget {
+  const _ComingSoonPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return AppScaffold(
+      title: 'Незабаром',
+      children: [
+        const SizedBox(height: 48),
+        Center(
+          child: Column(
+            children: [
+              Icon(Icons.rocket_launch_outlined, size: 72,
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.3)),
+              const SizedBox(height: 20),
+              Text('Незабаром', style: Theme.of(context).textTheme.headlineMedium),
+              const SizedBox(height: 12),
+              const Text(
+                'Цей розділ з\'явиться у наступному оновленні.',
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
