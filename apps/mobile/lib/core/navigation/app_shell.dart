@@ -12,6 +12,7 @@ import '../../features/pets/screens/add_pet_screen.dart';
 import '../../features/pets/screens/pet_list_screen.dart';
 import '../../features/pets/screens/pet_profile_screen.dart';
 import '../../features/settings/screens/settings_screen.dart';
+import '../../features/visit_records/data/visit_record_repository.dart';
 import '../../shared/widgets/app_scaffold.dart';
 import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/error_state.dart';
@@ -90,10 +91,33 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final repository = PetRepository();
+  final visitRepository = VisitRecordRepository();
   late Future<List<Pet>> petsFuture = repository.getPets();
+  int _visitCount = 0;
+  int _documentCount = 0;
 
   void refresh() {
     setState(() => petsFuture = repository.getPets());
+    _loadCounts();
+  }
+
+  Future<void> _loadCounts() async {
+    final pets = await repository.getPets();
+    int visits = 0;
+    int docs = 0;
+    for (final pet in pets) {
+      final records = await visitRepository.getVisitRecordsForPet(pet.id);
+      visits += records.length;
+      final documents = await visitRepository.getDocumentsForPet(pet.id);
+      docs += documents.length;
+    }
+    if (mounted) setState(() { _visitCount = visits; _documentCount = docs; });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCounts();
   }
 
   Future<void> addPet() async {
@@ -120,7 +144,7 @@ class _HomeScreenState extends State<HomeScreen> {
             else if (snapshot.hasError)
               ErrorState(message: 'Не вдалося завантажити головну сторінку.', onRetry: refresh)
             else ...[
-              _SummaryCard(petCount: pets.length),
+              _SummaryCard(petCount: pets.length, visitCount: _visitCount, documentCount: _documentCount),
               const SizedBox(height: 12),
               if (pets.isEmpty)
                 EmptyState(
@@ -159,9 +183,11 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class _SummaryCard extends StatelessWidget {
-  const _SummaryCard({required this.petCount});
+  const _SummaryCard({required this.petCount, required this.visitCount, required this.documentCount});
 
   final int petCount;
+  final int visitCount;
+  final int documentCount;
 
   @override
   Widget build(BuildContext context) {
@@ -178,19 +204,19 @@ class _SummaryCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            const Expanded(
+            Expanded(
               child: _StatTile(
                 icon: Icons.history_outlined,
-                value: '0',
-                label: 'прийомів',
+                value: '$visitCount',
+                label: visitCount == 1 ? 'прийом' : visitCount < 5 ? 'прийоми' : 'прийомів',
               ),
             ),
             const SizedBox(width: 8),
-            const Expanded(
+            Expanded(
               child: _StatTile(
                 icon: Icons.folder_outlined,
-                value: '0',
-                label: 'документів',
+                value: '$documentCount',
+                label: documentCount == 1 ? 'документ' : documentCount < 5 ? 'документи' : 'документів',
               ),
             ),
           ],
