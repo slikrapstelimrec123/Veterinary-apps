@@ -54,7 +54,7 @@ class _Initials extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         color: ctx.mounted
-            ? Theme.of(ctx).colorScheme.secondary.withOpacity(0.18)
+            ? Theme.of(ctx).colorScheme.secondary.withValues(alpha: 0.18)
             : Colors.grey.shade200,
         borderRadius: BorderRadius.circular(radius),
       ),

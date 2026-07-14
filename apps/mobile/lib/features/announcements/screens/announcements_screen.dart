@@ -538,7 +538,7 @@ class _MyAnnouncementCard extends StatelessWidget {
               height: 44,
               decoration: BoxDecoration(
                 color: (active ? AppTheme.primary : AppTheme.textSecondary)
-                    .withOpacity(0.12),
+                    .withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon,
@@ -934,11 +934,11 @@ class _BreedingCard extends StatelessWidget {
                             height: 44,
                             fit: BoxFit.cover,
                             errorBuilder: (_, __, ___) => _AnnouncementAvatar(
-                                color: AppTheme.accent.withOpacity(0.15),
+                                color: AppTheme.accent.withValues(alpha: 0.15),
                                 icon: Icons.favorite_outlined,
                                 iconColor: AppTheme.accent))
                         : _AnnouncementAvatar(
-                            color: AppTheme.accent.withOpacity(0.15),
+                            color: AppTheme.accent.withValues(alpha: 0.15),
                             icon: Icons.favorite_outlined,
                             iconColor: AppTheme.accent),
                   ),
@@ -1020,11 +1020,11 @@ class _SaleCard extends StatelessWidget {
                             height: 44,
                             fit: BoxFit.cover,
                             errorBuilder: (_, __, ___) => _AnnouncementAvatar(
-                                color: AppTheme.primary.withOpacity(0.12),
+                                color: AppTheme.primary.withValues(alpha: 0.12),
                                 icon: Icons.pets,
                                 iconColor: AppTheme.primary))
                         : _AnnouncementAvatar(
-                            color: AppTheme.primary.withOpacity(0.12),
+                            color: AppTheme.primary.withValues(alpha: 0.12),
                             icon: Icons.pets,
                             iconColor: AppTheme.primary),
                   ),
@@ -1131,7 +1131,9 @@ class _Badge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: active ? AppTheme.success.withOpacity(0.1) : AppTheme.background,
+        color: active
+            ? AppTheme.success.withValues(alpha: 0.1)
+            : AppTheme.background,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color),
       ),
@@ -1179,7 +1181,7 @@ class _BreedingDetailScreen extends StatelessWidget {
                         width: 56,
                         height: 56,
                         decoration: BoxDecoration(
-                          color: AppTheme.accent.withOpacity(0.15),
+                          color: AppTheme.accent.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: const Icon(Icons.favorite_outlined,
@@ -1286,7 +1288,7 @@ class _SaleDetailScreen extends StatelessWidget {
                     width: 56,
                     height: 56,
                     decoration: BoxDecoration(
-                      color: AppTheme.primary.withOpacity(0.12),
+                      color: AppTheme.primary.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: const Icon(Icons.pets,

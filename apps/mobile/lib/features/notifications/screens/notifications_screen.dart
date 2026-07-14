@@ -84,7 +84,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   onTap: () => Navigator.of(context).push(MaterialPageRoute(
                       builder: (_) => const IncomingTransfersScreen())),
                   child: Card(
-                    color: AppTheme.primary.withOpacity(0.08),
+                    color: AppTheme.primary.withValues(alpha: 0.08),
                     margin: const EdgeInsets.only(bottom: 16),
                     child: const Padding(
                       padding: EdgeInsets.all(14),

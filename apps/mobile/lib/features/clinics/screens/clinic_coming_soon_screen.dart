@@ -17,8 +17,10 @@ class ClinicComingSoonScreen extends StatelessWidget {
             children: [
               Icon(Icons.local_hospital_outlined,
                   size: 72,
-                  color:
-                      Theme.of(context).colorScheme.primary.withOpacity(0.4)),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .primary
+                      .withValues(alpha: 0.4)),
               const SizedBox(height: 20),
               Text('Незабаром',
                   style: Theme.of(context).textTheme.headlineMedium),
@@ -63,8 +65,10 @@ class ClinicComingSoonScreen extends StatelessWidget {
             children: [
               Icon(Icons.calendar_month_outlined,
                   size: 72,
-                  color:
-                      Theme.of(context).colorScheme.primary.withOpacity(0.4)),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .primary
+                      .withValues(alpha: 0.4)),
               const SizedBox(height: 20),
               Text('Записи на прийом',
                   style: Theme.of(context).textTheme.headlineMedium),

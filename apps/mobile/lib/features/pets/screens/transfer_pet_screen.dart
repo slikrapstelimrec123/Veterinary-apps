@@ -201,7 +201,7 @@ class _TransferPetScreenState extends State<TransferPetScreen> {
             ),
             const SizedBox(height: 12),
             Card(
-              color: AppTheme.warning.withOpacity(0.08),
+              color: AppTheme.warning.withValues(alpha: 0.08),
               child: const Padding(
                 padding: EdgeInsets.all(14),
                 child: Row(

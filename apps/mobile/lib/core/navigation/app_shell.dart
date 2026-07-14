@@ -381,10 +381,16 @@ class _UpcomingEventsCardState extends State<_UpcomingEventsCard> {
         final meds = await _medRepo.getMedications(pet.id);
         for (final med in meds) {
           final d = med.nextDoseDate;
-          if (d == null) continue;
+          if (d == null) {
+            continue;
+          }
           if (d.isBefore(now.subtract(const Duration(days: 1))) &&
-              !med.nextDoseOverdue) continue;
-          if (d.isAfter(threshold)) continue;
+              !med.nextDoseOverdue) {
+            continue;
+          }
+          if (d.isAfter(threshold)) {
+            continue;
+          }
           events.add(_UpcomingEvent(
             title: med.name,
             pet: pet,
@@ -451,7 +457,7 @@ class _UpcomingEventsCardState extends State<_UpcomingEventsCard> {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: color.withOpacity(0.12),
+                          color: color.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Icon(

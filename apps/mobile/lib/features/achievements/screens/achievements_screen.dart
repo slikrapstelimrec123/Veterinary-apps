@@ -157,7 +157,7 @@ class _AchievementCard extends StatelessWidget {
                     width: 42,
                     height: 42,
                     decoration: BoxDecoration(
-                      color: AppTheme.primary.withOpacity(0.12),
+                      color: AppTheme.primary.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(Icons.emoji_events_outlined,
@@ -528,7 +528,7 @@ class _AchievementFormState extends State<_AchievementForm> {
                     ),
                     const Divider(),
                     DropdownButtonFormField<String>(
-                      value: _eventType,
+                      initialValue: _eventType,
                       decoration: const InputDecoration(
                           labelText: 'Тип події', border: InputBorder.none),
                       items: _types

@@ -14,7 +14,7 @@ class AppIcon extends StatelessWidget {
     final fallback = Theme.of(context).colorScheme.onSurfaceVariant;
     // Use iconColor only if it's not fully transparent
     final c = color ??
-        ((iconColor != null && iconColor.alpha > 0) ? iconColor : fallback);
+        ((iconColor != null && iconColor.a > 0) ? iconColor : fallback);
     return SvgPicture.asset(
       'assets/icons/$name.svg',
       width: size,

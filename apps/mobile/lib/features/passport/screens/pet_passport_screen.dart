@@ -313,7 +313,7 @@ class _PassportCard extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 30,
-                  backgroundColor: AppTheme.primary.withOpacity(0.12),
+                  backgroundColor: AppTheme.primary.withValues(alpha: 0.12),
                   child: Text(
                     pet.name.isNotEmpty ? pet.name[0].toUpperCase() : '?',
                     style: const TextStyle(

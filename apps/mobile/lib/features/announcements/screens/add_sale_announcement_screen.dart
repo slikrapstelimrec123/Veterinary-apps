@@ -97,7 +97,7 @@ class _AddSaleAnnouncementScreenState extends State<AddSaleAnnouncementScreen> {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: AppTheme.primary.withOpacity(0.12),
+                        color: AppTheme.primary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(Icons.pets,
@@ -161,7 +161,7 @@ class _AddSaleAnnouncementScreenState extends State<AddSaleAnnouncementScreen> {
                   style: TextStyle(fontWeight: FontWeight.w600)),
               subtitle:
                   const Text('Тварина шукає дбайливого господаря безкоштовно'),
-              activeColor: AppTheme.primary,
+              activeThumbColor: AppTheme.primary,
               contentPadding: EdgeInsets.zero,
             ),
             if (!_isFree) ...[

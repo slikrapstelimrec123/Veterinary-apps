@@ -73,7 +73,7 @@ class _BetaFeedbackScreenState extends State<BetaFeedbackScreen> {
           const SizedBox(height: 12),
         ],
         DropdownButtonFormField<String>(
-          value: category,
+          initialValue: category,
           decoration: const InputDecoration(labelText: 'Категорія'),
           items: const [
             DropdownMenuItem(value: 'bug', child: Text('Помилка')),
@@ -88,7 +88,7 @@ class _BetaFeedbackScreenState extends State<BetaFeedbackScreen> {
         ),
         const SizedBox(height: 12),
         DropdownButtonFormField<int>(
-          value: rating,
+          initialValue: rating,
           decoration: const InputDecoration(labelText: 'Оцінка beta-досвіду'),
           items: const [
             DropdownMenuItem(value: 5, child: Text('5 - добре')),

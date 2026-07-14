@@ -76,7 +76,7 @@ class _VisitRecordDetailsScreenState extends State<VisitRecordDetailsScreen> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: selectedType,
+                initialValue: selectedType,
                 decoration: const InputDecoration(
                   labelText: 'Тип документа',
                   border: OutlineInputBorder(),

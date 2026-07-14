@@ -323,7 +323,7 @@ class _BookingForm extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         DropdownButtonFormField<String>(
-          value: selectedClinicId,
+          initialValue: selectedClinicId,
           decoration: const InputDecoration(labelText: 'Клініка'),
           items: data.clinics
               .map((clinic) =>
@@ -333,7 +333,7 @@ class _BookingForm extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         DropdownButtonFormField<String>(
-          value: selectedPetId,
+          initialValue: selectedPetId,
           decoration: const InputDecoration(labelText: 'Тварина'),
           items: data.pets
               .map((pet) =>
@@ -353,7 +353,7 @@ class _BookingForm extends StatelessWidget {
         ] else ...[
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
-            value: selectedServiceId,
+            initialValue: selectedServiceId,
             decoration: const InputDecoration(labelText: 'Послуга'),
             items: data.services
                 .map((service) => DropdownMenuItem(
@@ -365,7 +365,7 @@ class _BookingForm extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
-            value: selectedDoctorId,
+            initialValue: selectedDoctorId,
             decoration: const InputDecoration(labelText: 'Лікар'),
             items: data.doctors
                 .map((doctor) => DropdownMenuItem(

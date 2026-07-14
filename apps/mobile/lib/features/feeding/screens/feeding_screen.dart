@@ -210,7 +210,8 @@ class _FeedingCard extends StatelessWidget {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 8, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.success.withOpacity(0.15),
+                                  color:
+                                      AppTheme.success.withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: const Text('Зараз',
@@ -651,7 +652,7 @@ class _FeedingForm extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 child: DropdownButtonFormField<String>(
-                  value: foodType,
+                  initialValue: foodType,
                   decoration: const InputDecoration(border: InputBorder.none),
                   items: types
                       .map((t) =>

@@ -613,7 +613,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 child: DropdownButtonFormField<String>(
-                  value: _category,
+                  initialValue: _category,
                   decoration: const InputDecoration(border: InputBorder.none),
                   items: _categories
                       .map((c) =>
@@ -859,7 +859,7 @@ class _EditMedicationScreenState extends State<EditMedicationScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 child: DropdownButtonFormField<String>(
-                  value: _category,
+                  initialValue: _category,
                   decoration: const InputDecoration(border: InputBorder.none),
                   items: _categories
                       .map((c) =>

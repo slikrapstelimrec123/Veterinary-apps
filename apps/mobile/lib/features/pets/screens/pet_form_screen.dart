@@ -343,7 +343,7 @@ class _PetFormScreenState extends State<PetFormScreen> {
 
         // Species
         DropdownButtonFormField<String>(
-          value: species,
+          initialValue: species,
           decoration: const InputDecoration(labelText: 'Вид *'),
           items: speciesOptions
               .map((v) =>
@@ -371,7 +371,7 @@ class _PetFormScreenState extends State<PetFormScreen> {
 
         // Sex
         DropdownButtonFormField<String>(
-          value: sex,
+          initialValue: sex,
           decoration: const InputDecoration(labelText: 'Стать'),
           items: sexOptions
               .map((v) => DropdownMenuItem(value: v, child: Text(sexLabel(v))))
