@@ -1,3 +1,4 @@
+import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -11,19 +12,25 @@ import 'features/splash/splash_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  final appLinks = AppLinks();
 
   if (SupabaseConfig.isConfigured) {
     await Supabase.initialize(
       url: SupabaseConfig.url,
       publishableKey: SupabaseConfig.anonKey,
+      authOptions: const FlutterAuthClientOptions(
+        detectSessionInUri: false,
+      ),
     );
   }
 
-  runApp(const VetCareApp());
+  runApp(VetCareApp(appLinks: appLinks));
 }
 
 class VetCareApp extends StatefulWidget {
-  const VetCareApp({super.key});
+  const VetCareApp({super.key, required this.appLinks});
+
+  final AppLinks appLinks;
 
   @override
   State<VetCareApp> createState() => _VetCareAppState();
@@ -36,7 +43,7 @@ class _VetCareAppState extends State<VetCareApp> {
   @override
   void initState() {
     super.initState();
-    authState = app_auth.AuthState(AuthRepository());
+    authState = app_auth.AuthState(AuthRepository(), widget.appLinks);
     authState.bootstrap();
   }
 

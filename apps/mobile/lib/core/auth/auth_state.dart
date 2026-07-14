@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
@@ -8,16 +9,21 @@ export 'auth_repository.dart' show RegisterResult;
 import 'current_user.dart';
 
 class AuthState extends ChangeNotifier {
-  AuthState(this._repository) {
+  AuthState(this._repository, AppLinks appLinks) {
     if (_repository.isConfigured) {
       _authSubscription = supabase
           .Supabase.instance.client.auth.onAuthStateChange
           .listen(_handleAuthChange);
+      _deepLinkSubscription = appLinks.uriLinkStream.listen(
+        _handleOAuthCallback,
+        onError: _handleDeepLinkError,
+      );
     }
   }
 
   final AuthRepository _repository;
   StreamSubscription<supabase.AuthState>? _authSubscription;
+  StreamSubscription<Uri>? _deepLinkSubscription;
 
   CurrentUser? currentUser;
   bool isLoading = true;
@@ -26,6 +32,38 @@ class AuthState extends ChangeNotifier {
   bool get isAuthenticated => currentUser != null;
   bool get isConfigured => _repository.isConfigured;
   bool get useMockData => _repository.useMockData;
+
+  Future<void> _handleOAuthCallback(Uri uri) async {
+    final isOAuthCallback = uri.scheme == 'lappo' &&
+        uri.host == 'auth' &&
+        uri.path == '/callback';
+    if (!isOAuthCallback) return;
+
+    isLoading = true;
+    errorMessage = null;
+    notifyListeners();
+
+    try {
+      await supabase.Supabase.instance.client.auth.getSessionFromUrl(uri);
+      currentUser = await _repository.getCurrentUser();
+      if (currentUser == null) {
+        throw StateError('Профіль користувача не знайдено.');
+      }
+    } on supabase.AuthException catch (error) {
+      errorMessage = 'Не вдалося завершити вхід: ${error.message}';
+    } catch (error) {
+      errorMessage = 'Не вдалося завершити вхід: $error';
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  void _handleDeepLinkError(Object error) {
+    errorMessage = 'Не вдалося відкрити посилання входу: $error';
+    isLoading = false;
+    notifyListeners();
+  }
 
   Future<void> _handleAuthChange(supabase.AuthState state) async {
     if (state.event == supabase.AuthChangeEvent.signedOut) {
@@ -163,6 +201,7 @@ class AuthState extends ChangeNotifier {
   @override
   void dispose() {
     _authSubscription?.cancel();
+    _deepLinkSubscription?.cancel();
     super.dispose();
   }
 }
