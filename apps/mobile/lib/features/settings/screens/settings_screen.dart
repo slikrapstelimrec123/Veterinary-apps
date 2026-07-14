@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../../core/auth/auth_state.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../notifications/screens/notification_preferences_screen.dart';
+import 'account_deletion_screen.dart';
 import 'edit_profile_screen.dart';
 import 'legal_text_screen.dart';
 
@@ -25,18 +27,25 @@ class SettingsScreen extends StatelessWidget {
             children: [
               ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                  backgroundColor:
+                      Theme.of(context).colorScheme.primaryContainer,
                   child: Text(
-                    user?.fullName.isNotEmpty == true ? user!.fullName[0].toUpperCase() : '?',
-                    style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w700),
+                    user?.fullName.isNotEmpty == true
+                        ? user!.fullName[0].toUpperCase()
+                        : '?',
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.w700),
                   ),
                 ),
-                title: Text(user?.fullName ?? 'Власник тварини', style: const TextStyle(fontWeight: FontWeight.w700)),
+                title: Text(user?.fullName ?? 'Власник тварини',
+                    style: const TextStyle(fontWeight: FontWeight.w700)),
                 subtitle: Text(user?.email ?? ''),
                 trailing: IconButton(
                   icon: const Icon(Icons.edit_outlined),
                   tooltip: 'Редагувати профіль',
-                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const EditProfileScreen())),
+                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const EditProfileScreen())),
                 ),
               ),
             ],
@@ -49,24 +58,29 @@ class SettingsScreen extends StatelessWidget {
             title: const Text('Сповіщення'),
             subtitle: const Text('Нагадування та оновлення.'),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const NotificationPreferencesScreen())),
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => const NotificationPreferencesScreen())),
           ),
         ),
         const SizedBox(height: 12),
-        _InviteCard(),
-        const SizedBox(height: 12),
+        if (!kReleaseMode) ...[
+          _InviteCard(),
+          const SizedBox(height: 12),
+        ],
         Card(
           child: Column(
             children: [
               ListTile(
                 leading: const Icon(Icons.support_agent_outlined),
                 title: const Text('Служба підтримки'),
-                subtitle: const Text('Написати нам із запитанням або проблемою.'),
+                subtitle:
+                    const Text('Написати нам із запитанням або проблемою.'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => showModalBottomSheet(
                   context: context,
                   shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(20)),
                   ),
                   builder: (_) => SafeArea(
                     child: Padding(
@@ -75,24 +89,25 @@ class SettingsScreen extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Служба підтримки', style: Theme.of(context).textTheme.titleLarge),
+                          Text('Служба підтримки',
+                              style: Theme.of(context).textTheme.titleLarge),
                           const SizedBox(height: 8),
                           const Text(
                             'Якщо у вас виникли питання або проблеми — зв\'яжіться з нами зручним способом.',
                             style: TextStyle(color: Color(0xFF707784)),
                           ),
                           const SizedBox(height: 20),
-                          ListTile(
-                            leading: const Icon(Icons.email_outlined),
-                            title: const Text('Написати на email'),
-                            subtitle: const Text('support@lappo.app'),
+                          const ListTile(
+                            leading: Icon(Icons.email_outlined),
+                            title: Text('Написати на email'),
+                            subtitle: Text('support@lappo.app'),
                             contentPadding: EdgeInsets.zero,
                           ),
                           const Divider(height: 1),
-                          ListTile(
-                            leading: const Icon(Icons.chat_bubble_outline),
-                            title: const Text('Telegram'),
-                            subtitle: const Text('@lappo_support'),
+                          const ListTile(
+                            leading: Icon(Icons.chat_bubble_outline),
+                            title: Text('Telegram'),
+                            subtitle: Text('@lappo_support'),
                             contentPadding: EdgeInsets.zero,
                           ),
                           const SizedBox(height: 8),
@@ -106,7 +121,7 @@ class SettingsScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        Card(
+        const Card(
           child: Column(
             children: [
               _SettingsLink(
@@ -114,29 +129,27 @@ class SettingsScreen extends StatelessWidget {
                 title: 'Політика конфіденційності',
                 screen: LegalTextScreen.privacy(),
               ),
-              const Divider(height: 1),
+              Divider(height: 1),
               _SettingsLink(
                 icon: Icons.description_outlined,
                 title: 'Умови використання',
                 screen: LegalTextScreen.terms(),
               ),
-              const Divider(height: 1),
+              Divider(height: 1),
               _SettingsLink(
                 icon: Icons.download_outlined,
                 title: 'Запит на експорт даних',
                 screen: LegalTextScreen.placeholder(
                   title: 'Запит на експорт даних',
-                  body: 'Автоматичний експорт медичних даних буде реалізовано пізніше. Зверніться до підтримки для ручного запиту.',
+                  body:
+                      'Автоматичний експорт медичних даних буде реалізовано пізніше. Зверніться до підтримки для ручного запиту.',
                 ),
               ),
-              const Divider(height: 1),
+              Divider(height: 1),
               _SettingsLink(
                 icon: Icons.delete_outline,
                 title: 'Видалення акаунта',
-                screen: LegalTextScreen.placeholder(
-                  title: 'Видалення акаунта',
-                  body: 'Для видалення акаунта зверніться до служби підтримки. Медичні записи зберігаються відповідно до законодавства.',
-                ),
+                screen: AccountDeletionScreen(),
               ),
             ],
           ),
@@ -160,14 +173,15 @@ class _InviteCard extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (_) => SafeArea(
+      builder: (sheetContext) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Запросити друзів', style: Theme.of(context).textTheme.titleLarge),
+              Text('Запросити друзів',
+                  style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 8),
               const Text(
                 'Поділіться посиланням з іншими власниками тварин — нехай теж тримають медичні картки своїх улюбленців під рукою.',
@@ -175,7 +189,8 @@ class _InviteCard extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF5F6FF),
                   borderRadius: BorderRadius.circular(12),
@@ -186,7 +201,8 @@ class _InviteCard extends StatelessWidget {
                     const Expanded(
                       child: Text(
                         _inviteLink,
-                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                        style: TextStyle(
+                            fontWeight: FontWeight.w600, fontSize: 14),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -194,10 +210,12 @@ class _InviteCard extends StatelessWidget {
                       icon: const Icon(Icons.copy_outlined),
                       tooltip: 'Скопіювати',
                       onPressed: () {
-                        Clipboard.setData(const ClipboardData(text: _inviteLink));
-                        Navigator.pop(_);
+                        Clipboard.setData(
+                            const ClipboardData(text: _inviteLink));
+                        Navigator.pop(sheetContext);
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Посилання скопійовано.')),
+                          const SnackBar(
+                              content: Text('Посилання скопійовано.')),
                         );
                       },
                     ),
@@ -212,9 +230,11 @@ class _InviteCard extends StatelessWidget {
                   label: const Text('Поділитись'),
                   onPressed: () {
                     Clipboard.setData(const ClipboardData(text: _inviteLink));
-                    Navigator.pop(_);
+                    Navigator.pop(sheetContext);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Посилання скопійовано — вставте у будь-який месенджер.')),
+                      const SnackBar(
+                          content: Text(
+                              'Посилання скопійовано — вставте у будь-який месенджер.')),
                     );
                   },
                 ),
@@ -242,7 +262,8 @@ class _InviteCard extends StatelessWidget {
 }
 
 class _SettingsLink extends StatelessWidget {
-  const _SettingsLink({required this.icon, required this.title, required this.screen});
+  const _SettingsLink(
+      {required this.icon, required this.title, required this.screen});
 
   final IconData icon;
   final String title;
@@ -254,7 +275,8 @@ class _SettingsLink extends StatelessWidget {
       leading: Icon(icon),
       title: Text(title),
       trailing: const Icon(Icons.chevron_right),
-      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen)),
+      onTap: () =>
+          Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen)),
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/config/supabase_config.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/error_state.dart';
@@ -24,21 +25,25 @@ class VisitHistoryScreen extends StatefulWidget {
 
 class _VisitHistoryScreenState extends State<VisitHistoryScreen> {
   final repository = VisitRecordRepository();
-  late Future<List<VisitRecord>> recordsFuture = repository.getVisitRecordsForPet(widget.petId);
+  late Future<List<VisitRecord>> recordsFuture =
+      repository.getVisitRecordsForPet(widget.petId);
 
   void refresh() {
-    setState(() => recordsFuture = repository.getVisitRecordsForPet(widget.petId));
+    setState(
+        () => recordsFuture = repository.getVisitRecordsForPet(widget.petId));
   }
 
   Future<void> _addRecord() async {
     final result = await Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => AddVisitRecordScreen(petId: widget.petId, petName: widget.petName),
+      builder: (_) =>
+          AddVisitRecordScreen(petId: widget.petId, petName: widget.petName),
     ));
     if (result != null) refresh();
   }
 
   @override
   Widget build(BuildContext context) {
+    final canAddRecord = SupabaseConfig.useMockData;
     return FutureBuilder<List<VisitRecord>>(
       future: recordsFuture,
       builder: (context, snapshot) {
@@ -48,35 +53,47 @@ class _VisitHistoryScreenState extends State<VisitHistoryScreen> {
           title: 'Історія прийомів',
           subtitle: widget.petName,
           actions: [
-            IconButton(
-              icon: const Icon(Icons.add),
-              tooltip: 'Додати прийом',
-              onPressed: _addRecord,
-            ),
+            if (canAddRecord)
+              IconButton(
+                icon: const Icon(Icons.add),
+                tooltip: 'Додати прийом',
+                onPressed: _addRecord,
+              ),
           ],
           children: [
             if (snapshot.connectionState == ConnectionState.waiting)
               const Center(child: CircularProgressIndicator())
             else if (snapshot.hasError)
-              ErrorState(message: 'Не вдалося завантажити історію прийомів.', onRetry: refresh)
+              ErrorState(
+                  message: 'Не вдалося завантажити історію прийомів.',
+                  onRetry: refresh)
             else if (records.isEmpty)
               EmptyState(
                 title: 'Записів про прийоми ще немає',
-                message: 'Додайте перший запис самостійно або він з\'явиться після підключення клініки.',
+                message: canAddRecord
+                    ? 'Додайте перший запис самостійно або він з\'явиться після підключення клініки.'
+                    : 'Записи з’являться тут після того, як клініка завершить прийом.',
                 icon: Icons.history_outlined,
-                action: FilledButton(onPressed: _addRecord, child: const Text('Додати прийом')),
+                action: canAddRecord
+                    ? FilledButton(
+                        onPressed: _addRecord,
+                        child: const Text('Додати прийом'),
+                      )
+                    : null,
               )
             else ...[
               ...records.map((record) => Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: _VisitRecordCard(record: record),
                   )),
-              const SizedBox(height: 4),
-              OutlinedButton.icon(
-                onPressed: _addRecord,
-                icon: const Icon(Icons.add),
-                label: const Text('Додати запис про прийом'),
-              ),
+              if (canAddRecord) ...[
+                const SizedBox(height: 4),
+                OutlinedButton.icon(
+                  onPressed: _addRecord,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Додати запис про прийом'),
+                ),
+              ],
             ],
           ],
         );
@@ -100,7 +117,8 @@ class _VisitRecordCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         onTap: isSelfReported
             ? null
-            : () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => VisitRecordDetailsScreen(recordId: record.id))),
+            : () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => VisitRecordDetailsScreen(recordId: record.id))),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -108,15 +126,21 @@ class _VisitRecordCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Expanded(child: Text(date, style: Theme.of(context).textTheme.titleMedium)),
+                  Expanded(
+                      child: Text(date,
+                          style: Theme.of(context).textTheme.titleMedium)),
                   if (isSelfReported)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
                         color: Theme.of(context).colorScheme.primaryContainer,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Text('Власний запис', style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.primary)),
+                      child: Text('Власний запис',
+                          style: TextStyle(
+                              fontSize: 11,
+                              color: Theme.of(context).colorScheme.primary)),
                     ),
                 ],
               ),
@@ -126,7 +150,8 @@ class _VisitRecordCard extends StatelessWidget {
               Text(record.reason ?? record.diagnosis ?? 'Запис прийому'),
               if (record.treatmentNotes != null) ...[
                 const SizedBox(height: 4),
-                Text(record.treatmentNotes!, maxLines: 2, overflow: TextOverflow.ellipsis),
+                Text(record.treatmentNotes!,
+                    maxLines: 2, overflow: TextOverflow.ellipsis),
               ],
               if (record.documentCount > 0) ...[
                 const SizedBox(height: 8),
@@ -134,7 +159,8 @@ class _VisitRecordCard extends StatelessWidget {
                   children: [
                     const Icon(Icons.attach_file, size: 14),
                     const SizedBox(width: 4),
-                    Text('Документів: ${record.documentCount}', style: const TextStyle(fontSize: 13)),
+                    Text('Документів: ${record.documentCount}',
+                        style: const TextStyle(fontSize: 13)),
                   ],
                 ),
               ],

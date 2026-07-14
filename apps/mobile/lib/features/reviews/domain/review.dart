@@ -38,7 +38,9 @@ class Review {
   final String? doctorName;
 
   bool get isPublished => status == 'published';
-  String get authorLabel => isAnonymous ? 'Анонімний власник тварини' : ownerName ?? 'Власник тварини';
+  String get authorLabel => isAnonymous
+      ? 'Анонімний власник тварини'
+      : ownerName ?? 'Власник тварини';
 
   factory Review.fromJson(Map<String, dynamic> json) {
     final profile = json['profiles'];
@@ -57,11 +59,17 @@ class Review {
       clinicRating: (json['clinic_rating'] as num?)?.toInt(),
       serviceQualityRating: (json['service_quality_rating'] as num?)?.toInt(),
       comment: json['comment'] as String?,
-      status: json['status'] as String? ?? (json['is_published'] == true ? 'published' : 'hidden'),
+      status: json['status'] as String? ??
+          (json['is_published'] == true ? 'published' : 'hidden'),
       isAnonymous: json['is_anonymous'] as bool? ?? false,
-      createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.now(),
-      ownerName: profile is Map<String, dynamic> ? profile['full_name'] as String? : json['owner_name'] as String?,
-      doctorName: doctor is Map<String, dynamic> ? doctor['full_name'] as String? : json['doctor_name'] as String?,
+      createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
+          DateTime.now(),
+      ownerName: profile is Map<String, dynamic>
+          ? profile['full_name'] as String?
+          : json['owner_name'] as String?,
+      doctorName: doctor is Map<String, dynamic>
+          ? doctor['full_name'] as String?
+          : json['doctor_name'] as String?,
     );
   }
 }
@@ -81,7 +89,8 @@ class RatingSummary {
 
   bool get hasReviews => reviewCount > 0;
 
-  factory RatingSummary.fromJson(Map<String, dynamic>? json, {String secondaryKey = 'average_clinic_rating'}) {
+  factory RatingSummary.fromJson(Map<String, dynamic>? json,
+      {String secondaryKey = 'average_clinic_rating'}) {
     if (json == null) {
       return const RatingSummary(averageRating: 0, reviewCount: 0);
     }
@@ -90,7 +99,8 @@ class RatingSummary {
       averageRating: (json['average_rating'] as num?)?.toDouble() ?? 0,
       reviewCount: (json['review_count'] as num?)?.toInt() ?? 0,
       secondaryAverage: (json[secondaryKey] as num?)?.toDouble(),
-      latestReviewDate: DateTime.tryParse(json['latest_review_date'] as String? ?? ''),
+      latestReviewDate:
+          DateTime.tryParse(json['latest_review_date'] as String? ?? ''),
     );
   }
 }

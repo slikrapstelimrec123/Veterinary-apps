@@ -1,16 +1,32 @@
-# mobile
+# Lappo Mobile
 
-A new Flutter project.
+Flutter-приложение Lappo для владельцев домашних животных. Основные сценарии: профиль и медицинская карта животного, история визитов, документы, клиники, записи и уведомления.
 
-## Getting Started
+## Локальный запуск
 
-This project is a starting point for a Flutter application.
+Без настроенного Supabase приложение автоматически использует демонстрационные данные:
 
-A few resources to get you started if this is your first Flutter project:
+```powershell
+C:\flutter\bin\flutter.bat run
+```
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+Для подключения Supabase передайте публичные параметры проекта:
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```powershell
+C:\flutter\bin\flutter.bat run `
+  --dart-define=SUPABASE_URL=https://your-project.supabase.co `
+  --dart-define=SUPABASE_ANON_KEY=your-anon-key
+```
+
+На Windows можно скопировать `.env.example` в локальный `.env`, заполнить два значения и запустить `run_with_supabase.bat`.
+
+Секретный `service_role` ключ нельзя добавлять в приложение или `.env`.
+
+## Проверка качества
+
+```powershell
+C:\flutter\bin\flutter.bat analyze --no-pub
+C:\flutter\bin\flutter.bat test --no-pub
+```
+
+Перед релизом также нужно проверить реальные Supabase/RLS-сценарии, сборку на физическом iPhone и архивирование в Xcode на macOS.

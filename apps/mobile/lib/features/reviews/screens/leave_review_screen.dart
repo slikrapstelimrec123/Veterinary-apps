@@ -72,15 +72,18 @@ class _LeaveReviewScreenState extends State<LeaveReviewScreen> {
         rating: rating,
         doctorRating: doctorRating == 0 ? null : doctorRating,
         clinicRating: rating,
-        serviceQualityRating: serviceQualityRating == 0 ? null : serviceQualityRating,
+        serviceQualityRating:
+            serviceQualityRating == 0 ? null : serviceQualityRating,
         comment: comment.isEmpty ? null : comment,
         isAnonymous: isAnonymous,
       );
 
       if (!mounted) return;
-      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const ReviewSuccessScreen()));
+      Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const ReviewSuccessScreen()));
     } catch (_) {
-      setState(() => error = 'Не вдалося зберегти відгук. Перевірте, чи цей запис ще не був оцінений.');
+      setState(() => error =
+          'Не вдалося зберегти відгук. Перевірте, чи цей запис ще не був оцінений.');
     } finally {
       if (mounted) {
         setState(() => isSubmitting = false);
@@ -98,20 +101,31 @@ class _LeaveReviewScreenState extends State<LeaveReviewScreen> {
           Text(error!, style: const TextStyle(color: Color(0xFF9F1239))),
           const SizedBox(height: 12),
         ],
-        StarRatingInput(value: rating, onChanged: (value) => setState(() => rating = value), label: 'Загальна оцінка *'),
+        StarRatingInput(
+            value: rating,
+            onChanged: (value) => setState(() => rating = value),
+            label: 'Загальна оцінка *'),
         const SizedBox(height: 12),
         if (widget.doctorId != null) ...[
-          StarRatingInput(value: doctorRating, onChanged: (value) => setState(() => doctorRating = value), label: 'Оцінка лікаря'),
+          StarRatingInput(
+              value: doctorRating,
+              onChanged: (value) => setState(() => doctorRating = value),
+              label: 'Оцінка лікаря'),
           const SizedBox(height: 12),
         ],
-        StarRatingInput(value: serviceQualityRating, onChanged: (value) => setState(() => serviceQualityRating = value), label: 'Якість сервісу'),
+        StarRatingInput(
+            value: serviceQualityRating,
+            onChanged: (value) => setState(() => serviceQualityRating = value),
+            label: 'Якість сервісу'),
         const SizedBox(height: 12),
         TextField(
           controller: commentController,
           minLines: 4,
           maxLines: 7,
           maxLength: 1000,
-          decoration: const InputDecoration(labelText: 'Коментар', hintText: 'Що було корисним для вас і тварини?'),
+          decoration: const InputDecoration(
+              labelText: 'Коментар',
+              hintText: 'Що було корисним для вас і тварини?'),
         ),
         const SizedBox(height: 8),
         SwitchListTile(
@@ -121,9 +135,13 @@ class _LeaveReviewScreenState extends State<LeaveReviewScreen> {
           contentPadding: EdgeInsets.zero,
         ),
         const SizedBox(height: 16),
-        FilledButton(onPressed: isSubmitting ? null : submit, child: Text(isSubmitting ? 'Надсилання...' : 'Надіслати відгук')),
+        FilledButton(
+            onPressed: isSubmitting ? null : submit,
+            child: Text(isSubmitting ? 'Надсилання...' : 'Надіслати відгук')),
         const SizedBox(height: 8),
-        OutlinedButton(onPressed: isSubmitting ? null : () => Navigator.of(context).pop(), child: const Text('Скасувати')),
+        OutlinedButton(
+            onPressed: isSubmitting ? null : () => Navigator.of(context).pop(),
+            child: const Text('Скасувати')),
       ],
     );
   }

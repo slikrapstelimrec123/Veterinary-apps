@@ -13,7 +13,10 @@ import '../../visit_records/screens/documents_screen.dart';
 import '../../visit_records/screens/visit_history_screen.dart';
 import '../data/pet_repository.dart';
 import '../domain/pet.dart';
+import '../../announcements/screens/add_sale_announcement_screen.dart';
+import '../../announcements/screens/add_breeding_announcement_screen.dart';
 import 'edit_pet_screen.dart';
+import 'transfer_pet_screen.dart';
 
 class PetProfileScreen extends StatefulWidget {
   const PetProfileScreen({super.key, required this.petId});
@@ -29,7 +32,9 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
   late Future<Pet?> petFuture = repository.getPet(widget.petId);
 
   void refresh() {
-    setState(() => petFuture = repository.getPet(widget.petId));
+    setState(() {
+      petFuture = repository.getPet(widget.petId);
+    });
   }
 
   @override
@@ -41,14 +46,21 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
 
         return AppScaffold(
           title: pet?.name ?? 'Профіль тварини',
-          subtitle: pet == null ? null : '${pet.speciesLabel} · ${pet.breed ?? 'Породу не вказано'}',
+          subtitle: pet == null
+              ? null
+              : '${pet.speciesLabel} · ${pet.breed ?? 'Породу не вказано'}',
           children: [
             if (snapshot.connectionState == ConnectionState.waiting)
               const Center(child: CircularProgressIndicator())
             else if (snapshot.hasError)
-              ErrorState(message: 'Не вдалося завантажити профіль тварини.', onRetry: refresh)
+              ErrorState(
+                  message: 'Не вдалося завантажити профіль тварини.',
+                  onRetry: refresh)
             else if (pet == null)
-              const EmptyState(title: 'Тварину не знайдено', message: 'Цей профіль тварини недоступний.', icon: Icons.search_off_outlined)
+              const EmptyState(
+                  title: 'Тварину не знайдено',
+                  message: 'Цей профіль тварини недоступний.',
+                  icon: Icons.search_off_outlined)
             else
               _PetProfileContent(pet: pet, onChanged: refresh),
           ],
@@ -76,13 +88,40 @@ class _PetProfileContent extends StatelessWidget {
         const SizedBox(height: 12),
         OutlinedButton(
           onPressed: () async {
-            final result = await Navigator.of(context).push(MaterialPageRoute(builder: (_) => EditPetScreen(pet: pet)));
-            if (result != null) {
+            final result = await Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => EditPetScreen(pet: pet)));
+            if (result == 'deleted') {
+              if (context.mounted) Navigator.of(context).pop('deleted');
+            } else if (result != null) {
               onChanged();
               if (context.mounted) Navigator.of(context).pop(result);
             }
           },
           child: const Text('Редагувати дані тварини'),
+        ),
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) => AddSaleAnnouncementScreen(pet: pet),
+          )),
+          icon: const Icon(Icons.favorite_border),
+          label: const Text('Знайти нового власника'),
+        ),
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) => AddBreedingAnnouncementScreen(pet: pet),
+          )),
+          icon: const Icon(Icons.diversity_1_outlined),
+          label: const Text('Подати на вязку'),
+        ),
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) => TransferPetScreen(pet: pet),
+          )),
+          icon: const Icon(Icons.qr_code),
+          label: const Text('Передати картку тварини'),
         ),
       ],
     );
@@ -107,12 +146,15 @@ class _PetCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(pet.name, style: Theme.of(context).textTheme.headlineMedium),
+                  Text(pet.name,
+                      style: Theme.of(context).textTheme.headlineMedium),
                   const SizedBox(height: 4),
-                  Text('${pet.speciesLabel} · ${pet.ageLabel}', style: const TextStyle(color: AppTheme.textSecondary)),
+                  Text('${pet.speciesLabel} · ${pet.ageLabel}',
+                      style: const TextStyle(color: AppTheme.textSecondary)),
                   if (pet.breed != null) ...[
                     const SizedBox(height: 2),
-                    Text(pet.breed!, style: const TextStyle(color: AppTheme.textSecondary)),
+                    Text(pet.breed!,
+                        style: const TextStyle(color: AppTheme.textSecondary)),
                   ],
                 ],
               ),
@@ -140,7 +182,8 @@ class _ActionGrid extends StatelessWidget {
                 icon: Icons.history_outlined,
                 title: 'Прийоми',
                 onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => VisitHistoryScreen(petId: pet.id, petName: pet.name),
+                  builder: (_) =>
+                      VisitHistoryScreen(petId: pet.id, petName: pet.name),
                 )),
               ),
             ),
@@ -150,7 +193,8 @@ class _ActionGrid extends StatelessWidget {
                 icon: Icons.folder_outlined,
                 title: 'Документи',
                 onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => DocumentsScreen(petId: pet.id, petName: pet.name),
+                  builder: (_) =>
+                      DocumentsScreen(petId: pet.id, petName: pet.name),
                 )),
               ),
             ),
@@ -164,7 +208,8 @@ class _ActionGrid extends StatelessWidget {
                 icon: Icons.medication_outlined,
                 title: 'Препарати',
                 onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => MedicationsScreen(petId: pet.id, petName: pet.name),
+                  builder: (_) =>
+                      MedicationsScreen(petId: pet.id, petName: pet.name),
                 )),
               ),
             ),
@@ -174,7 +219,8 @@ class _ActionGrid extends StatelessWidget {
                 icon: Icons.qr_code_outlined,
                 title: 'Іст. лікування',
                 onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => PetPassportScreen(petId: pet.id, petName: pet.name),
+                  builder: (_) =>
+                      PetPassportScreen(petId: pet.id, petName: pet.name),
                 )),
               ),
             ),
@@ -188,7 +234,8 @@ class _ActionGrid extends StatelessWidget {
                 icon: Icons.restaurant_outlined,
                 title: 'Харчування',
                 onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => FeedingScreen(petId: pet.id, petName: pet.name),
+                  builder: (_) =>
+                      FeedingScreen(petId: pet.id, petName: pet.name),
                 )),
               ),
             ),
@@ -198,7 +245,8 @@ class _ActionGrid extends StatelessWidget {
                 icon: Icons.emoji_events_outlined,
                 title: 'Досягнення',
                 onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => AchievementsScreen(petId: pet.id, petName: pet.name),
+                  builder: (_) =>
+                      AchievementsScreen(petId: pet.id, petName: pet.name),
                 )),
               ),
             ),
@@ -210,11 +258,11 @@ class _ActionGrid extends StatelessWidget {
 }
 
 class _ActionCard extends StatelessWidget {
-  const _ActionCard({required this.icon, required this.title, required this.onTap, this.badge});
+  const _ActionCard(
+      {required this.icon, required this.title, required this.onTap});
   final IconData icon;
   final String title;
   final VoidCallback onTap;
-  final String? badge;
 
   @override
   Widget build(BuildContext context) {
@@ -228,11 +276,10 @@ class _ActionCard extends StatelessWidget {
             children: [
               Icon(icon, size: 28),
               const SizedBox(height: 6),
-              Text(title, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-              if (badge != null) ...[
-                const SizedBox(height: 2),
-                Text(badge!, style: const TextStyle(fontSize: 10, color: AppTheme.textSecondary)),
-              ],
+              Text(title,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w700, fontSize: 13)),
             ],
           ),
         ),
@@ -256,10 +303,12 @@ class _DetailSectionState extends State<_DetailSection> {
     final pet = widget.pet;
     final neuteredLabel = pet.isNeutered == null
         ? 'Не вказано'
-        : pet.isNeutered! ? 'Так' : 'Ні';
+        : pet.isNeutered!
+            ? 'Так'
+            : 'Ні';
     final details = <(String, String)>[
       ('Стать', pet.sexLabel),
-      ('Кастровано', neuteredLabel),
+      ('Стерилізовано', neuteredLabel),
       ('Вага', pet.weightKg == null ? 'Не вказано' : '${pet.weightKg} кг'),
       ('Колір', pet.color ?? 'Не вказано'),
       ('Мікрочип', pet.microchipNumber ?? 'Не вказано'),
@@ -272,7 +321,8 @@ class _DetailSectionState extends State<_DetailSection> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Основна інформація', style: Theme.of(context).textTheme.titleMedium),
+            Text('Основна інформація',
+                style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 12),
             ...details.map(
               (item) => Padding(
@@ -282,12 +332,15 @@ class _DetailSectionState extends State<_DetailSection> {
                   children: [
                     Flexible(
                       flex: 2,
-                      child: Text(item.$1, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                      child: Text(item.$1,
+                          style: const TextStyle(
+                              color: AppTheme.textSecondary, fontSize: 13)),
                     ),
                     const SizedBox(width: 8),
                     Flexible(
                       flex: 3,
-                      child: Text(item.$2, style: const TextStyle(fontWeight: FontWeight.w600)),
+                      child: Text(item.$2,
+                          style: const TextStyle(fontWeight: FontWeight.w600)),
                     ),
                   ],
                 ),
@@ -299,4 +352,3 @@ class _DetailSectionState extends State<_DetailSection> {
     );
   }
 }
-

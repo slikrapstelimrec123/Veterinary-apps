@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 class ErrorState extends StatelessWidget {
   const ErrorState({
@@ -22,7 +22,8 @@ class ErrorState extends StatelessWidget {
             Text(message, textAlign: TextAlign.center),
             if (onRetry != null) ...[
               const SizedBox(height: 12),
-              OutlinedButton(onPressed: onRetry, child: const Text('Спробувати ще раз')),
+              OutlinedButton(
+                  onPressed: onRetry, child: const Text('Спробувати ще раз')),
             ],
           ],
         ),
@@ -30,4 +31,3 @@ class ErrorState extends StatelessWidget {
     );
   }
 }
-

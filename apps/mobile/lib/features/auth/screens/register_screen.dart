@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/auth/auth_state.dart';
 import '../../../shared/widgets/app_scaffold.dart';
+import '../../../shared/widgets/city_autocomplete_field.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -14,6 +15,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final fullNameController = TextEditingController();
   final emailController = TextEditingController();
   final phoneController = TextEditingController();
+  final cityController = TextEditingController();
   final passwordController = TextEditingController();
   String? localError;
 
@@ -22,6 +24,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     fullNameController.dispose();
     emailController.dispose();
     phoneController.dispose();
+    cityController.dispose();
     passwordController.dispose();
     super.dispose();
   }
@@ -42,6 +45,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
+    final city = cityController.text.trim();
+    if (city.isEmpty) {
+      setState(() => localError = 'Оберіть місто.');
+      return;
+    }
+
     if (password.length < 8) {
       setState(() => localError = 'Пароль має містити щонайменше 8 символів.');
       return;
@@ -52,7 +61,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       email: email,
       password: password,
       fullName: fullName,
-      phone: phoneController.text.trim().isEmpty ? null : phoneController.text.trim(),
+      city: city,
+      phone: phoneController.text.trim().isEmpty
+          ? null
+          : phoneController.text.trim(),
     );
 
     if (!mounted) return;
@@ -70,7 +82,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return AppScaffold(
         title: 'Підтвердьте пошту',
         children: [
-          const Icon(Icons.mark_email_unread_outlined, size: 64, color: Color(0xFF0D1B3E)),
+          const Icon(Icons.mark_email_unread_outlined,
+              size: 64, color: Color(0xFF0D1B3E)),
           const SizedBox(height: 16),
           const Text(
             'Ми надіслали вам лист з підтвердженням. Перейдіть за посиланням у листі, щоб активувати акаунт.',
@@ -113,6 +126,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           decoration: const InputDecoration(labelText: 'Телефон'),
         ),
         const SizedBox(height: 12),
+        CityAutocompleteField(controller: cityController, label: 'Місто *'),
+        const SizedBox(height: 12),
         TextField(
           controller: passwordController,
           obscureText: true,
@@ -121,7 +136,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         const SizedBox(height: 20),
         FilledButton(
           onPressed: auth.isLoading ? null : submit,
-          child: Text(auth.isLoading ? 'Створення акаунта...' : 'Створити акаунт'),
+          child:
+              Text(auth.isLoading ? 'Створення акаунта...' : 'Створити акаунт'),
         ),
       ],
     );

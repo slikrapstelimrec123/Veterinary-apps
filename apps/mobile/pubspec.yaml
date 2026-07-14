@@ -1,7 +1,7 @@
 name: vet_care_mobile
 description: Pet owner mobile app for the veterinary care platform.
 publish_to: "none"
-version: 0.1.0+1
+version: 1.0.0+1
 
 environment:
   sdk: ">=3.4.0 <4.0.0"
@@ -13,9 +13,9 @@ dependencies:
     sdk: flutter
   supabase_flutter: ^2.6.0
   qr_flutter: ^4.1.0
-  google_fonts: ^6.2.1
   image_picker: ^1.1.2
   flutter_svg: ^2.0.9
+  url_launcher: ^6.3.0
 
 dependency_overrides:
   supabase_flutter: 2.6.0
@@ -25,14 +25,25 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/lappo_app_icon_dark_1024.png"
+  adaptive_icon_background: "#0D0D1A"
+  adaptive_icon_foreground: "assets/lappo_app_icon_dark_1024.png"
+  remove_alpha_ios: true
+  min_sdk_android: 21
 
 flutter:
   uses-material-design: true
+  fonts:
+    - family: Montserrat
+      fonts:
+        - asset: assets/fonts/Montserrat-Variable.ttf
   assets:
     - assets/
     - assets/icons/
-
-
-
-
+    - assets/fonts/OFL-Montserrat.txt
 

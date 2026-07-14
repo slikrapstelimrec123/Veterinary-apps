@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../features/clinics/screens/clinic_coming_soon_screen.dart';
+import '../../features/announcements/screens/announcements_screen.dart';
 import '../../features/medications/data/medication_repository.dart';
-import '../../features/medications/domain/pet_medication.dart';
 import '../../features/medications/screens/medications_screen.dart';
 import '../../features/notifications/data/notification_repository.dart';
 import '../../features/notifications/screens/notifications_screen.dart';
@@ -33,7 +32,9 @@ class _AppShellState extends State<AppShell> {
   late Future<int> unreadFuture = notificationRepository.getUnreadCount();
 
   void refreshUnreadCount() {
-    setState(() => unreadFuture = notificationRepository.getUnreadCount());
+    setState(() {
+      unreadFuture = notificationRepository.getUnreadCount();
+    });
   }
 
   @override
@@ -41,7 +42,7 @@ class _AppShellState extends State<AppShell> {
     final tabs = [
       HomeScreen(onOpenPets: () => setState(() => _index = 1)),
       const PetListScreen(),
-      const ClinicComingSoonScreen(),
+      const AnnouncementsScreen(),
       const NotificationsScreen(),
       const SettingsScreen(),
     ];
@@ -60,18 +61,22 @@ class _AppShellState extends State<AppShell> {
               if (value == 3) refreshUnreadCount();
             },
             destinations: [
-              const NavigationDestination(icon: Icon(Icons.home_outlined), label: 'Головна'),
-              const NavigationDestination(icon: Icon(Icons.pets_outlined), label: 'Тварини'),
-              const NavigationDestination(icon: Icon(Icons.local_hospital_outlined), label: 'Клініки'),
+              const NavigationDestination(
+                  icon: Icon(Icons.home_outlined), label: 'Home'),
+              const NavigationDestination(
+                  icon: Icon(Icons.pets_outlined), label: 'Pets'),
+              const NavigationDestination(
+                  icon: Icon(Icons.campaign_outlined), label: 'Announcements'),
               NavigationDestination(
                 icon: Badge(
                   isLabelVisible: unread > 0,
                   label: Text(unread > 9 ? '9+' : '$unread'),
                   child: const Icon(Icons.notifications_none_outlined),
                 ),
-                label: 'Сповіщення',
+                label: 'Notifications',
               ),
-              const NavigationDestination(icon: Icon(Icons.settings_outlined), label: 'Налаштування'),
+              const NavigationDestination(
+                  icon: Icon(Icons.settings_outlined), label: 'Settings'),
             ],
           );
         },
@@ -111,7 +116,12 @@ class _HomeScreenState extends State<HomeScreen> {
       final documents = await visitRepository.getDocumentsForPet(pet.id);
       docs += documents.length;
     }
-    if (mounted) setState(() { _visitCount = visits; _documentCount = docs; });
+    if (mounted) {
+      setState(() {
+        _visitCount = visits;
+        _documentCount = docs;
+      });
+    }
   }
 
   @override
@@ -121,7 +131,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> addPet() async {
-    final result = await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AddPetScreen()));
+    final result = await Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const AddPetScreen()));
     if (result != null) refresh();
   }
 
@@ -142,27 +153,39 @@ class _HomeScreenState extends State<HomeScreen> {
             if (snapshot.connectionState == ConnectionState.waiting)
               const Center(child: CircularProgressIndicator())
             else if (snapshot.hasError)
-              ErrorState(message: 'Не вдалося завантажити головну сторінку.', onRetry: refresh)
+              ErrorState(
+                  message: 'Не вдалося завантажити головну сторінку.',
+                  onRetry: refresh)
             else ...[
-              _SummaryCard(petCount: pets.length, visitCount: _visitCount, documentCount: _documentCount),
+              _SummaryCard(
+                  petCount: pets.length,
+                  visitCount: _visitCount,
+                  documentCount: _documentCount),
               const SizedBox(height: 12),
               if (pets.isEmpty)
                 EmptyState(
                   title: 'Додайте першу тварину',
-                  message: 'Створіть медичну картку, щоб зберігати всю інформацію про здоров\'я вашого улюбленця.',
+                  message:
+                      'Створіть медичну картку, щоб зберігати всю інформацію про здоров\'я вашого улюбленця.',
                   icon: Icons.pets_outlined,
-                  action: FilledButton(onPressed: addPet, child: const Text('Додати тварину')),
+                  action: FilledButton(
+                      onPressed: addPet, child: const Text('Додати тварину')),
                 )
               else ...[
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Ваші тварини', style: Theme.of(context).textTheme.titleLarge),
-                    TextButton(onPressed: widget.onOpenPets, child: const Text('Переглянути всі')),
+                    Flexible(
+                        child: Text('Ваші тварини',
+                            style: Theme.of(context).textTheme.titleLarge)),
+                    TextButton(
+                        onPressed: widget.onOpenPets,
+                        child: const Text('Переглянути всі')),
                   ],
                 ),
                 const SizedBox(height: 4),
-                ...pets.take(3).map((pet) => _HomePetPreview(pet: pet, onChanged: refresh)),
+                ...pets.take(3).map(
+                    (pet) => _HomePetPreview(pet: pet, onChanged: refresh)),
                 const SizedBox(height: 8),
                 OutlinedButton.icon(
                   onPressed: addPet,
@@ -183,7 +206,10 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class _SummaryCard extends StatelessWidget {
-  const _SummaryCard({required this.petCount, required this.visitCount, required this.documentCount});
+  const _SummaryCard(
+      {required this.petCount,
+      required this.visitCount,
+      required this.documentCount});
 
   final int petCount;
   final int visitCount;
@@ -200,7 +226,11 @@ class _SummaryCard extends StatelessWidget {
               child: _StatTile(
                 icon: Icons.pets_outlined,
                 value: '$petCount',
-                label: petCount == 1 ? 'тварина' : petCount < 5 ? 'тварини' : 'тварин',
+                label: petCount == 1
+                    ? 'тварина'
+                    : petCount < 5
+                        ? 'тварини'
+                        : 'тварин',
               ),
             ),
             const SizedBox(width: 8),
@@ -208,7 +238,11 @@ class _SummaryCard extends StatelessWidget {
               child: _StatTile(
                 icon: Icons.history_outlined,
                 value: '$visitCount',
-                label: visitCount == 1 ? 'прийом' : visitCount < 5 ? 'прийоми' : 'прийомів',
+                label: visitCount == 1
+                    ? 'прийом'
+                    : visitCount < 5
+                        ? 'прийоми'
+                        : 'прийомів',
               ),
             ),
             const SizedBox(width: 8),
@@ -216,7 +250,11 @@ class _SummaryCard extends StatelessWidget {
               child: _StatTile(
                 icon: Icons.folder_outlined,
                 value: '$documentCount',
-                label: documentCount == 1 ? 'документ' : documentCount < 5 ? 'документи' : 'документів',
+                label: documentCount == 1
+                    ? 'документ'
+                    : documentCount < 5
+                        ? 'документи'
+                        : 'документів',
               ),
             ),
           ],
@@ -227,7 +265,8 @@ class _SummaryCard extends StatelessWidget {
 }
 
 class _StatTile extends StatelessWidget {
-  const _StatTile({required this.icon, required this.value, required this.label});
+  const _StatTile(
+      {required this.icon, required this.value, required this.label});
   final IconData icon;
   final String value;
   final String label;
@@ -238,8 +277,14 @@ class _StatTile extends StatelessWidget {
       children: [
         Icon(icon, size: 22, color: AppTheme.primary),
         const SizedBox(height: 4),
-        Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppTheme.textMain)),
-        Text(label, style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary), textAlign: TextAlign.center),
+        Text(value,
+            style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.textMain)),
+        Text(label,
+            style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+            textAlign: TextAlign.center),
       ],
     );
   }
@@ -258,14 +303,16 @@ class _ClinicComingSoonCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.schedule_outlined, size: 18, color: AppTheme.textSecondary),
+                const Icon(Icons.campaign_outlined,
+                    size: 18, color: AppTheme.primary),
                 const SizedBox(width: 6),
-                Text('Клініки — незабаром', style: Theme.of(context).textTheme.titleMedium),
+                Text('Оголошення',
+                    style: Theme.of(context).textTheme.titleMedium),
               ],
             ),
             const SizedBox(height: 6),
             const Text(
-              'Незабаром ви зможете знаходити клініки та записуватися на прийом прямо в застосунку.',
+              'Знайдіть партнера для в\'язки або цуценят улюбленої породи у розділі оголошень.',
               style: TextStyle(color: AppTheme.textSecondary),
             ),
           ],
@@ -275,39 +322,12 @@ class _ClinicComingSoonCard extends StatelessWidget {
   }
 }
 
-class _ComingSoonPlaceholder extends StatelessWidget {
-  const _ComingSoonPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return AppScaffold(
-      title: 'Незабаром',
-      children: [
-        const SizedBox(height: 48),
-        Center(
-          child: Column(
-            children: [
-              Icon(Icons.rocket_launch_outlined, size: 72,
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.3)),
-              const SizedBox(height: 20),
-              Text('Незабаром', style: Theme.of(context).textTheme.headlineMedium),
-              const SizedBox(height: 12),
-              const Text(
-                'Цей розділ з\'явиться у наступному оновленні.',
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ─── Upcoming Events ─────────────────────────────────────────────────────────
-
 class _UpcomingEvent {
-  const _UpcomingEvent({required this.title, required this.pet, required this.date, required this.isOverdue});
+  const _UpcomingEvent(
+      {required this.title,
+      required this.pet,
+      required this.date,
+      required this.isOverdue});
   final String title;
   final Pet pet;
   final DateTime date;
@@ -343,7 +363,12 @@ class _UpcomingEventsCardState extends State<_UpcomingEventsCard> {
 
   Future<void> _load() async {
     if (widget.pets.isEmpty) {
-      if (mounted) setState(() { _events = []; _loaded = true; });
+      if (mounted) {
+        setState(() {
+          _events = [];
+          _loaded = true;
+        });
+      }
       return;
     }
 
@@ -357,7 +382,8 @@ class _UpcomingEventsCardState extends State<_UpcomingEventsCard> {
         for (final med in meds) {
           final d = med.nextDoseDate;
           if (d == null) continue;
-          if (d.isBefore(now.subtract(const Duration(days: 1))) && !med.nextDoseOverdue) continue;
+          if (d.isBefore(now.subtract(const Duration(days: 1))) &&
+              !med.nextDoseOverdue) continue;
           if (d.isAfter(threshold)) continue;
           events.add(_UpcomingEvent(
             title: med.name,
@@ -371,7 +397,12 @@ class _UpcomingEventsCardState extends State<_UpcomingEventsCard> {
 
     events.sort((a, b) => a.date.compareTo(b.date));
 
-    if (mounted) setState(() { _events = events; _loaded = true; });
+    if (mounted) {
+      setState(() {
+        _events = events;
+        _loaded = true;
+      });
+    }
   }
 
   String _formatDate(DateTime d) {
@@ -395,9 +426,11 @@ class _UpcomingEventsCardState extends State<_UpcomingEventsCard> {
           children: [
             Row(
               children: [
-                Icon(Icons.event_outlined, size: 18, color: AppTheme.primary),
+                const Icon(Icons.event_outlined,
+                    size: 18, color: AppTheme.primary),
                 const SizedBox(width: 6),
-                Text('Найближчі події', style: Theme.of(context).textTheme.titleMedium),
+                Text('Найближчі події',
+                    style: Theme.of(context).textTheme.titleMedium),
               ],
             ),
             const SizedBox(height: 12),
@@ -407,7 +440,8 @@ class _UpcomingEventsCardState extends State<_UpcomingEventsCard> {
               return InkWell(
                 borderRadius: BorderRadius.circular(10),
                 onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => MedicationsScreen(petId: e.pet.id, petName: e.pet.name),
+                  builder: (_) =>
+                      MedicationsScreen(petId: e.pet.id, petName: e.pet.name),
                 )),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 6),
@@ -421,7 +455,9 @@ class _UpcomingEventsCardState extends State<_UpcomingEventsCard> {
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Icon(
-                          overdue ? Icons.warning_amber_rounded : Icons.medication_outlined,
+                          overdue
+                              ? Icons.warning_amber_rounded
+                              : Icons.medication_outlined,
                           size: 20,
                           color: color,
                         ),
@@ -431,18 +467,28 @@ class _UpcomingEventsCardState extends State<_UpcomingEventsCard> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(e.title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                            Text(e.title,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w700, fontSize: 14)),
                             Text('${e.petName} · ${_formatDate(e.date)}',
-                                style: TextStyle(fontSize: 12, color: overdue ? color : AppTheme.textSecondary)),
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    color: overdue
+                                        ? color
+                                        : AppTheme.textSecondary)),
                           ],
                         ),
                       ),
                       Text(
                         _formatDate(e.date),
-                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: color),
+                        style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                            color: color),
                       ),
                       const SizedBox(width: 4),
-                      Icon(Icons.chevron_right, size: 16, color: AppTheme.textSecondary),
+                      const Icon(Icons.chevron_right,
+                          size: 16, color: AppTheme.textSecondary),
                     ],
                   ),
                 ),
@@ -454,8 +500,6 @@ class _UpcomingEventsCardState extends State<_UpcomingEventsCard> {
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _HomePetPreview extends StatelessWidget {
   const _HomePetPreview({required this.pet, required this.onChanged});
@@ -470,8 +514,10 @@ class _HomePetPreview extends StatelessWidget {
       child: Card(
         child: ListTile(
           leading: PetAvatar(name: pet.name),
-          title: Text(pet.name, style: const TextStyle(fontWeight: FontWeight.w700)),
-          subtitle: Text('${pet.speciesLabel} · ${pet.breed ?? 'Породу не вказано'}'),
+          title: Text(pet.name,
+              style: const TextStyle(fontWeight: FontWeight.w700)),
+          subtitle:
+              Text('${pet.speciesLabel} · ${pet.breed ?? 'Породу не вказано'}'),
           trailing: const Icon(Icons.chevron_right),
           onTap: () async {
             final result = await Navigator.of(context).push(MaterialPageRoute(

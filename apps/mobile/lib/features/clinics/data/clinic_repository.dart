@@ -24,8 +24,16 @@ class ClinicRepository {
       }).toList();
     }
 
-    final rows = await _client.from('clinics').select('*').eq('status', 'published').eq('published', true).order('name', ascending: true);
-    final clinics = (rows as List<dynamic>).whereType<Map<String, dynamic>>().map(Clinic.fromJson).toList();
+    final rows = await _client
+        .from('clinics')
+        .select('*')
+        .eq('status', 'published')
+        .eq('published', true)
+        .order('name', ascending: true);
+    final clinics = (rows as List<dynamic>)
+        .whereType<Map<String, dynamic>>()
+        .map(Clinic.fromJson)
+        .toList();
     final normalized = query?.trim().toLowerCase() ?? '';
 
     if (normalized.isEmpty) {
@@ -44,17 +52,23 @@ class ClinicRepository {
       return MockData.clinics.where((clinic) => clinic.id == id).firstOrNull;
     }
 
-    final row = await _client.from('clinics').select('*').eq('id', id).maybeSingle();
+    final row =
+        await _client.from('clinics').select('*').eq('id', id).maybeSingle();
     return row == null ? null : Clinic.fromJson(row);
   }
 
   Future<bool> canClinicAcceptOnlineBooking(String clinicId) async {
     if (_useMockData) {
-      return MockData.clinics.where((clinic) => clinic.id == clinicId).firstOrNull?.canAcceptOnlineBooking ?? false;
+      return MockData.clinics
+              .where((clinic) => clinic.id == clinicId)
+              .firstOrNull
+              ?.canAcceptOnlineBooking ??
+          false;
     }
 
     try {
-      final result = await _client.rpc('can_clinic_create_appointment', params: {'target_clinic_id': clinicId});
+      final result = await _client.rpc('can_clinic_create_appointment',
+          params: {'target_clinic_id': clinicId});
       return result == true;
     } catch (_) {
       return false;
@@ -63,7 +77,9 @@ class ClinicRepository {
 
   Future<List<Doctor>> getClinicDoctors(String clinicId) async {
     if (_useMockData) {
-      return MockData.doctors.where((doctor) => doctor.clinicId == clinicId && doctor.isBookable).toList();
+      return MockData.doctors
+          .where((doctor) => doctor.clinicId == clinicId && doctor.isBookable)
+          .toList();
     }
 
     final rows = await _client
@@ -74,21 +90,35 @@ class ClinicRepository {
         .eq('is_public', true)
         .order('full_name', ascending: true);
 
-    return (rows as List<dynamic>).whereType<Map<String, dynamic>>().map(Doctor.fromJson).toList();
+    return (rows as List<dynamic>)
+        .whereType<Map<String, dynamic>>()
+        .map(Doctor.fromJson)
+        .toList();
   }
 
   Future<Doctor?> getDoctor(String id) async {
     if (_useMockData) {
-      return MockData.doctors.where((doctor) => doctor.id == id && doctor.isBookable).firstOrNull;
+      return MockData.doctors
+          .where((doctor) => doctor.id == id && doctor.isBookable)
+          .firstOrNull;
     }
 
-    final row = await _client.from('doctors').select('*, clinics(name)').eq('id', id).eq('status', 'active').eq('is_public', true).maybeSingle();
+    final row = await _client
+        .from('doctors')
+        .select('*, clinics(name)')
+        .eq('id', id)
+        .eq('status', 'active')
+        .eq('is_public', true)
+        .maybeSingle();
     return row == null ? null : Doctor.fromJson(row);
   }
 
   Future<List<ClinicService>> getClinicServices(String clinicId) async {
     if (_useMockData) {
-      return MockData.services.where((service) => service.clinicId == clinicId && service.isBookable).toList();
+      return MockData.services
+          .where(
+              (service) => service.clinicId == clinicId && service.isBookable)
+          .toList();
     }
 
     final rows = await _client
@@ -99,6 +129,9 @@ class ClinicRepository {
         .eq('is_public', true)
         .order('name', ascending: true);
 
-    return (rows as List<dynamic>).whereType<Map<String, dynamic>>().map(ClinicService.fromJson).toList();
+    return (rows as List<dynamic>)
+        .whereType<Map<String, dynamic>>()
+        .map(ClinicService.fromJson)
+        .toList();
   }
 }

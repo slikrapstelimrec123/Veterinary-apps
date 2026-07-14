@@ -1,75 +1,14 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase_config.dart';
+import '../../../shared/services/private_pet_storage.dart';
 import '../domain/pet_achievement.dart';
 
 class AchievementRepository {
   bool get _useMock => SupabaseConfig.useMockData;
   SupabaseClient get _client => Supabase.instance.client;
 
-  static final List<PetAchievement> _mockData = [
-    PetAchievement(
-      id: 'mock_ach_1',
-      petId: 'mock_pet_luna',
-      title: 'Виставка порід — Київ 2024',
-      eventDate: DateTime(2024, 10, 5),
-      eventType: 'exhibition',
-      location: 'МВЦ, Київ',
-      result: '1 місце у класі юніорів',
-      awardTitle: 'Кращий юніор виставки',
-      notes: 'Luna отримала найвищий бал від всіх суддів.',
-      createdAt: DateTime(2024, 10, 6),
-    ),
-    PetAchievement(
-      id: 'mock_ach_2',
-      petId: 'mock_pet_luna',
-      title: 'Аджиліті — Осінній кубок',
-      eventDate: DateTime(2024, 9, 14),
-      eventType: 'competition',
-      location: 'Спортивний парк «Пролісок», Київ',
-      result: '2 місце',
-      awardTitle: 'Срібна нагорода',
-      notes: 'Пройшла трасу без штрафних балів за 28,4 с.',
-      createdAt: DateTime(2024, 9, 15),
-    ),
-    PetAchievement(
-      id: 'mock_ach_3',
-      petId: 'mock_pet_luna',
-      title: 'Базовий курс послуху',
-      eventDate: DateTime(2024, 6, 20),
-      endDate: DateTime(2024, 8, 15),
-      eventType: 'training',
-      location: 'Кінологічний центр «Вірний друг»',
-      result: 'Зараховано',
-      awardTitle: 'Сертифікат базового послуху',
-      notes: 'Відмінно освоїла команди «сидіти», «лежати», «місце», «підійди».',
-      createdAt: DateTime(2024, 8, 16),
-    ),
-    PetAchievement(
-      id: 'mock_ach_4',
-      petId: 'mock_pet_milo',
-      title: 'Виставка котів — Весна 2024',
-      eventDate: DateTime(2024, 4, 20),
-      eventType: 'exhibition',
-      location: 'Палац культури «Жовтень», Київ',
-      result: '3 місце у класі дорослих',
-      awardTitle: 'Бронзова медаль',
-      notes: 'Milo чудово себе поводив під час виставки.',
-      createdAt: DateTime(2024, 4, 21),
-    ),
-    PetAchievement(
-      id: 'mock_ach_5',
-      petId: 'mock_pet_milo',
-      title: 'Сертифікат здоров\'я WCF',
-      eventDate: DateTime(2024, 3, 10),
-      eventType: 'certification',
-      location: 'Ветклініка Північна Зірка',
-      result: 'Пройдено',
-      awardTitle: 'Сертифікат здоров\'я WCF 2024',
-      notes: 'Щорічне підтвердження стану здоров\'я для реєстру WCF.',
-      createdAt: DateTime(2024, 3, 10),
-    ),
-  ];
+  static final List<PetAchievement> _mockData = [];
 
   Future<List<PetAchievement>> getAchievements(String petId) async {
     if (_useMock) {
@@ -83,10 +22,9 @@ class AchievementRepository {
         .eq('pet_id', petId)
         .order('event_date', ascending: false);
 
-    return (rows as List<dynamic>)
+    return Future.wait((rows as List<dynamic>)
         .whereType<Map<String, dynamic>>()
-        .map(PetAchievement.fromJson)
-        .toList();
+        .map(_fromPrivateRow));
   }
 
   Future<PetAchievement> addAchievement(PetAchievement achievement) async {
@@ -103,6 +41,8 @@ class AchievementRepository {
         awardTitle: achievement.awardTitle,
         awardImageUrl: achievement.awardImageUrl,
         eventPhotoUrl: achievement.eventPhotoUrl,
+        awardImagePath: achievement.awardImagePath,
+        eventPhotoPath: achievement.eventPhotoPath,
         notes: achievement.notes,
         createdAt: DateTime.now(),
       );
@@ -116,7 +56,7 @@ class AchievementRepository {
         .select()
         .single();
 
-    return PetAchievement.fromJson(row);
+    return _fromPrivateRow(row);
   }
 
   Future<PetAchievement> updateAchievement(PetAchievement achievement) async {
@@ -133,7 +73,7 @@ class AchievementRepository {
         .select()
         .single();
 
-    return PetAchievement.fromJson(row);
+    return _fromPrivateRow(row);
   }
 
   Future<void> deleteAchievement(String id) async {
@@ -143,5 +83,22 @@ class AchievementRepository {
     }
 
     await _client.from('pet_achievements').delete().eq('id', id);
+  }
+
+  Future<PetAchievement> _fromPrivateRow(Map<String, dynamic> row) async {
+    final hydrated = Map<String, dynamic>.from(row);
+    try {
+      hydrated['award_image_url'] = await PrivatePetStorage.signedUrl(
+            row['award_image_path'] as String?,
+          ) ??
+          row['award_image_url'];
+      hydrated['event_photo_url'] = await PrivatePetStorage.signedUrl(
+            row['event_photo_path'] as String?,
+          ) ??
+          row['event_photo_url'];
+    } catch (_) {
+      // Preserve legacy URLs if signing is temporarily unavailable.
+    }
+    return PetAchievement.fromJson(hydrated);
   }
 }

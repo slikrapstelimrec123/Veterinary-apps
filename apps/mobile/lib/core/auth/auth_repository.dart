@@ -18,6 +18,7 @@ class AuthRepository {
         email: 'owner@example.com',
         fullName: 'Olena Petrenko',
         role: UserRole.petOwner,
+        city: 'Київ',
       );
     }
 
@@ -28,7 +29,7 @@ class AuthRepository {
 
     final profile = await _client
         .from('profiles')
-        .select('id,email,full_name,role,phone')
+        .select('id,email,full_name,role,phone,city')
         .eq('id', user.id)
         .maybeSingle();
 
@@ -42,10 +43,12 @@ class AuthRepository {
       fullName: profile['full_name'] as String? ?? 'Pet owner',
       role: CurrentUser.roleFromString(profile['role'] as String?),
       phone: profile['phone'] as String?,
+      city: profile['city'] as String?,
     );
   }
 
-  Future<CurrentUser?> login({required String email, required String password}) async {
+  Future<CurrentUser?> login(
+      {required String email, required String password}) async {
     if (!isConfigured) {
       return getCurrentUser();
     }
@@ -58,6 +61,7 @@ class AuthRepository {
     required String email,
     required String password,
     required String fullName,
+    required String city,
     String? phone,
   }) async {
     if (!isConfigured) {
@@ -71,6 +75,7 @@ class AuthRepository {
         'full_name': fullName,
         'role': 'pet_owner',
         'phone': phone,
+        'city': city,
       },
     );
 
@@ -83,13 +88,11 @@ class AuthRepository {
       return RegisterResult.confirmationRequired;
     }
 
-    // Update phone in profile if provided (trigger may not capture it)
-    if (phone != null && phone.isNotEmpty) {
-      await _client
-          .from('profiles')
-          .update({'phone': phone})
-          .eq('id', response.user!.id);
-    }
+    // Update phone/city in profile (trigger may not capture them)
+    await _client.from('profiles').update({
+      if (phone != null && phone.isNotEmpty) 'phone': phone,
+      'city': city,
+    }).eq('id', response.user!.id);
 
     return RegisterResult.success;
   }

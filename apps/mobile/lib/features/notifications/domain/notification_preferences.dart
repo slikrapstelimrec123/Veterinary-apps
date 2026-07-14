@@ -33,9 +33,12 @@ class NotificationPreferences {
       emailEnabled: emailEnabled ?? this.emailEnabled,
       pushEnabled: pushEnabled ?? this.pushEnabled,
       smsEnabled: smsEnabled ?? this.smsEnabled,
-      appointmentRemindersEnabled: appointmentRemindersEnabled ?? this.appointmentRemindersEnabled,
-      treatmentUpdatesEnabled: treatmentUpdatesEnabled ?? this.treatmentUpdatesEnabled,
-      reviewRequestsEnabled: reviewRequestsEnabled ?? this.reviewRequestsEnabled,
+      appointmentRemindersEnabled:
+          appointmentRemindersEnabled ?? this.appointmentRemindersEnabled,
+      treatmentUpdatesEnabled:
+          treatmentUpdatesEnabled ?? this.treatmentUpdatesEnabled,
+      reviewRequestsEnabled:
+          reviewRequestsEnabled ?? this.reviewRequestsEnabled,
       marketingEnabled: false,
     );
   }
@@ -60,8 +63,10 @@ class NotificationPreferences {
       emailEnabled: json['email_enabled'] as bool? ?? false,
       pushEnabled: json['push_enabled'] as bool? ?? false,
       smsEnabled: json['sms_enabled'] as bool? ?? false,
-      appointmentRemindersEnabled: json['appointment_reminders_enabled'] as bool? ?? true,
-      treatmentUpdatesEnabled: json['treatment_updates_enabled'] as bool? ?? true,
+      appointmentRemindersEnabled:
+          json['appointment_reminders_enabled'] as bool? ?? true,
+      treatmentUpdatesEnabled:
+          json['treatment_updates_enabled'] as bool? ?? true,
       reviewRequestsEnabled: json['review_requests_enabled'] as bool? ?? true,
       marketingEnabled: false,
     );

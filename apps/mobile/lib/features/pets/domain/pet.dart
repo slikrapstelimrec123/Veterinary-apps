@@ -1,4 +1,4 @@
-﻿class Pet {
+class Pet {
   const Pet({
     required this.id,
     required this.name,
@@ -10,9 +10,11 @@
     this.color,
     this.microchipNumber,
     this.avatarUrl,
+    this.avatarStoragePath,
     this.notes,
     this.isNeutered,
     this.passportPhotoUrl,
+    this.passportStoragePath,
     this.createdAt,
     this.updatedAt,
   });
@@ -27,9 +29,11 @@
   final String? color;
   final String? microchipNumber;
   final String? avatarUrl;
+  final String? avatarStoragePath;
   final String? notes;
   final bool? isNeutered;
   final String? passportPhotoUrl;
+  final String? passportStoragePath;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -64,12 +68,14 @@
 
     final now = DateTime.now();
     var years = now.year - birthDate!.year;
-    if (now.month < birthDate!.month || (now.month == birthDate!.month && now.day < birthDate!.day)) {
+    if (now.month < birthDate!.month ||
+        (now.month == birthDate!.month && now.day < birthDate!.day)) {
       years--;
     }
 
     if (years <= 0) {
-      final months = (now.year - birthDate!.year) * 12 + now.month - birthDate!.month;
+      final months =
+          (now.year - birthDate!.year) * 12 + now.month - birthDate!.month;
       return months <= 1 ? 'Менше 1 місяця' : '$months міс.';
     }
 
@@ -87,9 +93,11 @@
       'color': color,
       'microchip_number': microchipNumber,
       'avatar_url': avatarUrl,
+      'avatar_storage_path': avatarStoragePath,
       'notes': notes,
       'is_neutered': isNeutered,
       'passport_photo_url': passportPhotoUrl,
+      'passport_storage_path': passportStoragePath,
     };
   }
 
@@ -105,9 +113,11 @@
       color: json['color'] as String?,
       microchipNumber: json['microchip_number'] as String?,
       avatarUrl: json['avatar_url'] as String? ?? json['photo_url'] as String?,
+      avatarStoragePath: json['avatar_storage_path'] as String?,
       notes: json['notes'] as String? ?? json['health_notes'] as String?,
       isNeutered: json['is_neutered'] as bool?,
       passportPhotoUrl: json['passport_photo_url'] as String?,
+      passportStoragePath: json['passport_storage_path'] as String?,
       createdAt: DateTime.tryParse(json['created_at'] as String? ?? ''),
       updatedAt: DateTime.tryParse(json['updated_at'] as String? ?? ''),
     );
@@ -124,9 +134,11 @@
     String? color,
     String? microchipNumber,
     String? avatarUrl,
+    String? avatarStoragePath,
     String? notes,
     bool? isNeutered,
     String? passportPhotoUrl,
+    String? passportStoragePath,
   }) {
     return Pet(
       id: id ?? this.id,
@@ -139,9 +151,11 @@
       color: color ?? this.color,
       microchipNumber: microchipNumber ?? this.microchipNumber,
       avatarUrl: avatarUrl ?? this.avatarUrl,
+      avatarStoragePath: avatarStoragePath ?? this.avatarStoragePath,
       notes: notes ?? this.notes,
       isNeutered: isNeutered ?? this.isNeutered,
       passportPhotoUrl: passportPhotoUrl ?? this.passportPhotoUrl,
+      passportStoragePath: passportStoragePath ?? this.passportStoragePath,
       createdAt: createdAt,
       updatedAt: updatedAt,
     );

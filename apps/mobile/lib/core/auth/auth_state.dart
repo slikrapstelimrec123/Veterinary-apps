@@ -54,6 +54,7 @@ class AuthState extends ChangeNotifier {
     required String email,
     required String password,
     required String fullName,
+    required String city,
     String? phone,
   }) async {
     isLoading = true;
@@ -66,6 +67,7 @@ class AuthState extends ChangeNotifier {
         email: email,
         password: password,
         fullName: fullName,
+        city: city,
         phone: phone,
       );
       switch (result) {
@@ -74,13 +76,15 @@ class AuthState extends ChangeNotifier {
         case RegisterResult.confirmationRequired:
           registrationPendingConfirmation = true;
         case RegisterResult.failed:
-          errorMessage = 'Не вдалося створити акаунт. Перевірте поля й спробуйте ще раз.';
+          errorMessage =
+              'Не вдалося створити акаунт. Перевірте поля й спробуйте ще раз.';
       }
     } on AuthException catch (e) {
       if (e.message.toLowerCase().contains('already registered') ||
           e.message.toLowerCase().contains('already exists') ||
           e.statusCode == '422') {
-        errorMessage = 'Ця електронна пошта вже зареєстрована. Спробуйте увійти.';
+        errorMessage =
+            'Ця електронна пошта вже зареєстрована. Спробуйте увійти.';
       } else {
         errorMessage = 'Помилка: ${e.message}';
       }

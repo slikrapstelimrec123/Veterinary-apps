@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/empty_state.dart';
@@ -17,7 +17,8 @@ class MyAppointmentsScreen extends StatefulWidget {
 
 class _MyAppointmentsScreenState extends State<MyAppointmentsScreen> {
   final repository = AppointmentRepository();
-  late Future<List<Appointment>> appointmentsFuture = repository.getOwnAppointments();
+  late Future<List<Appointment>> appointmentsFuture =
+      repository.getOwnAppointments();
 
   void refresh() {
     setState(() => appointmentsFuture = repository.getOwnAppointments());
@@ -36,7 +37,8 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen> {
           children: [
             FilledButton.icon(
               onPressed: () async {
-                await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AppointmentBookingScreen()));
+                await Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => const AppointmentBookingScreen()));
                 refresh();
               },
               icon: const Icon(Icons.add),
@@ -46,16 +48,23 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen> {
             if (snapshot.connectionState == ConnectionState.waiting)
               const Center(child: CircularProgressIndicator())
             else if (snapshot.hasError)
-              ErrorState(message: 'Не вдалося завантажити записи.', onRetry: refresh)
+              ErrorState(
+                  message: 'Не вдалося завантажити записи.', onRetry: refresh)
             else if (appointments.isEmpty)
               EmptyState(
                 title: 'Записів ще немає',
-                message: 'Запишіться на візит із профілю опублікованої клініки.',
+                message:
+                    'Запишіться на візит із профілю опублікованої клініки.',
                 icon: Icons.calendar_month_outlined,
-                action: OutlinedButton(onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AppointmentBookingScreen())), child: const Text('Знайти час')),
+                action: OutlinedButton(
+                    onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                            builder: (_) => const AppointmentBookingScreen())),
+                    child: const Text('Знайти час')),
               )
             else
-              ...appointments.map((appointment) => _AppointmentTile(appointment: appointment, onChanged: refresh)),
+              ...appointments.map((appointment) => _AppointmentTile(
+                  appointment: appointment, onChanged: refresh)),
           ],
         );
       },
@@ -75,11 +84,14 @@ class _AppointmentTile extends StatelessWidget {
       child: ListTile(
         leading: const Icon(Icons.event_available_outlined),
         title: Text(appointment.clinicName),
-        subtitle: Text('${appointment.petName} - ${appointment.serviceName}\n${appointment.appointmentDate.day}.${appointment.appointmentDate.month}.${appointment.appointmentDate.year} - ${appointment.startTime}'),
+        subtitle: Text(
+            '${appointment.petName} - ${appointment.serviceName}\n${appointment.appointmentDate.day}.${appointment.appointmentDate.month}.${appointment.appointmentDate.year} - ${appointment.startTime}'),
         isThreeLine: true,
         trailing: Chip(label: Text(appointment.statusLabel)),
         onTap: () async {
-          await Navigator.of(context).push(MaterialPageRoute(builder: (_) => AppointmentDetailsScreen(appointmentId: appointment.id)));
+          await Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) =>
+                  AppointmentDetailsScreen(appointmentId: appointment.id)));
           onChanged();
         },
       ),

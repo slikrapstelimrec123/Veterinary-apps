@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../core/theme/app_theme.dart';
-
 class AppScaffold extends StatelessWidget {
   const AppScaffold({
     super.key,
@@ -20,14 +18,15 @@ class AppScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final logoWidget = const _LappoLogo();
+    const logoWidget = _LappoLogo();
     final allActions = [
       if (showLogo) ...[logoWidget, const SizedBox(width: 12)],
       ...?actions,
     ];
 
     return Scaffold(
-      appBar: AppBar(title: Text(title), actions: allActions.isEmpty ? null : allActions),
+      appBar: AppBar(
+          title: Text(title), actions: allActions.isEmpty ? null : allActions),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -36,7 +35,8 @@ class AppScaffold extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               children: [
                 if (subtitle != null) ...[
-                  Text(subtitle!, style: Theme.of(context).textTheme.bodyMedium),
+                  Text(subtitle!,
+                      style: Theme.of(context).textTheme.bodyMedium),
                   const SizedBox(height: 20),
                 ],
                 ...children,

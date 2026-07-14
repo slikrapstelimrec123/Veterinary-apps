@@ -8,7 +8,8 @@ import '../domain/review.dart';
 import '../widgets/rating_widgets.dart';
 
 class DoctorReviewsScreen extends StatefulWidget {
-  const DoctorReviewsScreen({super.key, required this.doctorId, required this.doctorName});
+  const DoctorReviewsScreen(
+      {super.key, required this.doctorId, required this.doctorName});
 
   final String doctorId;
   final String doctorName;
@@ -19,7 +20,8 @@ class DoctorReviewsScreen extends StatefulWidget {
 
 class _DoctorReviewsScreenState extends State<DoctorReviewsScreen> {
   final repository = ReviewRepository();
-  late Future<List<Review>> future = repository.getDoctorReviews(widget.doctorId);
+  late Future<List<Review>> future =
+      repository.getDoctorReviews(widget.doctorId);
 
   void refresh() {
     setState(() => future = repository.getDoctorReviews(widget.doctorId));
@@ -38,9 +40,14 @@ class _DoctorReviewsScreenState extends State<DoctorReviewsScreen> {
             if (snapshot.connectionState == ConnectionState.waiting)
               const Center(child: CircularProgressIndicator())
             else if (snapshot.hasError)
-              ErrorState(message: 'Не вдалося завантажити відгуки лікаря.', onRetry: refresh)
+              ErrorState(
+                  message: 'Не вдалося завантажити відгуки лікаря.',
+                  onRetry: refresh)
             else if (reviews.isEmpty)
-              const EmptyState(title: 'Відгуків про лікаря ще немає', message: 'Відгуки з’являться після завершених прийомів.', icon: Icons.star_border)
+              const EmptyState(
+                  title: 'Відгуків про лікаря ще немає',
+                  message: 'Відгуки з’являться після завершених прийомів.',
+                  icon: Icons.star_border)
             else
               ...reviews.map((review) => ReviewCard(review: review)),
           ],

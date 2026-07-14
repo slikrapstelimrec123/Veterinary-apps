@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/empty_state.dart';
@@ -29,7 +29,8 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
     final doctor = await repository.getDoctor(widget.doctorId);
     final summary = await reviewRepository.getDoctorSummary(widget.doctorId);
     final reviews = await reviewRepository.getDoctorReviews(widget.doctorId);
-    return _DoctorProfileData(doctor: doctor, summary: summary, reviews: reviews.take(3).toList());
+    return _DoctorProfileData(
+        doctor: doctor, summary: summary, reviews: reviews.take(3).toList());
   }
 
   void refresh() {
@@ -45,17 +46,28 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
         final doctor = data?.doctor;
 
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const AppScaffold(title: 'Лікар', children: [Center(child: CircularProgressIndicator())]);
+          return const AppScaffold(
+              title: 'Лікар',
+              children: [Center(child: CircularProgressIndicator())]);
         }
 
         if (snapshot.hasError) {
-          return AppScaffold(title: 'Лікар', children: [ErrorState(message: 'Не вдалося завантажити профіль лікаря.', onRetry: refresh)]);
+          return AppScaffold(title: 'Лікар', children: [
+            ErrorState(
+                message: 'Не вдалося завантажити профіль лікаря.',
+                onRetry: refresh)
+          ]);
         }
 
         if (doctor == null) {
           return const AppScaffold(
             title: 'Лікар',
-            children: [EmptyState(title: 'Лікар недоступний', message: 'Цей лікар недоступний для публічного запису.', icon: Icons.person_off_outlined)],
+            children: [
+              EmptyState(
+                  title: 'Лікар недоступний',
+                  message: 'Цей лікар недоступний для публічного запису.',
+                  icon: Icons.person_off_outlined)
+            ],
           );
         }
 
@@ -65,11 +77,15 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
           children: [
             _DoctorSummaryCard(doctor: doctor),
             const SizedBox(height: 12),
-            RatingSummaryCard(summary: data!.summary, emptyText: 'Відгуків про лікаря ще немає.'),
+            RatingSummaryCard(
+                summary: data!.summary,
+                emptyText: 'Відгуків про лікаря ще немає.'),
             if (data.summary.hasReviews) ...[
               const SizedBox(height: 8),
               TextButton(
-                onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => DoctorReviewsScreen(doctorId: doctor.id, doctorName: doctor.fullName))),
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => DoctorReviewsScreen(
+                        doctorId: doctor.id, doctorName: doctor.fullName))),
                 child: const Text('Переглянути всі відгуки'),
               ),
               ...data.reviews.map((review) => ReviewCard(review: review)),
@@ -79,9 +95,12 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
               child: ListTile(
                 leading: const Icon(Icons.schedule_outlined),
                 title: const Text('Доступність'),
-                subtitle: const Text('Оберіть дату й послугу, щоб побачити вільний час.'),
+                subtitle: const Text(
+                    'Оберіть дату й послугу, щоб побачити вільний час.'),
                 trailing: FilledButton(
-                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => AppointmentBookingScreen(clinicId: doctor.clinicId, doctorId: doctor.id))),
+                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => AppointmentBookingScreen(
+                          clinicId: doctor.clinicId, doctorId: doctor.id))),
                   child: const Text('Записатися'),
                 ),
               ),
@@ -94,7 +113,8 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
 }
 
 class _DoctorProfileData {
-  const _DoctorProfileData({required this.doctor, required this.summary, required this.reviews});
+  const _DoctorProfileData(
+      {required this.doctor, required this.summary, required this.reviews});
 
   final Doctor? doctor;
   final RatingSummary summary;
@@ -116,14 +136,17 @@ class _DoctorSummaryCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                const CircleAvatar(radius: 28, child: Icon(Icons.person_outline)),
+                const CircleAvatar(
+                    radius: 28, child: Icon(Icons.person_outline)),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(doctor.specialization, style: Theme.of(context).textTheme.titleMedium),
-                      if (doctor.experienceYears != null) Text('Досвід: ${doctor.experienceYears} р.'),
+                      Text(doctor.specialization,
+                          style: Theme.of(context).textTheme.titleMedium),
+                      if (doctor.experienceYears != null)
+                        Text('Досвід: ${doctor.experienceYears} р.'),
                     ],
                   ),
                 ),

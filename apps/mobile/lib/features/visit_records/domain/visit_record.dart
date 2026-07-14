@@ -51,9 +51,13 @@ class VisitRecord {
       clinicId: json['clinic_id'] as String?,
       doctorId: json['doctor_id'] as String?,
       appointmentId: json['appointment_id'] as String?,
-      visitDate: DateTime.tryParse(json['visit_date'] as String? ?? '') ?? DateTime.now(),
-      clinicName: clinic is Map<String, dynamic> ? clinic['name'] as String? : null,
-      doctorName: doctor is Map<String, dynamic> ? doctor['full_name'] as String? : null,
+      visitDate: DateTime.tryParse(json['visit_date'] as String? ?? '') ??
+          DateTime.now(),
+      clinicName:
+          clinic is Map<String, dynamic> ? clinic['name'] as String? : null,
+      doctorName: doctor is Map<String, dynamic>
+          ? doctor['full_name'] as String?
+          : null,
       reason: json['reason'] as String?,
       symptoms: json['symptoms'] as String?,
       diagnosis: json['diagnosis'] as String?,
@@ -62,7 +66,8 @@ class VisitRecord {
       prescribedMedications: json['medications_given'] as String?,
       recommendations: json['recommendations'] as String?,
       nextVisitRecommended: json['next_visit_date'] != null,
-      nextVisitDate: DateTime.tryParse(json['next_visit_date'] as String? ?? ''),
+      nextVisitDate:
+          DateTime.tryParse(json['next_visit_date'] as String? ?? ''),
       status: json['status'] as String? ?? 'self_reported',
       documentCount: (json['document_count'] as num?)?.toInt() ?? 0,
     );

@@ -2,9 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase_config.dart';
+import '../../../shared/services/private_pet_storage.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/empty_state.dart';
@@ -13,7 +13,8 @@ import '../data/achievement_repository.dart';
 import '../domain/pet_achievement.dart';
 
 class AchievementsScreen extends StatefulWidget {
-  const AchievementsScreen({super.key, required this.petId, required this.petName});
+  const AchievementsScreen(
+      {super.key, required this.petId, required this.petName});
 
   final String petId;
   final String petName;
@@ -43,8 +44,12 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
         title: const Text('Видалити подію?'),
         content: Text('«${a.title}» буде видалено назавжди.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Скасувати')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Видалити')),
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Скасувати')),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Видалити')),
         ],
       ),
     );
@@ -78,17 +83,21 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
               return const Center(child: CircularProgressIndicator());
             }
             if (snapshot.hasError) {
-              return ErrorState(message: 'Не вдалося завантажити досягнення.', onRetry: _load);
+              return ErrorState(
+                  message: 'Не вдалося завантажити досягнення.',
+                  onRetry: _load);
             }
             final items = snapshot.data ?? [];
             if (items.isEmpty) {
               return EmptyState(
                 icon: Icons.emoji_events_outlined,
                 title: 'Ще немає подій',
-                message: 'Додайте змагання, виставки чи інші досягнення вашого улюбленця.',
+                message:
+                    'Додайте змагання, виставки чи інші досягнення вашого улюбленця.',
                 action: FilledButton.icon(
                   onPressed: () async {
-                    final result = await Navigator.of(context).push(MaterialPageRoute(
+                    final result =
+                        await Navigator.of(context).push(MaterialPageRoute(
                       builder: (_) => AddAchievementScreen(petId: widget.petId),
                     ));
                     if (result == true) _load();
@@ -99,16 +108,20 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
               );
             }
             return Column(
-              children: items.map((a) => _AchievementCard(
-                achievement: a,
-                onEdit: () async {
-                  final result = await Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => EditAchievementScreen(achievement: a),
-                  ));
-                  if (result == true) _load();
-                },
-                onDelete: () => _delete(a),
-              )).toList(),
+              children: items
+                  .map((a) => _AchievementCard(
+                        achievement: a,
+                        onEdit: () async {
+                          final result = await Navigator.of(context)
+                              .push(MaterialPageRoute(
+                            builder: (_) =>
+                                EditAchievementScreen(achievement: a),
+                          ));
+                          if (result == true) _load();
+                        },
+                        onDelete: () => _delete(a),
+                      ))
+                  .toList(),
             );
           },
         ),
@@ -118,7 +131,10 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
 }
 
 class _AchievementCard extends StatelessWidget {
-  const _AchievementCard({required this.achievement, required this.onEdit, required this.onDelete});
+  const _AchievementCard(
+      {required this.achievement,
+      required this.onEdit,
+      required this.onDelete});
 
   final PetAchievement achievement;
   final VoidCallback onEdit;
@@ -144,41 +160,60 @@ class _AchievementCard extends StatelessWidget {
                       color: AppTheme.primary.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.emoji_events_outlined, color: AppTheme.primary, size: 22),
+                    child: const Icon(Icons.emoji_events_outlined,
+                        color: AppTheme.primary, size: 22),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(a.title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
-                        Text(a.eventTypeLabel, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                        Text(a.title,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w700, fontSize: 15)),
+                        Text(a.eventTypeLabel,
+                            style: const TextStyle(
+                                color: AppTheme.textSecondary, fontSize: 12)),
                       ],
                     ),
                   ),
-                  IconButton(icon: const Icon(Icons.edit_outlined, size: 18), onPressed: onEdit),
-                  IconButton(icon: const Icon(Icons.delete_outline, size: 18, color: AppTheme.danger), onPressed: onDelete),
+                  IconButton(
+                      icon: const Icon(Icons.edit_outlined, size: 18),
+                      onPressed: onEdit),
+                  IconButton(
+                      icon: const Icon(Icons.delete_outline,
+                          size: 18, color: AppTheme.danger),
+                      onPressed: onDelete),
                 ],
               ),
               const SizedBox(height: 10),
               _InfoRow(Icons.calendar_today_outlined, _dateRange(a)),
-              if (a.location != null) _InfoRow(Icons.location_on_outlined, a.location!),
-              if (a.result != null) _InfoRow(Icons.leaderboard_outlined, a.result!),
-              if (a.awardTitle != null) _InfoRow(Icons.military_tech_outlined, a.awardTitle!),
+              if (a.location != null)
+                _InfoRow(Icons.location_on_outlined, a.location!),
+              if (a.result != null)
+                _InfoRow(Icons.leaderboard_outlined, a.result!),
+              if (a.awardTitle != null)
+                _InfoRow(Icons.military_tech_outlined, a.awardTitle!),
               if (a.notes != null) ...[
                 const Divider(height: 16),
-                Text(a.notes!, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                Text(a.notes!,
+                    style: const TextStyle(
+                        color: AppTheme.textSecondary, fontSize: 13)),
               ],
               if (a.eventPhotoUrl != null || a.awardImageUrl != null) ...[
                 const SizedBox(height: 10),
                 Row(
                   children: [
                     if (a.eventPhotoUrl != null)
-                      Expanded(child: _PhotoThumbnail(url: a.eventPhotoUrl!, label: 'Фото з події')),
+                      Expanded(
+                          child: _PhotoThumbnail(
+                              url: a.eventPhotoUrl!, label: 'Фото з події')),
                     if (a.eventPhotoUrl != null && a.awardImageUrl != null)
                       const SizedBox(width: 8),
                     if (a.awardImageUrl != null)
-                      Expanded(child: _PhotoThumbnail(url: a.awardImageUrl!, label: 'Фото нагороди')),
+                      Expanded(
+                          child: _PhotoThumbnail(
+                              url: a.awardImageUrl!, label: 'Фото нагороди')),
                   ],
                 ),
               ],
@@ -209,7 +244,9 @@ class _PhotoThumbnail extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+        Text(label,
+            style:
+                const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
         const SizedBox(height: 4),
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
@@ -221,7 +258,8 @@ class _PhotoThumbnail extends StatelessWidget {
             errorBuilder: (_, __, ___) => Container(
               height: 120,
               color: Colors.grey.shade200,
-              child: const Icon(Icons.broken_image_outlined, color: Colors.grey),
+              child:
+                  const Icon(Icons.broken_image_outlined, color: Colors.grey),
             ),
           ),
         ),
@@ -280,7 +318,8 @@ class EditAchievementScreen extends StatelessWidget {
 }
 
 class _AchievementForm extends StatefulWidget {
-  const _AchievementForm({required this.petId, required this.onSave, this.initial});
+  const _AchievementForm(
+      {required this.petId, required this.onSave, this.initial});
 
   final String petId;
   final PetAchievement? initial;
@@ -308,6 +347,8 @@ class _AchievementFormState extends State<_AchievementForm> {
   File? _awardPhotoFile;
   String? _eventPhotoUrl;
   String? _awardPhotoUrl;
+  String? _eventPhotoPath;
+  String? _awardPhotoPath;
 
   final _picker = ImagePicker();
 
@@ -333,6 +374,8 @@ class _AchievementFormState extends State<_AchievementForm> {
       _endDate = a.endDate;
       _eventPhotoUrl = a.eventPhotoUrl;
       _awardPhotoUrl = a.awardImageUrl;
+      _eventPhotoPath = a.eventPhotoPath;
+      _awardPhotoPath = a.awardImagePath;
     }
   }
 
@@ -347,7 +390,8 @@ class _AchievementFormState extends State<_AchievementForm> {
   }
 
   Future<void> _pickPhoto(bool isEvent) async {
-    final picked = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    final picked =
+        await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
     if (picked == null) return;
     setState(() {
       if (isEvent) {
@@ -360,11 +404,11 @@ class _AchievementFormState extends State<_AchievementForm> {
 
   Future<String?> _uploadPhoto(File file, String folder) async {
     if (SupabaseConfig.useMockData) return null;
-    final client = Supabase.instance.client;
-    final ext = file.path.split('.').last;
-    final path = '$folder/${DateTime.now().millisecondsSinceEpoch}.$ext';
-    await client.storage.from('achievement-photos').upload(path, file);
-    return client.storage.from('achievement-photos').getPublicUrl(path);
+    return PrivatePetStorage.uploadImage(
+      petId: widget.petId,
+      category: 'achievements/$folder',
+      file: file,
+    );
   }
 
   Future<void> _pickDate(bool isEnd) async {
@@ -393,12 +437,14 @@ class _AchievementFormState extends State<_AchievementForm> {
     try {
       String? eventUrl = _eventPhotoUrl;
       String? awardUrl = _awardPhotoUrl;
+      String? eventPath = _eventPhotoPath;
+      String? awardPath = _awardPhotoPath;
 
       if (_eventPhotoFile != null) {
-        eventUrl = await _uploadPhoto(_eventPhotoFile!, 'events');
+        eventPath = await _uploadPhoto(_eventPhotoFile!, 'events');
       }
       if (_awardPhotoFile != null) {
-        awardUrl = await _uploadPhoto(_awardPhotoFile!, 'awards');
+        awardPath = await _uploadPhoto(_awardPhotoFile!, 'awards');
       }
 
       final a = PetAchievement(
@@ -408,11 +454,17 @@ class _AchievementFormState extends State<_AchievementForm> {
         eventDate: _eventDate,
         endDate: _endDate,
         eventType: _eventType,
-        location: _locationCtrl.text.trim().isEmpty ? null : _locationCtrl.text.trim(),
-        result: _resultCtrl.text.trim().isEmpty ? null : _resultCtrl.text.trim(),
-        awardTitle: _awardCtrl.text.trim().isEmpty ? null : _awardCtrl.text.trim(),
+        location: _locationCtrl.text.trim().isEmpty
+            ? null
+            : _locationCtrl.text.trim(),
+        result:
+            _resultCtrl.text.trim().isEmpty ? null : _resultCtrl.text.trim(),
+        awardTitle:
+            _awardCtrl.text.trim().isEmpty ? null : _awardCtrl.text.trim(),
         awardImageUrl: awardUrl,
         eventPhotoUrl: eventUrl,
+        awardImagePath: awardPath,
+        eventPhotoPath: eventPath,
         notes: _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
       );
       await widget.onSave(a);
@@ -420,7 +472,9 @@ class _AchievementFormState extends State<_AchievementForm> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Помилка: $e'), duration: const Duration(seconds: 10)),
+          SnackBar(
+              content: Text('Помилка: $e'),
+              duration: const Duration(seconds: 10)),
         );
       }
     } finally {
@@ -439,7 +493,12 @@ class _AchievementFormState extends State<_AchievementForm> {
         title: Text(isEdit ? 'Редагувати подію' : 'Нова подія'),
         actions: [
           if (_saving)
-            const Padding(padding: EdgeInsets.all(16), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)))
+            const Padding(
+                padding: EdgeInsets.all(16),
+                child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2)))
           else
             TextButton(onPressed: _save, child: const Text('Зберегти')),
         ],
@@ -449,11 +508,12 @@ class _AchievementFormState extends State<_AchievementForm> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            _Label('Основне'),
+            const _Label('Основне'),
             const SizedBox(height: 8),
             Card(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Column(
                   children: [
                     TextFormField(
@@ -462,13 +522,19 @@ class _AchievementFormState extends State<_AchievementForm> {
                         labelText: 'Назва події *',
                         border: InputBorder.none,
                       ),
-                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Вкажіть назву' : null,
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? 'Вкажіть назву'
+                          : null,
                     ),
                     const Divider(),
                     DropdownButtonFormField<String>(
                       value: _eventType,
-                      decoration: const InputDecoration(labelText: 'Тип події', border: InputBorder.none),
-                      items: _types.map((t) => DropdownMenuItem(value: t.$1, child: Text(t.$2))).toList(),
+                      decoration: const InputDecoration(
+                          labelText: 'Тип події', border: InputBorder.none),
+                      items: _types
+                          .map((t) =>
+                              DropdownMenuItem(value: t.$1, child: Text(t.$2)))
+                          .toList(),
                       onChanged: (v) => setState(() => _eventType = v),
                     ),
                   ],
@@ -476,7 +542,7 @@ class _AchievementFormState extends State<_AchievementForm> {
               ),
             ),
             const SizedBox(height: 16),
-            _Label('Дати'),
+            const _Label('Дати'),
             const SizedBox(height: 8),
             Card(
               child: Padding(
@@ -496,7 +562,8 @@ class _AchievementFormState extends State<_AchievementForm> {
                       contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                       leading: const Icon(Icons.event_outlined),
                       title: const Text('Дата кінця (необов\'язково)'),
-                      subtitle: Text(_endDate != null ? _fmt(_endDate!) : 'Не вказано'),
+                      subtitle: Text(
+                          _endDate != null ? _fmt(_endDate!) : 'Не вказано'),
                       onTap: () => _pickDate(true),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -515,11 +582,12 @@ class _AchievementFormState extends State<_AchievementForm> {
               ),
             ),
             const SizedBox(height: 16),
-            _Label('Деталі'),
+            const _Label('Деталі'),
             const SizedBox(height: 8),
             Card(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Column(
                   children: [
                     TextFormField(
@@ -553,35 +621,44 @@ class _AchievementFormState extends State<_AchievementForm> {
               ),
             ),
             const SizedBox(height: 16),
-            _Label('Фото'),
+            const _Label('Фото'),
             const SizedBox(height: 8),
             Row(
               children: [
-                Expanded(child: _PhotoPicker(
+                Expanded(
+                    child: _PhotoPicker(
                   label: 'Фото з події',
                   icon: Icons.photo_camera_outlined,
                   file: _eventPhotoFile,
                   existingUrl: _eventPhotoUrl,
                   onPick: () => _pickPhoto(true),
-                  onRemove: () => setState(() { _eventPhotoFile = null; _eventPhotoUrl = null; }),
+                  onRemove: () => setState(() {
+                    _eventPhotoFile = null;
+                    _eventPhotoUrl = null;
+                  }),
                 )),
                 const SizedBox(width: 10),
-                Expanded(child: _PhotoPicker(
+                Expanded(
+                    child: _PhotoPicker(
                   label: 'Фото нагороди',
                   icon: Icons.military_tech_outlined,
                   file: _awardPhotoFile,
                   existingUrl: _awardPhotoUrl,
                   onPick: () => _pickPhoto(false),
-                  onRemove: () => setState(() { _awardPhotoFile = null; _awardPhotoUrl = null; }),
+                  onRemove: () => setState(() {
+                    _awardPhotoFile = null;
+                    _awardPhotoUrl = null;
+                  }),
                 )),
               ],
             ),
             const SizedBox(height: 16),
-            _Label('Нотатки'),
+            const _Label('Нотатки'),
             const SizedBox(height: 8),
             Card(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: TextFormField(
                   controller: _notesCtrl,
                   decoration: const InputDecoration(
@@ -646,8 +723,10 @@ class _PhotoPicker extends StatelessWidget {
                     borderRadius: BorderRadius.circular(11),
                     child: file != null
                         ? Image.file(file!, fit: BoxFit.cover)
-                        : Image.network(existingUrl!, fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => const Icon(Icons.broken_image_outlined)),
+                        : Image.network(existingUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) =>
+                                const Icon(Icons.broken_image_outlined)),
                   ),
                   Positioned(
                     top: 4,
@@ -660,7 +739,8 @@ class _PhotoPicker extends StatelessWidget {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         padding: const EdgeInsets.all(4),
-                        child: const Icon(Icons.close, size: 16, color: Colors.white),
+                        child: const Icon(Icons.close,
+                            size: 16, color: Colors.white),
                       ),
                     ),
                   ),
@@ -674,7 +754,8 @@ class _PhotoPicker extends StatelessWidget {
                   Text(
                     label,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                    style: const TextStyle(
+                        fontSize: 12, color: AppTheme.textSecondary),
                   ),
                 ],
               ),

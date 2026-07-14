@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/app_scaffold.dart';
 import '../models/appointment.dart';
@@ -13,7 +13,8 @@ class AppointmentConfirmationScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppScaffold(
       title: 'Запит на запис створено',
-      subtitle: 'Клініка підтвердить час візиту. Статус можна відстежувати у ваших записах.',
+      subtitle:
+          'Клініка підтвердить час візиту. Статус можна відстежувати у ваших записах.',
       children: [
         Card(
           child: Padding(
@@ -21,11 +22,13 @@ class AppointmentConfirmationScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(appointment.clinicName, style: Theme.of(context).textTheme.titleLarge),
+                Text(appointment.clinicName,
+                    style: Theme.of(context).textTheme.titleLarge),
                 const SizedBox(height: 8),
                 Text(appointment.serviceName),
                 const SizedBox(height: 8),
-                Text('${appointment.appointmentDate.day}.${appointment.appointmentDate.month}.${appointment.appointmentDate.year} - ${appointment.startTime}-${appointment.endTime}'),
+                Text(
+                    '${appointment.appointmentDate.day}.${appointment.appointmentDate.month}.${appointment.appointmentDate.year} - ${appointment.startTime}-${appointment.endTime}'),
                 const SizedBox(height: 8),
                 Text(appointment.doctorName ?? 'Лікаря призначить клініка'),
                 const SizedBox(height: 8),
@@ -38,7 +41,8 @@ class AppointmentConfirmationScreen extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         FilledButton(
-          onPressed: () => Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const MyAppointmentsScreen())),
+          onPressed: () => Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => const MyAppointmentsScreen())),
           child: const Text('Переглянути мої записи'),
         ),
       ],

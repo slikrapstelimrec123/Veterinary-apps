@@ -7,76 +7,7 @@ class MedicationRepository {
   bool get _useMock => SupabaseConfig.useMockData;
   SupabaseClient get _client => Supabase.instance.client;
 
-  static final List<PetMedication> _mockData = [
-    PetMedication(
-      id: 'mock_med_1',
-      petId: 'mock_pet_luna',
-      name: 'Bravecto (жувальна таблетка)',
-      givenDate: DateTime.now().subtract(const Duration(days: 14)),
-      dosage: '500 мг (1 таблетка)',
-      category: 'tick_flea',
-      notes: 'Захист від кліщів і бліх на 3 місяці.',
-      nextDoseDate: DateTime.now().add(const Duration(days: 77)),
-      reminderEnabled: true,
-      createdAt: DateTime.now().subtract(const Duration(days: 14)),
-    ),
-    PetMedication(
-      id: 'mock_med_2',
-      petId: 'mock_pet_luna',
-      name: 'Мільбемакс (дегельмінтизація)',
-      givenDate: DateTime.now().subtract(const Duration(days: 60)),
-      dosage: '1 таблетка',
-      category: 'deworming',
-      notes: 'Планова дегельмінтизація кожні 3 місяці.',
-      nextDoseDate: DateTime.now().add(const Duration(days: 30)),
-      reminderEnabled: true,
-      createdAt: DateTime.now().subtract(const Duration(days: 60)),
-    ),
-    PetMedication(
-      id: 'mock_med_3',
-      petId: 'mock_pet_luna',
-      name: 'Омега-3 (рибячий жир)',
-      givenDate: DateTime.now().subtract(const Duration(days: 30)),
-      dosage: '1 капсула на день',
-      category: 'vitamin',
-      notes: 'Для здоров\'я шкіри та шерсті.',
-      createdAt: DateTime.now().subtract(const Duration(days: 30)),
-    ),
-    PetMedication(
-      id: 'mock_med_4',
-      petId: 'mock_pet_milo',
-      name: 'Stronghold (краплі на холку)',
-      givenDate: DateTime.now().subtract(const Duration(days: 7)),
-      dosage: '0,75 мл (1 піпетка)',
-      category: 'tick_flea',
-      notes: 'Від бліх, кліщів та глистів.',
-      nextDoseDate: DateTime.now().add(const Duration(days: 23)),
-      reminderEnabled: true,
-      createdAt: DateTime.now().subtract(const Duration(days: 7)),
-    ),
-    PetMedication(
-      id: 'mock_med_5',
-      petId: 'mock_pet_milo',
-      name: 'Паксіфор (дегельмінтизація)',
-      givenDate: DateTime.now().subtract(const Duration(days: 45)),
-      dosage: '½ таблетки',
-      category: 'deworming',
-      notes: 'Планова дегельмінтизація.',
-      nextDoseDate: DateTime.now().add(const Duration(days: 45)),
-      reminderEnabled: false,
-      createdAt: DateTime.now().subtract(const Duration(days: 45)),
-    ),
-    PetMedication(
-      id: 'mock_med_6',
-      petId: 'mock_pet_milo',
-      name: 'Вітамінний комплекс Beaphar',
-      givenDate: DateTime.now().subtract(const Duration(days: 10)),
-      dosage: '1 таблетка на день',
-      category: 'vitamin',
-      notes: 'Мультивітаміни для підтримки імунітету.',
-      createdAt: DateTime.now().subtract(const Duration(days: 10)),
-    ),
-  ];
+  static final List<PetMedication> _mockData = [];
 
   Future<List<PetMedication>> getMedications(String petId) async {
     if (_useMock) {

@@ -1,4 +1,4 @@
-﻿class VisitDocument {
+class VisitDocument {
   const VisitDocument({
     required this.id,
     required this.visitRecordId,
@@ -35,7 +35,9 @@
     }
 
     final mb = fileSize! / (1024 * 1024);
-    return mb >= 1 ? '${mb.toStringAsFixed(1)} MB' : '${(fileSize! / 1024).toStringAsFixed(0)} KB';
+    return mb >= 1
+        ? '${mb.toStringAsFixed(1)} MB'
+        : '${(fileSize! / 1024).toStringAsFixed(0)} KB';
   }
 
   factory VisitDocument.fromJson(Map<String, dynamic> json) {
@@ -45,7 +47,8 @@
       petId: json['pet_id'] as String,
       title: json['title'] as String? ?? 'Медичний документ',
       type: json['document_type'] as String? ?? 'other',
-      createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.now(),
+      createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
+          DateTime.now(),
       fileName: json['file_name'] as String?,
       fileType: json['file_type'] as String?,
       fileSize: (json['file_size'] as num?)?.toInt(),

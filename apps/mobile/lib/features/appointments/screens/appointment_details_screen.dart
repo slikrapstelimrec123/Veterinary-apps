@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/empty_state.dart';
@@ -16,17 +16,20 @@ class AppointmentDetailsScreen extends StatefulWidget {
   final String appointmentId;
 
   @override
-  State<AppointmentDetailsScreen> createState() => _AppointmentDetailsScreenState();
+  State<AppointmentDetailsScreen> createState() =>
+      _AppointmentDetailsScreenState();
 }
 
 class _AppointmentDetailsScreenState extends State<AppointmentDetailsScreen> {
   final repository = AppointmentRepository();
   final visitRecordRepository = VisitRecordRepository();
   final reviewRepository = ReviewRepository();
-  late Future<Appointment?> appointmentFuture = repository.getAppointment(widget.appointmentId);
+  late Future<Appointment?> appointmentFuture =
+      repository.getAppointment(widget.appointmentId);
 
   void refresh() {
-    setState(() => appointmentFuture = repository.getAppointment(widget.appointmentId));
+    setState(() =>
+        appointmentFuture = repository.getAppointment(widget.appointmentId));
   }
 
   Future<void> cancel(Appointment appointment) async {
@@ -36,8 +39,12 @@ class _AppointmentDetailsScreenState extends State<AppointmentDetailsScreen> {
         title: const Text('Скасувати запис?'),
         content: const Text('Клініка побачить, що ви скасували цей запис.'),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Залишити')),
-          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Скасувати запис')),
+          TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Залишити')),
+          FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Скасувати запис')),
         ],
       ),
     );
@@ -46,7 +53,8 @@ class _AppointmentDetailsScreenState extends State<AppointmentDetailsScreen> {
       return;
     }
 
-    await repository.cancelOwnerAppointment(appointment, reason: 'Скасовано власником тварини');
+    await repository.cancelOwnerAppointment(appointment,
+        reason: 'Скасовано власником тварини');
     refresh();
   }
 
@@ -58,15 +66,25 @@ class _AppointmentDetailsScreenState extends State<AppointmentDetailsScreen> {
         final appointment = snapshot.data;
 
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const AppScaffold(title: 'Запис', children: [Center(child: CircularProgressIndicator())]);
+          return const AppScaffold(
+              title: 'Запис',
+              children: [Center(child: CircularProgressIndicator())]);
         }
 
         if (snapshot.hasError) {
-          return AppScaffold(title: 'Запис', children: [ErrorState(message: 'Не вдалося завантажити запис.', onRetry: refresh)]);
+          return AppScaffold(title: 'Запис', children: [
+            ErrorState(
+                message: 'Не вдалося завантажити запис.', onRetry: refresh)
+          ]);
         }
 
         if (appointment == null) {
-          return const AppScaffold(title: 'Запис', children: [EmptyState(title: 'Запис недоступний', message: 'Цей запис недоступний.', icon: Icons.event_busy_outlined)]);
+          return const AppScaffold(title: 'Запис', children: [
+            EmptyState(
+                title: 'Запис недоступний',
+                message: 'Цей запис недоступний.',
+                icon: Icons.event_busy_outlined)
+          ]);
         }
 
         return AppScaffold(
@@ -79,12 +97,16 @@ class _AppointmentDetailsScreenState extends State<AppointmentDetailsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(appointment.serviceName, style: Theme.of(context).textTheme.titleLarge),
+                    Text(appointment.serviceName,
+                        style: Theme.of(context).textTheme.titleLarge),
                     const SizedBox(height: 10),
                     Text('Тварина: ${appointment.petName}'),
-                    Text('Лікар: ${appointment.doctorName ?? 'Призначить клініка'}'),
-                    Text('Дата: ${appointment.appointmentDate.day}.${appointment.appointmentDate.month}.${appointment.appointmentDate.year}'),
-                    Text('Час: ${appointment.startTime}-${appointment.endTime}'),
+                    Text(
+                        'Лікар: ${appointment.doctorName ?? 'Призначить клініка'}'),
+                    Text(
+                        'Дата: ${appointment.appointmentDate.day}.${appointment.appointmentDate.month}.${appointment.appointmentDate.year}'),
+                    Text(
+                        'Час: ${appointment.startTime}-${appointment.endTime}'),
                     if (appointment.ownerNote != null) ...[
                       const SizedBox(height: 10),
                       Text('Ваша нотатка: ${appointment.ownerNote}'),
@@ -95,14 +117,16 @@ class _AppointmentDetailsScreenState extends State<AppointmentDetailsScreen> {
                     ],
                     if (appointment.cancellationReason != null) ...[
                       const SizedBox(height: 10),
-                      Text('Причина скасування: ${appointment.cancellationReason}'),
+                      Text(
+                          'Причина скасування: ${appointment.cancellationReason}'),
                     ],
                   ],
                 ),
               ),
             ),
             FutureBuilder(
-              future: visitRecordRepository.getVisitRecordForAppointment(appointment.id),
+              future: visitRecordRepository
+                  .getVisitRecordForAppointment(appointment.id),
               builder: (context, recordSnapshot) {
                 final record = recordSnapshot.data;
                 return Column(
@@ -112,7 +136,10 @@ class _AppointmentDetailsScreenState extends State<AppointmentDetailsScreen> {
                       Padding(
                         padding: const EdgeInsets.only(top: 12),
                         child: FilledButton.icon(
-                          onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => VisitRecordDetailsScreen(recordId: record.id))),
+                          onPressed: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                  builder: (_) => VisitRecordDetailsScreen(
+                                      recordId: record.id))),
                           icon: const Icon(Icons.medical_information_outlined),
                           label: const Text('Переглянути запис лікування'),
                         ),
@@ -120,7 +147,8 @@ class _AppointmentDetailsScreenState extends State<AppointmentDetailsScreen> {
                     _ReviewAction(
                       appointment: appointment,
                       visitRecordId: record?.id,
-                      canReviewByStatus: appointment.status == 'completed' || record?.status == 'published',
+                      canReviewByStatus: appointment.status == 'completed' ||
+                          record?.status == 'published',
                       repository: reviewRepository,
                       onChanged: refresh,
                     ),
@@ -163,7 +191,8 @@ class _ReviewAction extends StatelessWidget {
     if (!canReviewByStatus) {
       return const Padding(
         padding: EdgeInsets.only(top: 12),
-        child: Text('Відгук можна залишити після завершеного прийому.', style: TextStyle(color: Colors.black54)),
+        child: Text('Відгук можна залишити після завершеного прийому.',
+            style: TextStyle(color: Colors.black54)),
       );
     }
 
@@ -181,7 +210,8 @@ class _ReviewAction extends StatelessWidget {
             child: Card(
               child: Padding(
                 padding: EdgeInsets.all(14),
-                child: Text('Цей запис уже має ваш відгук. Дякуємо за допомогу іншим власникам тварин.'),
+                child: Text(
+                    'Цей запис уже має ваш відгук. Дякуємо за допомогу іншим власникам тварин.'),
               ),
             ),
           );

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/empty_state.dart';
@@ -34,7 +34,12 @@ class _ClinicProfileScreenState extends State<ClinicProfileScreen> {
     final services = await repository.getClinicServices(widget.clinicId);
     final summary = await reviewRepository.getClinicSummary(widget.clinicId);
     final reviews = await reviewRepository.getClinicReviews(widget.clinicId);
-    return _ClinicProfileData(clinic: clinic, doctors: doctors, services: services, summary: summary, reviews: reviews.take(3).toList());
+    return _ClinicProfileData(
+        clinic: clinic,
+        doctors: doctors,
+        services: services,
+        summary: summary,
+        reviews: reviews.take(3).toList());
   }
 
   void refresh() {
@@ -50,17 +55,28 @@ class _ClinicProfileScreenState extends State<ClinicProfileScreen> {
         final clinic = data?.clinic;
 
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const AppScaffold(title: 'Клініка', children: [Center(child: CircularProgressIndicator())]);
+          return const AppScaffold(
+              title: 'Клініка',
+              children: [Center(child: CircularProgressIndicator())]);
         }
 
         if (snapshot.hasError) {
-          return AppScaffold(title: 'Клініка', children: [ErrorState(message: 'Не вдалося завантажити профіль клініки.', onRetry: refresh)]);
+          return AppScaffold(title: 'Клініка', children: [
+            ErrorState(
+                message: 'Не вдалося завантажити профіль клініки.',
+                onRetry: refresh)
+          ]);
         }
 
         if (clinic == null) {
           return const AppScaffold(
             title: 'Клініка',
-            children: [EmptyState(title: 'Клініка недоступна', message: 'Ця клініка не опублікована або більше не існує.', icon: Icons.local_hospital_outlined)],
+            children: [
+              EmptyState(
+                  title: 'Клініка недоступна',
+                  message: 'Ця клініка не опублікована або більше не існує.',
+                  icon: Icons.local_hospital_outlined)
+            ],
           );
         }
 
@@ -74,7 +90,10 @@ class _ClinicProfileScreenState extends State<ClinicProfileScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(clinic.description ?? 'Опублікована ветеринарна клініка.', style: Theme.of(context).textTheme.bodyLarge),
+                    Text(
+                        clinic.description ??
+                            'Опублікована ветеринарна клініка.',
+                        style: Theme.of(context).textTheme.bodyLarge),
                     const SizedBox(height: 12),
                     if (clinic.phone != null) Text(clinic.phone!),
                     if (clinic.email != null) Text(clinic.email!),
@@ -83,35 +102,46 @@ class _ClinicProfileScreenState extends State<ClinicProfileScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            RatingSummaryCard(summary: data!.summary, emptyText: 'Відгуків ще немає. Вони з’являться після завершених записів.'),
+            RatingSummaryCard(
+                summary: data!.summary,
+                emptyText:
+                    'Відгуків ще немає. Вони з’являться після завершених записів.'),
             if (data.summary.hasReviews) ...[
               const SizedBox(height: 8),
               TextButton(
-                onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ClinicReviewsScreen(clinicId: clinic.id, clinicName: clinic.name))),
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => ClinicReviewsScreen(
+                        clinicId: clinic.id, clinicName: clinic.name))),
                 child: const Text('Переглянути всі відгуки'),
               ),
               ...data.reviews.map((review) => ReviewCard(review: review)),
             ],
             const SizedBox(height: 12),
             FilledButton.icon(
-              onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => AppointmentBookingScreen(clinicId: clinic.id))),
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) =>
+                      AppointmentBookingScreen(clinicId: clinic.id))),
               icon: const Icon(Icons.calendar_month_outlined),
               label: const Text('Записатися на прийом'),
             ),
             const SizedBox(height: 20),
             Text('Послуги', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 8),
-            if ((data?.services ?? []).isEmpty)
-              const EmptyState(title: 'Публічних послуг немає', message: 'Ця клініка ще не опублікувала послуги для запису.')
+            if (data.services.isEmpty)
+              const EmptyState(
+                  title: 'Публічних послуг немає',
+                  message: 'Ця клініка ще не опублікувала послуги для запису.')
             else
-              ...data!.services.map((service) => _ServiceTile(service: service)),
+              ...data.services.map((service) => _ServiceTile(service: service)),
             const SizedBox(height: 20),
             Text('Лікарі', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 8),
-            if ((data?.doctors ?? []).isEmpty)
-              const EmptyState(title: 'Публічних лікарів немає', message: 'У цієї клініки немає публічних лікарів для запису.')
+            if (data.doctors.isEmpty)
+              const EmptyState(
+                  title: 'Публічних лікарів немає',
+                  message: 'У цієї клініки немає публічних лікарів для запису.')
             else
-              ...data!.doctors.map((doctor) => _DoctorTile(doctor: doctor)),
+              ...data.doctors.map((doctor) => _DoctorTile(doctor: doctor)),
           ],
         );
       },
@@ -149,14 +179,20 @@ class _DoctorTile extends StatelessWidget {
         title: Text(doctor.fullName),
         subtitle: Text(doctor.specialization),
         trailing: const Icon(Icons.chevron_right),
-        onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => DoctorProfileScreen(doctorId: doctor.id))),
+        onTap: () => Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) => DoctorProfileScreen(doctorId: doctor.id))),
       ),
     );
   }
 }
 
 class _ClinicProfileData {
-  const _ClinicProfileData({required this.clinic, required this.doctors, required this.services, required this.summary, required this.reviews});
+  const _ClinicProfileData(
+      {required this.clinic,
+      required this.doctors,
+      required this.services,
+      required this.summary,
+      required this.reviews});
 
   final Clinic? clinic;
   final List<Doctor> doctors;

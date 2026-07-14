@@ -27,7 +27,8 @@ class Clinic {
   final bool published;
   final bool canAcceptOnlineBooking;
 
-  String get locationLabel => [city, address].where((value) => value.trim().isNotEmpty).join(', ');
+  String get locationLabel =>
+      [city, address].where((value) => value.trim().isNotEmpty).join(', ');
   bool get isPublished => status == 'published' && published;
 
   factory Clinic.fromJson(Map<String, dynamic> json) {
@@ -43,7 +44,8 @@ class Clinic {
       coverImageUrl: json['cover_image_url'] as String?,
       status: json['status'] as String? ?? 'draft',
       published: json['published'] as bool? ?? false,
-      canAcceptOnlineBooking: json['can_accept_online_booking'] as bool? ?? true,
+      canAcceptOnlineBooking:
+          json['can_accept_online_booking'] as bool? ?? true,
     );
   }
 }

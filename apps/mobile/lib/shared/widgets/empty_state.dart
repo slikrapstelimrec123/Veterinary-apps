@@ -23,7 +23,9 @@ class EmptyState extends StatelessWidget {
           children: [
             Icon(icon, size: 44, color: Theme.of(context).colorScheme.primary),
             const SizedBox(height: 12),
-            Text(title, style: Theme.of(context).textTheme.titleMedium, textAlign: TextAlign.center),
+            Text(title,
+                style: Theme.of(context).textTheme.titleMedium,
+                textAlign: TextAlign.center),
             const SizedBox(height: 8),
             Text(message, textAlign: TextAlign.center),
             if (action != null) ...[
@@ -36,4 +38,3 @@ class EmptyState extends StatelessWidget {
     );
   }
 }
-

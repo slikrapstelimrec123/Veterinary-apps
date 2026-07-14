@@ -11,7 +11,6 @@ import 'features/splash/splash_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const VetCareApp());
 
   if (SupabaseConfig.isConfigured) {
     await Supabase.initialize(
@@ -19,6 +18,8 @@ Future<void> main() async {
       anonKey: SupabaseConfig.anonKey,
     );
   }
+
+  runApp(const VetCareApp());
 }
 
 class VetCareApp extends StatefulWidget {

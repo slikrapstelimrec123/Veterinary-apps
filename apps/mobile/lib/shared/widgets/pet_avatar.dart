@@ -25,17 +25,23 @@ class PetAvatar extends StatelessWidget {
           width: size,
           height: size,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _Initials(initial: initial, size: size, radius: radius, context: context),
+          errorBuilder: (_, __, ___) => _Initials(
+              initial: initial, size: size, radius: radius, context: context),
         ),
       );
     }
 
-    return _Initials(initial: initial, size: size, radius: radius, context: context);
+    return _Initials(
+        initial: initial, size: size, radius: radius, context: context);
   }
 }
 
 class _Initials extends StatelessWidget {
-  const _Initials({required this.initial, required this.size, required this.radius, required this.context});
+  const _Initials(
+      {required this.initial,
+      required this.size,
+      required this.radius,
+      required this.context});
   final String initial;
   final double size;
   final double radius;
@@ -47,7 +53,9 @@ class _Initials extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: ctx.mounted ? Theme.of(ctx).colorScheme.secondary.withOpacity(0.18) : Colors.grey.shade200,
+        color: ctx.mounted
+            ? Theme.of(ctx).colorScheme.secondary.withOpacity(0.18)
+            : Colors.grey.shade200,
         borderRadius: BorderRadius.circular(radius),
       ),
       alignment: Alignment.center,
@@ -62,4 +70,3 @@ class _Initials extends StatelessWidget {
     );
   }
 }
-

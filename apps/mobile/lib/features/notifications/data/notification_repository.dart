@@ -22,34 +22,44 @@ class NotificationRepository {
         .neq('status', 'archived')
         .order('created_at', ascending: false);
 
-    return (rows as List<dynamic>).whereType<Map<String, dynamic>>().map(AppNotification.fromJson).toList();
+    return (rows as List<dynamic>)
+        .whereType<Map<String, dynamic>>()
+        .map(AppNotification.fromJson)
+        .toList();
   }
 
   Future<int> getUnreadCount() async {
     if (_useMockData) {
-      return MockData.notifications.where((notification) => notification.isUnread).length;
+      return MockData.notifications
+          .where((notification) => notification.isUnread)
+          .length;
     }
 
-    final rows = await _client.from('notifications').select('id').eq('status', 'unread');
+    final rows =
+        await _client.from('notifications').select('id').eq('status', 'unread');
     return (rows as List<dynamic>).length;
   }
 
   Future<void> markAsRead(String id) async {
     if (_useMockData) {
-      final index = MockData.notifications.indexWhere((notification) => notification.id == id);
+      final index = MockData.notifications
+          .indexWhere((notification) => notification.id == id);
       if (index >= 0) {
-        MockData.notifications[index] = MockData.notifications[index].copyWith(status: 'read');
+        MockData.notifications[index] =
+            MockData.notifications[index].copyWith(status: 'read');
       }
       return;
     }
 
-    await _client.rpc('mark_notification_read', params: {'target_notification_id': id});
+    await _client
+        .rpc('mark_notification_read', params: {'target_notification_id': id});
   }
 
   Future<void> markAllAsRead() async {
     if (_useMockData) {
       for (var index = 0; index < MockData.notifications.length; index++) {
-        MockData.notifications[index] = MockData.notifications[index].copyWith(status: 'read');
+        MockData.notifications[index] =
+            MockData.notifications[index].copyWith(status: 'read');
       }
       return;
     }
@@ -63,9 +73,17 @@ class NotificationRepository {
     }
 
     final userId = _client.auth.currentUser!.id;
-    await _client.from('notification_preferences').upsert(const NotificationPreferences().toJson(userId), onConflict: 'user_id');
-    final row = await _client.from('notification_preferences').select('*').eq('user_id', userId).maybeSingle();
-    return row == null ? const NotificationPreferences() : NotificationPreferences.fromJson(row);
+    await _client.from('notification_preferences').upsert(
+        const NotificationPreferences().toJson(userId),
+        onConflict: 'user_id');
+    final row = await _client
+        .from('notification_preferences')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+    return row == null
+        ? const NotificationPreferences()
+        : NotificationPreferences.fromJson(row);
   }
 
   Future<void> savePreferences(NotificationPreferences preferences) async {
@@ -74,6 +92,8 @@ class NotificationRepository {
       return;
     }
 
-    await _client.from('notification_preferences').upsert(preferences.toJson(_client.auth.currentUser!.id), onConflict: 'user_id');
+    await _client.from('notification_preferences').upsert(
+        preferences.toJson(_client.auth.currentUser!.id),
+        onConflict: 'user_id');
   }
 }

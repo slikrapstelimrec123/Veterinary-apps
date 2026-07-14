@@ -14,6 +14,7 @@ class CurrentUser {
     required this.fullName,
     required this.role,
     this.phone,
+    this.city,
   });
 
   final String id;
@@ -21,9 +22,13 @@ class CurrentUser {
   final String fullName;
   final UserRole role;
   final String? phone;
+  final String? city;
 
   bool get isPetOwner => role == UserRole.petOwner;
-  bool get isClinicRole => role == UserRole.clinicOwner || role == UserRole.veterinarian || role == UserRole.clinicManager;
+  bool get isClinicRole =>
+      role == UserRole.clinicOwner ||
+      role == UserRole.veterinarian ||
+      role == UserRole.clinicManager;
 
   static UserRole roleFromString(String? value) {
     return switch (value) {
@@ -36,4 +41,3 @@ class CurrentUser {
     };
   }
 }
-

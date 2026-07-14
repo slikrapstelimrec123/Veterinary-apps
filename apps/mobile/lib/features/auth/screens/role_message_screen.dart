@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../../core/auth/auth_state.dart';
 import '../../../core/auth/current_user.dart';
@@ -35,4 +35,3 @@ class RoleMessageScreen extends StatelessWidget {
     );
   }
 }
-

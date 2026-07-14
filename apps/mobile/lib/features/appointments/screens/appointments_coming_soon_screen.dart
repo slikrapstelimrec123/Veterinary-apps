@@ -15,9 +15,13 @@ class AppointmentsComingSoonScreen extends StatelessWidget {
         Center(
           child: Column(
             children: [
-              Icon(Icons.calendar_month_outlined, size: 72, color: Theme.of(context).colorScheme.primary.withOpacity(0.4)),
+              Icon(Icons.calendar_month_outlined,
+                  size: 72,
+                  color:
+                      Theme.of(context).colorScheme.primary.withOpacity(0.4)),
               const SizedBox(height: 20),
-              Text('Незабаром', style: Theme.of(context).textTheme.headlineMedium),
+              Text('Незабаром',
+                  style: Theme.of(context).textTheme.headlineMedium),
               const SizedBox(height: 12),
               const Text(
                 'Онлайн-запис на прийом до ветеринара з\'явиться у наступному оновленні.',
@@ -33,11 +37,19 @@ class AppointmentsComingSoonScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Тим часом ви можете:', style: Theme.of(context).textTheme.titleMedium),
+                Text('Тим часом ви можете:',
+                    style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 12),
-                _FeatureRow(icon: Icons.edit_note_outlined, text: 'Самостійно додавати записи про прийоми у профілі тварини'),
-                _FeatureRow(icon: Icons.folder_outlined, text: 'Завантажувати документи та результати аналізів'),
-                _FeatureRow(icon: Icons.qr_code_outlined, text: 'Переглядати цифровий паспорт тварини'),
+                const _FeatureRow(
+                    icon: Icons.edit_note_outlined,
+                    text:
+                        'Самостійно додавати записи про прийоми у профілі тварини'),
+                const _FeatureRow(
+                    icon: Icons.folder_outlined,
+                    text: 'Завантажувати документи та результати аналізів'),
+                const _FeatureRow(
+                    icon: Icons.qr_code_outlined,
+                    text: 'Переглядати цифровий паспорт тварини'),
               ],
             ),
           ),

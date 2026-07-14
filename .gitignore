@@ -15,6 +15,11 @@ build/
 .env.*
 !.env.example
 
+# Apple signing secrets
+*.p8
+*.p12
+*.mobileprovision
+
 # IDE
 .idea/
 .vscode/

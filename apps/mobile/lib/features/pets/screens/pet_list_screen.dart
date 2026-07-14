@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/empty_state.dart';
@@ -25,7 +25,8 @@ class _PetListScreenState extends State<PetListScreen> {
   }
 
   Future<void> addPet() async {
-    final result = await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AddPetScreen()));
+    final result = await Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const AddPetScreen()));
     if (result != null) {
       refresh();
     }
@@ -42,19 +43,25 @@ class _PetListScreenState extends State<PetListScreen> {
           title: 'Мої тварини',
           subtitle: 'Зберігайте всі медичні картки в одному спокійному місці.',
           actions: [
-            IconButton(onPressed: addPet, icon: const Icon(Icons.add), tooltip: 'Додати тварину'),
+            IconButton(
+                onPressed: addPet,
+                icon: const Icon(Icons.add),
+                tooltip: 'Додати тварину'),
           ],
           children: [
             if (snapshot.connectionState == ConnectionState.waiting)
               const Center(child: CircularProgressIndicator())
             else if (snapshot.hasError)
-              ErrorState(message: 'Не вдалося завантажити тварин.', onRetry: refresh)
+              ErrorState(
+                  message: 'Не вдалося завантажити тварин.', onRetry: refresh)
             else if (pets.isEmpty)
               EmptyState(
                 title: 'Тварин ще немає',
-                message: 'Додайте першу тварину, щоб зберігати її медичну історію в одному місці.',
+                message:
+                    'Додайте першу тварину, щоб зберігати її медичну історію в одному місці.',
                 icon: Icons.pets_outlined,
-                action: FilledButton(onPressed: addPet, child: const Text('Додати тварину')),
+                action: FilledButton(
+                    onPressed: addPet, child: const Text('Додати тварину')),
               )
             else
               ...pets.map((pet) => Padding(
@@ -80,7 +87,8 @@ class _PetListCard extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
         onTap: () async {
-          final result = await Navigator.of(context).push(MaterialPageRoute(builder: (_) => PetProfileScreen(petId: pet.id)));
+          final result = await Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => PetProfileScreen(petId: pet.id)));
           if (result != null) {
             onChanged();
           }
@@ -95,11 +103,14 @@ class _PetListCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(pet.name, style: Theme.of(context).textTheme.titleMedium),
+                    Text(pet.name,
+                        style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 4),
-                    Text('${pet.speciesLabel} · ${pet.breed ?? 'Породу не вказано'} · ${pet.ageLabel}'),
+                    Text(
+                        '${pet.speciesLabel} · ${pet.breed ?? 'Породу не вказано'} · ${pet.ageLabel}'),
                     const SizedBox(height: 4),
-                    const Text('Останній візит: поки немає даних', style: TextStyle(color: Colors.black54)),
+                    const Text('Останній візит: поки немає даних',
+                        style: TextStyle(color: Colors.black54)),
                   ],
                 ),
               ),
@@ -111,4 +122,3 @@ class _PetListCard extends StatelessWidget {
     );
   }
 }
-

@@ -11,18 +11,29 @@ class AppointmentSlotGenerator {
     required List<DoctorSchedule> schedules,
     required List<Appointment> appointments,
   }) {
-    final schedule = schedules.where((item) => item.doctorId == doctorId && item.dayOfWeek == date.weekday && item.isActive).firstOrNull;
+    final schedule = schedules
+        .where((item) =>
+            item.doctorId == doctorId &&
+            item.dayOfWeek == date.weekday &&
+            item.isActive)
+        .firstOrNull;
 
     if (schedule == null) {
       return [];
     }
 
-    final slotMinutes = serviceDurationMinutes > 0 ? serviceDurationMinutes : schedule.slotDurationMinutes;
+    final slotMinutes = serviceDurationMinutes > 0
+        ? serviceDurationMinutes
+        : schedule.slotDurationMinutes;
     final now = DateTime.now();
     final dayStart = _onDate(date, schedule.startTime);
     final dayEnd = _onDate(date, schedule.endTime);
-    final breakStart = schedule.breakStartTime == null ? null : _onDate(date, schedule.breakStartTime!);
-    final breakEnd = schedule.breakEndTime == null ? null : _onDate(date, schedule.breakEndTime!);
+    final breakStart = schedule.breakStartTime == null
+        ? null
+        : _onDate(date, schedule.breakStartTime!);
+    final breakEnd = schedule.breakEndTime == null
+        ? null
+        : _onDate(date, schedule.breakEndTime!);
     final doctorAppointments = appointments.where((appointment) {
       return appointment.doctorId == doctorId &&
           _sameDay(appointment.appointmentDate, date) &&
@@ -30,10 +41,16 @@ class AppointmentSlotGenerator {
     }).toList();
     final slots = <AppointmentSlot>[];
 
-    for (var start = dayStart; start.add(Duration(minutes: slotMinutes)).isAtSameMomentAs(dayEnd) || start.add(Duration(minutes: slotMinutes)).isBefore(dayEnd); start = start.add(Duration(minutes: slotMinutes))) {
+    for (var start = dayStart;
+        start.add(Duration(minutes: slotMinutes)).isAtSameMomentAs(dayEnd) ||
+            start.add(Duration(minutes: slotMinutes)).isBefore(dayEnd);
+        start = start.add(Duration(minutes: slotMinutes))) {
       final end = start.add(Duration(minutes: slotMinutes));
       final isPast = start.isBefore(now);
-      final overlapsBreak = breakStart != null && breakEnd != null && start.isBefore(breakEnd) && end.isAfter(breakStart);
+      final overlapsBreak = breakStart != null &&
+          breakEnd != null &&
+          start.isBefore(breakEnd) &&
+          end.isAfter(breakStart);
       final overlapsAppointment = doctorAppointments.any((appointment) {
         final bookedStart = _onDate(date, appointment.startTime);
         final bookedEnd = _onDate(date, appointment.endTime);
@@ -41,7 +58,11 @@ class AppointmentSlotGenerator {
       });
 
       if (!isPast && !overlapsBreak && !overlapsAppointment) {
-        slots.add(AppointmentSlot(doctorId: doctorId, date: date, startTime: _formatTime(start), endTime: _formatTime(end)));
+        slots.add(AppointmentSlot(
+            doctorId: doctorId,
+            date: date,
+            startTime: _formatTime(start),
+            endTime: _formatTime(end)));
       }
     }
 
@@ -50,7 +71,8 @@ class AppointmentSlotGenerator {
 
   DateTime _onDate(DateTime date, String time) {
     final parts = time.split(':').map(int.parse).toList();
-    return DateTime(date.year, date.month, date.day, parts[0], parts.length > 1 ? parts[1] : 0);
+    return DateTime(date.year, date.month, date.day, parts[0],
+        parts.length > 1 ? parts[1] : 0);
   }
 
   String _formatTime(DateTime value) {
@@ -59,5 +81,8 @@ class AppointmentSlotGenerator {
     return '$hour:$minute';
   }
 
-  bool _sameDay(DateTime left, DateTime right) => left.year == right.year && left.month == right.month && left.day == right.day;
+  bool _sameDay(DateTime left, DateTime right) =>
+      left.year == right.year &&
+      left.month == right.month &&
+      left.day == right.day;
 }

@@ -8,7 +8,8 @@ import '../data/medication_repository.dart';
 import '../domain/pet_medication.dart';
 
 class MedicationsScreen extends StatefulWidget {
-  const MedicationsScreen({super.key, required this.petId, required this.petName});
+  const MedicationsScreen(
+      {super.key, required this.petId, required this.petName});
 
   final String petId;
   final String petName;
@@ -25,39 +26,53 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
   String? _error;
   String? _filter; // null = all
 
-  static const _categories = ['tick_flea', 'deworming', 'vitamin', 'antibiotic', 'other'];
+  static const _categories = [
+    'tick_flea',
+    'deworming',
+    'vitamin',
+    'antibiotic',
+    'other'
+  ];
 
   List<PetMedication> get _filtered {
     final all = List<PetMedication>.from(_meds ?? [])
       ..sort((a, b) => b.givenDate.compareTo(a.givenDate));
     if (_filter == null) return all;
-    if (_filter == 'active') return all.where((m) => m.nextDoseDate != null && !m.nextDoseOverdue).toList();
-    if (_filter == 'inactive') return all.where((m) => m.nextDoseDate == null || m.nextDoseOverdue).toList();
+    if (_filter == 'active') {
+      return all
+          .where((m) => m.nextDoseDate != null && !m.nextDoseOverdue)
+          .toList();
+    }
+    if (_filter == 'inactive') {
+      return all
+          .where((m) => m.nextDoseDate == null || m.nextDoseOverdue)
+          .toList();
+    }
     return all.where((m) => m.category == _filter).toList();
   }
 
   String _filterLabel(String? f) => switch (f) {
-    null => 'Всі',
-    'active' => 'Активні',
-    'inactive' => 'Неактивні',
-    'tick_flea' => 'Від кліщів / бліх',
-    'deworming' => 'Дегельмінтизація',
-    'vitamin' => 'Вітаміни / добавки',
-    'antibiotic' => 'Антибіотик',
-    'other' => 'Інше',
-    _ => f,
-  };
+        null => 'Всі',
+        'active' => 'Активні',
+        'inactive' => 'Неактивні',
+        'tick_flea' => 'Від кліщів / бліх',
+        'deworming' => 'Дегельмінтизація',
+        'vitamin' => 'Вітаміни / добавки',
+        'antibiotic' => 'Антибіотик',
+        'other' => 'Інше',
+        _ => f,
+      };
 
   IconData _filterIcon(String? f) => switch (f) {
-    null => Icons.list_outlined,
-    'active' => Icons.check_circle_outline,
-    'inactive' => Icons.cancel_outlined,
-    'tick_flea' => Icons.bug_report_outlined,
-    'deworming' => Icons.sanitizer_outlined,
-    'vitamin' => Icons.local_pharmacy_outlined,
-    'antibiotic' => Icons.medication_outlined,
-    _ => Icons.category_outlined,
-  };
+        null => Icons.list_outlined,
+        'active' => Icons.check_circle_outline,
+        'inactive' => Icons.cancel_outlined,
+        'tick_flea' => Icons.bug_report_outlined,
+        'deworming' => Icons.sanitizer_outlined,
+        'vitamin' => Icons.local_pharmacy_outlined,
+        'antibiotic' => Icons.medication_outlined,
+        _ => Icons.category_outlined,
+      };
 
   void _showFilterSheet() {
     final options = [null, 'active', 'inactive', ..._categories];
@@ -71,11 +86,17 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const SizedBox(height: 8),
-            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
+            Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2))),
             const SizedBox(height: 12),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text('Фільтр', style: Theme.of(context).textTheme.titleMedium),
+              child: Text('Фільтр',
+                  style: Theme.of(context).textTheme.titleMedium),
             ),
             const SizedBox(height: 8),
             Flexible(
@@ -84,14 +105,17 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     ...options.map((opt) => ListTile(
-                      leading: Icon(_filterIcon(opt), color: _filter == opt ? AppTheme.primary : null),
-                      title: Text(_filterLabel(opt)),
-                      trailing: _filter == opt ? const Icon(Icons.check, color: AppTheme.primary) : null,
-                      onTap: () {
-                        setState(() => _filter = opt);
-                        Navigator.pop(context);
-                      },
-                    )),
+                          leading: Icon(_filterIcon(opt),
+                              color: _filter == opt ? AppTheme.primary : null),
+                          title: Text(_filterLabel(opt)),
+                          trailing: _filter == opt
+                              ? const Icon(Icons.check, color: AppTheme.primary)
+                              : null,
+                          onTap: () {
+                            setState(() => _filter = opt);
+                            Navigator.pop(context);
+                          },
+                        )),
                     const SizedBox(height: 8),
                   ],
                 ),
@@ -110,18 +134,33 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
   }
 
   Future<void> _load() async {
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final data = await _repo.getMedications(widget.petId);
-      if (mounted) setState(() { _meds = data; _loading = false; });
+      if (mounted) {
+        setState(() {
+          _meds = data;
+          _loading = false;
+        });
+      }
     } catch (e) {
-      if (mounted) setState(() { _error = e.toString(); _loading = false; });
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _loading = false;
+        });
+      }
     }
   }
 
   Future<void> _add() async {
-    final result = await Navigator.of(context).push<PetMedication>(MaterialPageRoute(
-      builder: (_) => AddMedicationScreen(petId: widget.petId, petName: widget.petName),
+    final result =
+        await Navigator.of(context).push<PetMedication>(MaterialPageRoute(
+      builder: (_) =>
+          AddMedicationScreen(petId: widget.petId, petName: widget.petName),
     ));
     if (result != null && mounted) {
       setState(() => _meds = [result, ...?_meds]);
@@ -132,11 +171,13 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
   }
 
   Future<void> _edit(PetMedication med) async {
-    final result = await Navigator.of(context).push<PetMedication>(MaterialPageRoute(
+    final result =
+        await Navigator.of(context).push<PetMedication>(MaterialPageRoute(
       builder: (_) => EditMedicationScreen(medication: med),
     ));
     if (result != null && mounted) {
-      setState(() => _meds = _meds?.map((m) => m.id == result.id ? result : m).toList());
+      setState(() =>
+          _meds = _meds?.map((m) => m.id == result.id ? result : m).toList());
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Запис оновлено.')),
       );
@@ -150,10 +191,13 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
         title: const Text('Видалити запис?'),
         content: Text('Видалити "${med.name}"?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Скасувати')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Скасувати')),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Видалити', style: TextStyle(color: AppTheme.danger)),
+            child: const Text('Видалити',
+                style: TextStyle(color: AppTheme.danger)),
           ),
         ],
       ),
@@ -180,9 +224,11 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
           TextButton.icon(
             onPressed: _showFilterSheet,
             icon: const Icon(Icons.filter_list, size: 18),
-            label: Text(_filterLabel(_filter), style: const TextStyle(fontSize: 12)),
+            label: Text(_filterLabel(_filter),
+                style: const TextStyle(fontSize: 12)),
           ),
-        IconButton(icon: const Icon(Icons.add), tooltip: 'Додати', onPressed: _add),
+        IconButton(
+            icon: const Icon(Icons.add), tooltip: 'Додати', onPressed: _add),
       ],
       children: [
         if (_loading)
@@ -192,13 +238,16 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
         else if (meds.isEmpty)
           EmptyState(
             title: 'Записів про препарати немає',
-            message: 'Додайте перший запис — від кліщів, дегельмінтизацію або будь-які інші препарати.',
+            message:
+                'Додайте перший запис — від кліщів, дегельмінтизацію або будь-які інші препарати.',
             icon: Icons.medication_outlined,
-            action: FilledButton(onPressed: _add, child: const Text('Додати препарат')),
+            action: FilledButton(
+                onPressed: _add, child: const Text('Додати препарат')),
           )
         else ...[
           ..._buildReminders(meds, context),
-          ...meds.map((m) => _MedicationCard(med: m, onDelete: () => _delete(m), onEdit: () => _edit(m))),
+          ...meds.map((m) => _MedicationCard(
+              med: m, onDelete: () => _delete(m), onEdit: () => _edit(m))),
           const SizedBox(height: 4),
           OutlinedButton.icon(
             onPressed: _add,
@@ -211,7 +260,10 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
   }
 
   List<Widget> _buildReminders(List<PetMedication> meds, BuildContext context) {
-    final upcoming = meds.where((m) => m.nextDoseDate != null && (m.nextDueSoon || m.nextDoseOverdue)).toList();
+    final upcoming = meds
+        .where((m) =>
+            m.nextDoseDate != null && (m.nextDueSoon || m.nextDoseOverdue))
+        .toList();
     if (upcoming.isEmpty) return [];
 
     return [
@@ -223,9 +275,13 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(children: [
-                Icon(Icons.notifications_active_outlined, size: 18, color: Theme.of(context).colorScheme.primary),
+                Icon(Icons.notifications_active_outlined,
+                    size: 18, color: Theme.of(context).colorScheme.primary),
                 const SizedBox(width: 6),
-                Text('Нагадування', style: TextStyle(fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.primary)),
+                Text('Нагадування',
+                    style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: Theme.of(context).colorScheme.primary)),
               ]),
               const SizedBox(height: 8),
               ...upcoming.map((m) {
@@ -236,10 +292,19 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 4),
                   child: Row(children: [
-                    Icon(overdue ? Icons.warning_amber_outlined : Icons.schedule_outlined, size: 16,
+                    Icon(
+                        overdue
+                            ? Icons.warning_amber_outlined
+                            : Icons.schedule_outlined,
+                        size: 16,
                         color: overdue ? AppTheme.danger : AppTheme.warning),
                     const SizedBox(width: 6),
-                    Expanded(child: Text(label, style: TextStyle(color: overdue ? AppTheme.danger : AppTheme.textMain))),
+                    Expanded(
+                        child: Text(label,
+                            style: TextStyle(
+                                color: overdue
+                                    ? AppTheme.danger
+                                    : AppTheme.textMain))),
                   ]),
                 );
               }),
@@ -253,7 +318,8 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
 }
 
 class _MedicationCard extends StatelessWidget {
-  const _MedicationCard({required this.med, required this.onDelete, required this.onEdit});
+  const _MedicationCard(
+      {required this.med, required this.onDelete, required this.onEdit});
   final PetMedication med;
   final VoidCallback onDelete;
   final VoidCallback onEdit;
@@ -274,9 +340,13 @@ class _MedicationCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(med.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                        Text(med.name,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w800, fontSize: 15)),
                         const SizedBox(height: 2),
-                        Text(med.categoryLabel, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                        Text(med.categoryLabel,
+                            style: const TextStyle(
+                                color: AppTheme.textSecondary, fontSize: 13)),
                       ],
                     ),
                   ),
@@ -295,25 +365,41 @@ class _MedicationCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 10),
-              _InfoRow(icon: Icons.calendar_today_outlined, label: 'Дата прийому', value: _formatDate(med.givenDate)),
+              _InfoRow(
+                  icon: Icons.calendar_today_outlined,
+                  label: 'Дата прийому',
+                  value: _formatDate(med.givenDate)),
               if (med.dosage != null)
-                _InfoRow(icon: Icons.scale_outlined, label: 'Дозування', value: med.dosage!),
+                _InfoRow(
+                    icon: Icons.scale_outlined,
+                    label: 'Дозування',
+                    value: med.dosage!),
               if (med.nextDoseDate != null)
                 _InfoRow(
                   icon: Icons.event_outlined,
                   label: 'Наступний прийом',
                   value: _formatDate(med.nextDoseDate!),
-                  valueColor: med.nextDoseOverdue ? AppTheme.danger : med.nextDueSoon ? AppTheme.warning : null,
+                  valueColor: med.nextDoseOverdue
+                      ? AppTheme.danger
+                      : med.nextDueSoon
+                          ? AppTheme.warning
+                          : null,
                 ),
               if (med.notes != null && med.notes!.isNotEmpty)
-                _InfoRow(icon: Icons.notes_outlined, label: 'Нотатки', value: med.notes!),
+                _InfoRow(
+                    icon: Icons.notes_outlined,
+                    label: 'Нотатки',
+                    value: med.notes!),
               if (med.reminderEnabled)
-                Padding(
-                  padding: const EdgeInsets.only(top: 6),
+                const Padding(
+                  padding: EdgeInsets.only(top: 6),
                   child: Row(children: [
-                    const Icon(Icons.notifications_active_outlined, size: 14, color: AppTheme.primary),
-                    const SizedBox(width: 4),
-                    const Text('Нагадування увімкнено', style: TextStyle(fontSize: 12, color: AppTheme.primary)),
+                    Icon(Icons.notifications_active_outlined,
+                        size: 14, color: AppTheme.primary),
+                    SizedBox(width: 4),
+                    Text('Нагадування увімкнено',
+                        style:
+                            TextStyle(fontSize: 12, color: AppTheme.primary)),
                   ]),
                 ),
             ],
@@ -325,7 +411,11 @@ class _MedicationCard extends StatelessWidget {
 }
 
 class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.icon, required this.label, required this.value, this.valueColor});
+  const _InfoRow(
+      {required this.icon,
+      required this.label,
+      required this.value,
+      this.valueColor});
   final IconData icon;
   final String label;
   final String value;
@@ -340,9 +430,17 @@ class _InfoRow extends StatelessWidget {
         children: [
           Icon(icon, size: 15, color: AppTheme.textSecondary),
           const SizedBox(width: 6),
-          SizedBox(width: 110, child: Text(label, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13))),
+          SizedBox(
+              width: 110,
+              child: Text(label,
+                  style: const TextStyle(
+                      color: AppTheme.textSecondary, fontSize: 13))),
           Expanded(
-            child: Text(value, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: valueColor)),
+            child: Text(value,
+                style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                    color: valueColor)),
           ),
         ],
       ),
@@ -356,7 +454,8 @@ String _formatDate(DateTime d) =>
 // ─── Add form ────────────────────────────────────────────────────────────────
 
 class AddMedicationScreen extends StatefulWidget {
-  const AddMedicationScreen({super.key, required this.petId, required this.petName});
+  const AddMedicationScreen(
+      {super.key, required this.petId, required this.petName});
 
   final String petId;
   final String petName;
@@ -406,7 +505,8 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
   Future<void> _pickNextDate() async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: _nextDoseDate ?? DateTime.now().add(const Duration(days: 30)),
+      initialDate:
+          _nextDoseDate ?? DateTime.now().add(const Duration(days: 30)),
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365 * 3)),
     );
@@ -423,9 +523,13 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
         petId: widget.petId,
         name: _nameController.text.trim(),
         givenDate: _givenDate,
-        dosage: _dosageController.text.trim().isEmpty ? null : _dosageController.text.trim(),
+        dosage: _dosageController.text.trim().isEmpty
+            ? null
+            : _dosageController.text.trim(),
         category: _category,
-        notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+        notes: _notesController.text.trim().isEmpty
+            ? null
+            : _notesController.text.trim(),
         nextDoseDate: _nextDoseDate,
         reminderEnabled: _reminderEnabled,
       );
@@ -438,7 +542,8 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Не вдалося зберегти. Спробуйте ще раз.')),
+          const SnackBar(
+              content: Text('Не вдалося зберегти. Спробуйте ще раз.')),
         );
       }
     } finally {
@@ -453,7 +558,12 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
         title: const Text('Додати препарат'),
         actions: [
           if (_saving)
-            const Padding(padding: EdgeInsets.all(16), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)))
+            const Padding(
+                padding: EdgeInsets.all(16),
+                child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2)))
           else
             TextButton(onPressed: _save, child: const Text('Зберегти')),
         ],
@@ -463,11 +573,12 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            _Label('Основна інформація'),
+            const _Label('Основна інформація'),
             const SizedBox(height: 8),
             Card(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Column(
                   children: [
                     TextFormField(
@@ -477,7 +588,9 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                         border: InputBorder.none,
                         hintText: 'напр. Bravecto, Milbemax...',
                       ),
-                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Вкажіть назву' : null,
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? 'Вкажіть назву'
+                          : null,
                     ),
                     const Divider(),
                     TextFormField(
@@ -493,21 +606,25 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            _Label('Категорія'),
+            const _Label('Категорія'),
             const SizedBox(height: 8),
             Card(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 child: DropdownButtonFormField<String>(
                   value: _category,
                   decoration: const InputDecoration(border: InputBorder.none),
-                  items: _categories.map((c) => DropdownMenuItem(value: c.$1, child: Text(c.$2))).toList(),
+                  items: _categories
+                      .map((c) =>
+                          DropdownMenuItem(value: c.$1, child: Text(c.$2)))
+                      .toList(),
                   onChanged: (v) => setState(() => _category = v ?? 'other'),
                 ),
               ),
             ),
             const SizedBox(height: 16),
-            _Label('Дати'),
+            const _Label('Дати'),
             const SizedBox(height: 8),
             Card(
               child: Padding(
@@ -525,7 +642,9 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                     ListTile(
                       leading: const Icon(Icons.event_outlined),
                       title: const Text('Наступний прийом'),
-                      subtitle: Text(_nextDoseDate != null ? _formatDate(_nextDoseDate!) : 'Не вказано'),
+                      subtitle: Text(_nextDoseDate != null
+                          ? _formatDate(_nextDoseDate!)
+                          : 'Не вказано'),
                       onTap: _pickNextDate,
                       trailing: const Icon(Icons.chevron_right),
                     ),
@@ -534,7 +653,8 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                       SwitchListTile(
                         secondary: const Icon(Icons.notifications_outlined),
                         title: const Text('Нагадування'),
-                        subtitle: const Text('Сповістити перед наступним прийомом'),
+                        subtitle:
+                            const Text('Сповістити перед наступним прийомом'),
                         value: _reminderEnabled,
                         onChanged: (v) => setState(() => _reminderEnabled = v),
                       ),
@@ -544,11 +664,12 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            _Label('Нотатки'),
+            const _Label('Нотатки'),
             const SizedBox(height: 8),
             Card(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: TextFormField(
                   controller: _notesController,
                   decoration: const InputDecoration(
@@ -561,7 +682,9 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            FilledButton(onPressed: _saving ? null : _save, child: const Text('Зберегти запис')),
+            FilledButton(
+                onPressed: _saving ? null : _save,
+                child: const Text('Зберегти запис')),
             const SizedBox(height: 24),
           ],
         ),
@@ -575,7 +698,8 @@ class _Label extends StatelessWidget {
   final String text;
 
   @override
-  Widget build(BuildContext context) => Text(text, style: Theme.of(context).textTheme.titleMedium);
+  Widget build(BuildContext context) =>
+      Text(text, style: Theme.of(context).textTheme.titleMedium);
 }
 
 // ─── Edit form ────────────────────────────────────────────────────────────────
@@ -590,9 +714,12 @@ class EditMedicationScreen extends StatefulWidget {
 
 class _EditMedicationScreenState extends State<EditMedicationScreen> {
   final _formKey = GlobalKey<FormState>();
-  late final _nameController = TextEditingController(text: widget.medication.name);
-  late final _dosageController = TextEditingController(text: widget.medication.dosage ?? '');
-  late final _notesController = TextEditingController(text: widget.medication.notes ?? '');
+  late final _nameController =
+      TextEditingController(text: widget.medication.name);
+  late final _dosageController =
+      TextEditingController(text: widget.medication.dosage ?? '');
+  late final _notesController =
+      TextEditingController(text: widget.medication.notes ?? '');
 
   late String _category = widget.medication.category ?? 'other';
   late DateTime _givenDate = widget.medication.givenDate;
@@ -629,7 +756,8 @@ class _EditMedicationScreenState extends State<EditMedicationScreen> {
   Future<void> _pickNextDate() async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: _nextDoseDate ?? DateTime.now().add(const Duration(days: 30)),
+      initialDate:
+          _nextDoseDate ?? DateTime.now().add(const Duration(days: 30)),
       firstDate: DateTime.now().subtract(const Duration(days: 365)),
       lastDate: DateTime.now().add(const Duration(days: 365 * 3)),
     );
@@ -646,9 +774,13 @@ class _EditMedicationScreenState extends State<EditMedicationScreen> {
         petId: widget.medication.petId,
         name: _nameController.text.trim(),
         givenDate: _givenDate,
-        dosage: _dosageController.text.trim().isEmpty ? null : _dosageController.text.trim(),
+        dosage: _dosageController.text.trim().isEmpty
+            ? null
+            : _dosageController.text.trim(),
         category: _category,
-        notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+        notes: _notesController.text.trim().isEmpty
+            ? null
+            : _notesController.text.trim(),
         nextDoseDate: _nextDoseDate,
         reminderEnabled: _reminderEnabled,
         createdAt: widget.medication.createdAt,
@@ -660,7 +792,8 @@ class _EditMedicationScreenState extends State<EditMedicationScreen> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Не вдалося зберегти. Спробуйте ще раз.')),
+          const SnackBar(
+              content: Text('Не вдалося зберегти. Спробуйте ще раз.')),
         );
       }
     } finally {
@@ -675,7 +808,12 @@ class _EditMedicationScreenState extends State<EditMedicationScreen> {
         title: const Text('Редагувати препарат'),
         actions: [
           if (_saving)
-            const Padding(padding: EdgeInsets.all(16), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)))
+            const Padding(
+                padding: EdgeInsets.all(16),
+                child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2)))
           else
             TextButton(onPressed: _save, child: const Text('Зберегти')),
         ],
@@ -685,43 +823,54 @@ class _EditMedicationScreenState extends State<EditMedicationScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            _Label('Основна інформація'),
+            const _Label('Основна інформація'),
             const SizedBox(height: 8),
             Card(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Column(
                   children: [
                     TextFormField(
                       controller: _nameController,
-                      decoration: const InputDecoration(labelText: 'Назва препарату *', border: InputBorder.none),
-                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Вкажіть назву' : null,
+                      decoration: const InputDecoration(
+                          labelText: 'Назва препарату *',
+                          border: InputBorder.none),
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? 'Вкажіть назву'
+                          : null,
                     ),
                     const Divider(),
                     TextFormField(
                       controller: _dosageController,
-                      decoration: const InputDecoration(labelText: 'Дозування (необов\'язково)', border: InputBorder.none),
+                      decoration: const InputDecoration(
+                          labelText: 'Дозування (необов\'язково)',
+                          border: InputBorder.none),
                     ),
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 16),
-            _Label('Категорія'),
+            const _Label('Категорія'),
             const SizedBox(height: 8),
             Card(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 child: DropdownButtonFormField<String>(
                   value: _category,
                   decoration: const InputDecoration(border: InputBorder.none),
-                  items: _categories.map((c) => DropdownMenuItem(value: c.$1, child: Text(c.$2))).toList(),
+                  items: _categories
+                      .map((c) =>
+                          DropdownMenuItem(value: c.$1, child: Text(c.$2)))
+                      .toList(),
                   onChanged: (v) => setState(() => _category = v ?? 'other'),
                 ),
               ),
             ),
             const SizedBox(height: 16),
-            _Label('Дати'),
+            const _Label('Дати'),
             const SizedBox(height: 8),
             Card(
               child: Padding(
@@ -739,7 +888,9 @@ class _EditMedicationScreenState extends State<EditMedicationScreen> {
                     ListTile(
                       leading: const Icon(Icons.event_outlined),
                       title: const Text('Наступний прийом'),
-                      subtitle: Text(_nextDoseDate != null ? _formatDate(_nextDoseDate!) : 'Не вказано'),
+                      subtitle: Text(_nextDoseDate != null
+                          ? _formatDate(_nextDoseDate!)
+                          : 'Не вказано'),
                       onTap: _pickNextDate,
                       trailing: const Icon(Icons.chevron_right),
                     ),
@@ -748,7 +899,10 @@ class _EditMedicationScreenState extends State<EditMedicationScreen> {
                       ListTile(
                         leading: const Icon(Icons.close),
                         title: const Text('Прибрати дату наступного прийому'),
-                        onTap: () => setState(() { _nextDoseDate = null; _reminderEnabled = false; }),
+                        onTap: () => setState(() {
+                          _nextDoseDate = null;
+                          _reminderEnabled = false;
+                        }),
                       ),
                       const Divider(height: 1),
                       SwitchListTile(
@@ -763,20 +917,25 @@ class _EditMedicationScreenState extends State<EditMedicationScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            _Label('Нотатки'),
+            const _Label('Нотатки'),
             const SizedBox(height: 8),
             Card(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: TextFormField(
                   controller: _notesController,
-                  decoration: const InputDecoration(labelText: 'Нотатки (необов\'язково)', border: InputBorder.none),
+                  decoration: const InputDecoration(
+                      labelText: 'Нотатки (необов\'язково)',
+                      border: InputBorder.none),
                   maxLines: 3,
                 ),
               ),
             ),
             const SizedBox(height: 24),
-            FilledButton(onPressed: _saving ? null : _save, child: const Text('Зберегти зміни')),
+            FilledButton(
+                onPressed: _saving ? null : _save,
+                child: const Text('Зберегти зміни')),
             const SizedBox(height: 24),
           ],
         ),

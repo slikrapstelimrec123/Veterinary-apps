@@ -15,7 +15,8 @@ class VisitRecordDetailsScreen extends StatefulWidget {
   final String recordId;
 
   @override
-  State<VisitRecordDetailsScreen> createState() => _VisitRecordDetailsScreenState();
+  State<VisitRecordDetailsScreen> createState() =>
+      _VisitRecordDetailsScreenState();
 }
 
 class _VisitRecordDetailsScreenState extends State<VisitRecordDetailsScreen> {
@@ -54,14 +55,17 @@ class _VisitRecordDetailsScreenState extends State<VisitRecordDetailsScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setSheet) => Padding(
           padding: EdgeInsets.only(
-            left: 24, right: 24, top: 24,
+            left: 24,
+            right: 24,
+            top: 24,
             bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Додати документ', style: Theme.of(ctx).textTheme.titleLarge),
+              Text('Додати документ',
+                  style: Theme.of(ctx).textTheme.titleLarge),
               const SizedBox(height: 16),
               TextField(
                 controller: titleController,
@@ -78,9 +82,11 @@ class _VisitRecordDetailsScreenState extends State<VisitRecordDetailsScreen> {
                   border: OutlineInputBorder(),
                 ),
                 items: types.entries
-                    .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
+                    .map((e) =>
+                        DropdownMenuItem(value: e.key, child: Text(e.value)))
                     .toList(),
-                onChanged: (v) => setSheet(() => selectedType = v ?? selectedType),
+                onChanged: (v) =>
+                    setSheet(() => selectedType = v ?? selectedType),
               ),
               const SizedBox(height: 12),
               SizedBox(
@@ -91,7 +97,9 @@ class _VisitRecordDetailsScreenState extends State<VisitRecordDetailsScreen> {
                   onPressed: () {
                     Navigator.pop(ctx);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Завантаження файлів буде доступне у наступному оновленні.')),
+                      const SnackBar(
+                          content: Text(
+                              'Завантаження файлів буде доступне у наступному оновленні.')),
                     );
                   },
                 ),
@@ -119,28 +127,54 @@ class _VisitRecordDetailsScreenState extends State<VisitRecordDetailsScreen> {
             if (snapshot.connectionState == ConnectionState.waiting)
               const Center(child: CircularProgressIndicator())
             else if (snapshot.hasError)
-              ErrorState(message: 'Не вдалося завантажити деталі візиту.', onRetry: refresh)
+              ErrorState(
+                  message: 'Не вдалося завантажити деталі візиту.',
+                  onRetry: refresh)
             else if (record == null)
-              const EmptyState(title: 'Візит не знайдено', message: 'Цей запис лікування недоступний.', icon: Icons.search_off_outlined)
+              const EmptyState(
+                  title: 'Візит не знайдено',
+                  message: 'Цей запис лікування недоступний.',
+                  icon: Icons.search_off_outlined)
             else ...[
-              _RecordSection(title: 'Дата візиту', body: record.visitDate.toIso8601String().split('T').first),
-              _RecordSection(title: 'Клініка', body: record.clinicName ?? 'Не вказано'),
-              _RecordSection(title: 'Лікар', body: record.doctorName ?? 'Не вказано'),
-              _RecordSection(title: 'Причина', body: record.reason ?? 'Не вказано'),
-              _RecordSection(title: 'Симптоми', body: record.symptoms ?? 'Не вказано'),
-              _RecordSection(title: 'Діагноз', body: record.diagnosis ?? 'Не вказано'),
-              _RecordSection(title: 'Процедури', body: record.proceduresPerformed ?? 'Процедури не додано.'),
-              _RecordSection(title: 'Лікування', body: record.treatmentNotes ?? 'Нотатки про лікування не додано.'),
-              _RecordSection(title: 'Препарати', body: record.prescribedMedications ?? 'Препарати не додано.'),
-              _RecordSection(title: 'Рекомендації', body: record.recommendations ?? 'Рекомендації не додано.'),
-              _RecordSection(title: 'Наступний візит', body: _nextVisitLabel(record)),
+              _RecordSection(
+                  title: 'Дата візиту',
+                  body: record.visitDate.toIso8601String().split('T').first),
+              _RecordSection(
+                  title: 'Клініка', body: record.clinicName ?? 'Не вказано'),
+              _RecordSection(
+                  title: 'Лікар', body: record.doctorName ?? 'Не вказано'),
+              _RecordSection(
+                  title: 'Причина', body: record.reason ?? 'Не вказано'),
+              _RecordSection(
+                  title: 'Симптоми', body: record.symptoms ?? 'Не вказано'),
+              _RecordSection(
+                  title: 'Діагноз', body: record.diagnosis ?? 'Не вказано'),
+              _RecordSection(
+                  title: 'Процедури',
+                  body: record.proceduresPerformed ?? 'Процедури не додано.'),
+              _RecordSection(
+                  title: 'Лікування',
+                  body: record.treatmentNotes ??
+                      'Нотатки про лікування не додано.'),
+              _RecordSection(
+                  title: 'Препарати',
+                  body: record.prescribedMedications ?? 'Препарати не додано.'),
+              _RecordSection(
+                  title: 'Рекомендації',
+                  body: record.recommendations ?? 'Рекомендації не додано.'),
+              _RecordSection(
+                  title: 'Наступний візит', body: _nextVisitLabel(record)),
               if (record.appointmentId != null && record.clinicId != null)
-                _VisitReviewAction(record: record, repository: reviewRepository, onChanged: refresh),
+                _VisitReviewAction(
+                    record: record,
+                    repository: reviewRepository,
+                    onChanged: refresh),
               const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Документи', style: Theme.of(context).textTheme.titleLarge),
+                  Text('Документи',
+                      style: Theme.of(context).textTheme.titleLarge),
                   TextButton.icon(
                     onPressed: () => _showUploadSheet(record.id, record.petId),
                     icon: const Icon(Icons.upload_file_outlined, size: 18),
@@ -156,7 +190,8 @@ class _VisitRecordDetailsScreenState extends State<VisitRecordDetailsScreen> {
                   icon: Icons.attach_file_outlined,
                 )
               else
-                ...documents.map((doc) => _DocumentTile(document: doc, repository: repository)),
+                ...documents.map((doc) =>
+                    _DocumentTile(document: doc, repository: repository)),
             ],
           ],
         );
@@ -165,13 +200,19 @@ class _VisitRecordDetailsScreenState extends State<VisitRecordDetailsScreen> {
   }
 
   String _nextVisitLabel(VisitRecord record) {
-    if (!record.nextVisitRecommended) return 'Дату повторного візиту не вказано.';
-    return record.nextVisitDate?.toIso8601String().split('T').first ?? 'Рекомендовано, але дату не вказано.';
+    if (!record.nextVisitRecommended) {
+      return 'Дату повторного візиту не вказано.';
+    }
+    return record.nextVisitDate?.toIso8601String().split('T').first ??
+        'Рекомендовано, але дату не вказано.';
   }
 }
 
 class _VisitReviewAction extends StatelessWidget {
-  const _VisitReviewAction({required this.record, required this.repository, required this.onChanged});
+  const _VisitReviewAction(
+      {required this.record,
+      required this.repository,
+      required this.onChanged});
 
   final VisitRecord record;
   final ReviewRepository repository;
@@ -182,9 +223,14 @@ class _VisitReviewAction extends StatelessWidget {
     return FutureBuilder(
       future: repository.getReviewForAppointment(record.appointmentId!),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) return const SizedBox.shrink();
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox.shrink();
+        }
         if (snapshot.data != null) {
-          return const Card(child: Padding(padding: EdgeInsets.all(14), child: Text('Цей візит уже оцінено.')));
+          return const Card(
+              child: Padding(
+                  padding: EdgeInsets.all(14),
+                  child: Text('Цей візит уже оцінено.')));
         }
         return Padding(
           padding: const EdgeInsets.only(bottom: 12),
@@ -255,13 +301,17 @@ class _DocumentTile extends StatelessWidget {
       child: ListTile(
         leading: const Icon(Icons.description_outlined),
         title: Text(document.title),
-        subtitle: Text('${document.type} · ${document.fileSizeLabel} · ${document.createdAt.toIso8601String().split('T').first}'),
+        subtitle: Text(
+            '${document.type} · ${document.fileSizeLabel} · ${document.createdAt.toIso8601String().split('T').first}'),
         trailing: const Icon(Icons.lock_outline),
         onTap: () async {
           final url = await repository.getSignedDocumentUrl(document);
           if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(url == null ? 'Перегляд файлу поки недоступний.' : 'Посилання створено.')),
+            SnackBar(
+                content: Text(url == null
+                    ? 'Перегляд файлу поки недоступний.'
+                    : 'Посилання створено.')),
           );
         },
       ),

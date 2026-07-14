@@ -35,11 +35,14 @@ class Doctor {
       clinicId: json['clinic_id'] as String? ?? '',
       fullName: json['full_name'] as String? ?? '',
       specialization: json['specialization'] as String? ?? 'Veterinarian',
-      clinicName: clinic is Map<String, dynamic> ? clinic['name'] as String? ?? '' : json['clinic_name'] as String? ?? '',
+      clinicName: clinic is Map<String, dynamic>
+          ? clinic['name'] as String? ?? ''
+          : json['clinic_name'] as String? ?? '',
       bio: json['bio'] as String?,
       experienceYears: (json['experience_years'] as num?)?.toInt(),
       avatarUrl: json['avatar_url'] as String?,
-      defaultAppointmentDurationMinutes: (json['default_appointment_duration_minutes'] as num?)?.toInt() ?? 30,
+      defaultAppointmentDurationMinutes:
+          (json['default_appointment_duration_minutes'] as num?)?.toInt() ?? 30,
       status: json['status'] as String? ?? 'draft',
       isPublic: json['is_public'] as bool? ?? false,
     );

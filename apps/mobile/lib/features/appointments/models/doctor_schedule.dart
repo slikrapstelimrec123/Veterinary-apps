@@ -31,12 +31,18 @@ class DoctorSchedule {
       dayOfWeek: (json['day_of_week'] as num?)?.toInt() ?? 1,
       startTime: _shortTime(json['start_time'] as String? ?? '09:00'),
       endTime: _shortTime(json['end_time'] as String? ?? '18:00'),
-      breakStartTime: json['break_start_time'] == null ? null : _shortTime(json['break_start_time'] as String),
-      breakEndTime: json['break_end_time'] == null ? null : _shortTime(json['break_end_time'] as String),
-      slotDurationMinutes: (json['slot_duration_minutes'] as num?)?.toInt() ?? 30,
+      breakStartTime: json['break_start_time'] == null
+          ? null
+          : _shortTime(json['break_start_time'] as String),
+      breakEndTime: json['break_end_time'] == null
+          ? null
+          : _shortTime(json['break_end_time'] as String),
+      slotDurationMinutes:
+          (json['slot_duration_minutes'] as num?)?.toInt() ?? 30,
       isActive: json['is_active'] as bool? ?? true,
     );
   }
 }
 
-String _shortTime(String value) => value.length >= 5 ? value.substring(0, 5) : value;
+String _shortTime(String value) =>
+    value.length >= 5 ? value.substring(0, 5) : value;

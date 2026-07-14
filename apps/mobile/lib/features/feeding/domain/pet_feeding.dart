@@ -26,13 +26,13 @@ class PetFeeding {
   bool get isCurrent => endDate == null;
 
   String get foodTypeLabel => switch (foodType) {
-    'dry' => 'Сухий корм',
-    'wet' => 'Вологий корм',
-    'raw' => 'Натуральне харчування',
-    'mixed' => 'Змішане',
-    'prescription' => 'Лікувальний корм',
-    _ => foodType ?? 'Інше',
-  };
+        'dry' => 'Сухий корм',
+        'wet' => 'Вологий корм',
+        'raw' => 'Натуральне харчування',
+        'mixed' => 'Змішане',
+        'prescription' => 'Лікувальний корм',
+        _ => foodType ?? 'Інше',
+      };
 
   factory PetFeeding.fromJson(Map<String, dynamic> json) {
     return PetFeeding(
@@ -42,21 +42,25 @@ class PetFeeding {
       brand: json['brand'] as String?,
       foodType: json['food_type'] as String?,
       startDate: DateTime.parse(json['start_date'] as String),
-      endDate: json['end_date'] != null ? DateTime.tryParse(json['end_date'] as String) : null,
+      endDate: json['end_date'] != null
+          ? DateTime.tryParse(json['end_date'] as String)
+          : null,
       notes: json['notes'] as String?,
       rating: json['rating'] as int?,
-      createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at'] as String) : null,
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'] as String)
+          : null,
     );
   }
 
   Map<String, dynamic> toInsertJson() => {
-    'pet_id': petId,
-    'food_name': foodName,
-    'brand': brand,
-    'food_type': foodType,
-    'start_date': startDate.toIso8601String().split('T').first,
-    'end_date': endDate?.toIso8601String().split('T').first,
-    'notes': notes,
-    'rating': rating,
-  };
+        'pet_id': petId,
+        'food_name': foodName,
+        'brand': brand,
+        'food_type': foodType,
+        'start_date': startDate.toIso8601String().split('T').first,
+        'end_date': endDate?.toIso8601String().split('T').first,
+        'notes': notes,
+        'rating': rating,
+      };
 }

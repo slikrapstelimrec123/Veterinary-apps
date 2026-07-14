@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/empty_state.dart';
@@ -24,7 +24,8 @@ class AppointmentBookingScreen extends StatefulWidget {
   final String? doctorId;
 
   @override
-  State<AppointmentBookingScreen> createState() => _AppointmentBookingScreenState();
+  State<AppointmentBookingScreen> createState() =>
+      _AppointmentBookingScreenState();
 }
 
 class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
@@ -59,21 +60,32 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
 
   Future<_BookingData> _load() async {
     final clinics = await clinicRepository.getPublishedClinics();
-    final clinicId = selectedClinicId ?? (clinics.isNotEmpty ? clinics.first.id : null);
+    final clinicId =
+        selectedClinicId ?? (clinics.isNotEmpty ? clinics.first.id : null);
     selectedClinicId = clinicId;
 
     final pets = await petRepository.getPets();
-    if ((selectedPetId == null || !pets.any((pet) => pet.id == selectedPetId)) && pets.isNotEmpty) {
+    if ((selectedPetId == null ||
+            !pets.any((pet) => pet.id == selectedPetId)) &&
+        pets.isNotEmpty) {
       selectedPetId = pets.first.id;
     } else if (pets.isEmpty) {
       selectedPetId = null;
     }
 
     if (clinicId == null) {
-      return _BookingData(clinics: clinics, pets: pets, services: const [], doctors: const [], schedules: const [], appointments: const [], canAcceptOnlineBooking: false);
+      return _BookingData(
+          clinics: clinics,
+          pets: pets,
+          services: const [],
+          doctors: const [],
+          schedules: const [],
+          appointments: const [],
+          canAcceptOnlineBooking: false);
     }
 
-    final canAcceptOnlineBooking = await clinicRepository.canClinicAcceptOnlineBooking(clinicId);
+    final canAcceptOnlineBooking =
+        await clinicRepository.canClinicAcceptOnlineBooking(clinicId);
     if (!canAcceptOnlineBooking) {
       return _BookingData(
         clinics: clinics,
@@ -89,14 +101,19 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
     final services = await clinicRepository.getClinicServices(clinicId);
     final doctors = await clinicRepository.getClinicDoctors(clinicId);
     final schedules = await appointmentRepository.getDoctorSchedules(clinicId);
-    final appointments = await appointmentRepository.getClinicAppointments(clinicId);
+    final appointments =
+        await appointmentRepository.getClinicAppointments(clinicId);
 
-    if ((selectedServiceId == null || !services.any((service) => service.id == selectedServiceId)) && services.isNotEmpty) {
+    if ((selectedServiceId == null ||
+            !services.any((service) => service.id == selectedServiceId)) &&
+        services.isNotEmpty) {
       selectedServiceId = services.first.id;
     } else if (services.isEmpty) {
       selectedServiceId = null;
     }
-    if ((selectedDoctorId == null || !doctors.any((doctor) => doctor.id == selectedDoctorId)) && doctors.isNotEmpty) {
+    if ((selectedDoctorId == null ||
+            !doctors.any((doctor) => doctor.id == selectedDoctorId)) &&
+        doctors.isNotEmpty) {
       selectedDoctorId = doctors.first.id;
     } else if (doctors.isEmpty) {
       selectedDoctorId = null;
@@ -124,19 +141,29 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
   }
 
   Future<void> submit(_BookingData data) async {
-    final clinic = data.clinics.where((item) => item.id == selectedClinicId).firstOrNull;
+    final clinic =
+        data.clinics.where((item) => item.id == selectedClinicId).firstOrNull;
     final pet = data.pets.where((item) => item.id == selectedPetId).firstOrNull;
-    final service = data.services.where((item) => item.id == selectedServiceId).firstOrNull;
-    final doctor = data.doctors.where((item) => item.id == selectedDoctorId).firstOrNull;
+    final service =
+        data.services.where((item) => item.id == selectedServiceId).firstOrNull;
+    final doctor =
+        data.doctors.where((item) => item.id == selectedDoctorId).firstOrNull;
     final slot = selectedSlot;
 
     if (!data.canAcceptOnlineBooking) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ця клініка тимчасово недоступна для онлайн-запису.')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Ця клініка тимчасово недоступна для онлайн-запису.')));
       return;
     }
 
-    if (clinic == null || pet == null || service == null || doctor == null || slot == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Оберіть тварину, клініку, послугу, лікаря, дату й час.')));
+    if (clinic == null ||
+        pet == null ||
+        service == null ||
+        doctor == null ||
+        slot == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content:
+              Text('Оберіть тварину, клініку, послугу, лікаря, дату й час.')));
       return;
     }
 
@@ -157,7 +184,9 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
           startTime: slot.startTime,
           endTime: slot.endTime,
           status: 'pending',
-          ownerNote: noteController.text.trim().isEmpty ? null : noteController.text.trim(),
+          ownerNote: noteController.text.trim().isEmpty
+              ? null
+              : noteController.text.trim(),
         ),
       );
 
@@ -165,10 +194,12 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
         return;
       }
 
-      await Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => AppointmentConfirmationScreen(appointment: created)));
+      await Navigator.of(context).pushReplacement(MaterialPageRoute(
+          builder: (_) => AppointmentConfirmationScreen(appointment: created)));
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Не вдалося створити запис. Спробуйте ще раз.')));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Не вдалося створити запис. Спробуйте ще раз.')));
       }
     } finally {
       if (mounted) {
@@ -191,9 +222,14 @@ class _AppointmentBookingScreenState extends State<AppointmentBookingScreen> {
             if (snapshot.connectionState == ConnectionState.waiting)
               const Center(child: CircularProgressIndicator())
             else if (snapshot.hasError)
-              ErrorState(message: 'Не вдалося завантажити варіанти запису.', onRetry: () => setState(() => dataFuture = _load()))
+              ErrorState(
+                  message: 'Не вдалося завантажити варіанти запису.',
+                  onRetry: () => setState(() => dataFuture = _load()))
             else if (data == null || data.clinics.isEmpty)
-              const EmptyState(title: 'Немає доступних клінік', message: 'Опубліковані клініки з’являться тут.', icon: Icons.local_hospital_outlined)
+              const EmptyState(
+                  title: 'Немає доступних клінік',
+                  message: 'Опубліковані клініки з’являться тут.',
+                  icon: Icons.local_hospital_outlined)
             else
               _BookingForm(
                 data: data,
@@ -268,7 +304,8 @@ class _BookingForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final service = data.services.where((item) => item.id == selectedServiceId).firstOrNull;
+    final service =
+        data.services.where((item) => item.id == selectedServiceId).firstOrNull;
     final generator = AppointmentSlotGenerator();
     final slots = selectedDoctorId == null || service == null
         ? <AppointmentSlot>[]
@@ -279,7 +316,8 @@ class _BookingForm extends StatelessWidget {
             schedules: data.schedules,
             appointments: data.appointments,
           );
-    final dates = List.generate(14, (index) => DateTime.now().add(Duration(days: index + 1)));
+    final dates = List.generate(
+        14, (index) => DateTime.now().add(Duration(days: index + 1)));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -287,14 +325,20 @@ class _BookingForm extends StatelessWidget {
         DropdownButtonFormField<String>(
           value: selectedClinicId,
           decoration: const InputDecoration(labelText: 'Клініка'),
-          items: data.clinics.map((clinic) => DropdownMenuItem(value: clinic.id, child: Text(clinic.name))).toList(),
+          items: data.clinics
+              .map((clinic) =>
+                  DropdownMenuItem(value: clinic.id, child: Text(clinic.name)))
+              .toList(),
           onChanged: onClinicChanged,
         ),
         const SizedBox(height: 12),
         DropdownButtonFormField<String>(
           value: selectedPetId,
           decoration: const InputDecoration(labelText: 'Тварина'),
-          items: data.pets.map((pet) => DropdownMenuItem(value: pet.id, child: Text(pet.name))).toList(),
+          items: data.pets
+              .map((pet) =>
+                  DropdownMenuItem(value: pet.id, child: Text(pet.name)))
+              .toList(),
           onChanged: onPetChanged,
         ),
         if (!data.canAcceptOnlineBooking) ...[
@@ -305,69 +349,93 @@ class _BookingForm extends StatelessWidget {
             icon: Icons.event_busy_outlined,
           ),
           const SizedBox(height: 16),
-          FilledButton(onPressed: null, child: Text('Підтвердити запис')),
+          const FilledButton(onPressed: null, child: Text('Підтвердити запис')),
         ] else ...[
-        const SizedBox(height: 12),
-        DropdownButtonFormField<String>(
-          value: selectedServiceId,
-          decoration: const InputDecoration(labelText: 'Послуга'),
-          items: data.services.map((service) => DropdownMenuItem(value: service.id, child: Text('${service.name} - ${service.durationMinutes} хв'))).toList(),
-          onChanged: onServiceChanged,
-        ),
-        const SizedBox(height: 12),
-        DropdownButtonFormField<String>(
-          value: selectedDoctorId,
-          decoration: const InputDecoration(labelText: 'Лікар'),
-          items: data.doctors.map((doctor) => DropdownMenuItem(value: doctor.id, child: Text(doctor.fullName))).toList(),
-          onChanged: onDoctorChanged,
-        ),
-        const SizedBox(height: 18),
-        Text('Дата', style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 8),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: dates.map((date) {
-              final selected = _sameDay(date, selectedDate);
-              return Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: ChoiceChip(label: Text('${date.day}.${date.month}'), selected: selected, onSelected: (_) => onDateChanged(date)),
-              );
-            }).toList(),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            value: selectedServiceId,
+            decoration: const InputDecoration(labelText: 'Послуга'),
+            items: data.services
+                .map((service) => DropdownMenuItem(
+                    value: service.id,
+                    child: Text(
+                        '${service.name} - ${service.durationMinutes} хв')))
+                .toList(),
+            onChanged: onServiceChanged,
           ),
-        ),
-        const SizedBox(height: 18),
-        Text('Час', style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 8),
-        if (slots.isEmpty)
-          const EmptyState(title: 'Немає вільного часу', message: 'Оберіть іншу дату, лікаря або послугу.', icon: Icons.schedule_outlined)
-        else
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: slots.map((slot) {
-              final selected = selectedSlot?.doctorId == slot.doctorId && selectedSlot?.startTime == slot.startTime && _sameDay(selectedSlot!.date, slot.date);
-              return ChoiceChip(label: Text(slot.label), selected: selected, onSelected: (_) => onSlotChanged(slot));
-            }).toList(),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            value: selectedDoctorId,
+            decoration: const InputDecoration(labelText: 'Лікар'),
+            items: data.doctors
+                .map((doctor) => DropdownMenuItem(
+                    value: doctor.id, child: Text(doctor.fullName)))
+                .toList(),
+            onChanged: onDoctorChanged,
           ),
-        const SizedBox(height: 16),
-        TextField(
-          controller: noteController,
-          minLines: 2,
-          maxLines: 4,
-          decoration: const InputDecoration(labelText: 'Нотатка для клініки', hintText: 'Причина візиту, симптоми або побажання щодо огляду'),
-        ),
-        const SizedBox(height: 20),
-        FilledButton(
-          onPressed: isSubmitting ? null : onSubmit,
-          child: Text(isSubmitting ? 'Створення...' : 'Підтвердити запис'),
-        ),
+          const SizedBox(height: 18),
+          Text('Дата', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: dates.map((date) {
+                final selected = _sameDay(date, selectedDate);
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: ChoiceChip(
+                      label: Text('${date.day}.${date.month}'),
+                      selected: selected,
+                      onSelected: (_) => onDateChanged(date)),
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: 18),
+          Text('Час', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+          if (slots.isEmpty)
+            const EmptyState(
+                title: 'Немає вільного часу',
+                message: 'Оберіть іншу дату, лікаря або послугу.',
+                icon: Icons.schedule_outlined)
+          else
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: slots.map((slot) {
+                final selected = selectedSlot?.doctorId == slot.doctorId &&
+                    selectedSlot?.startTime == slot.startTime &&
+                    _sameDay(selectedSlot!.date, slot.date);
+                return ChoiceChip(
+                    label: Text(slot.label),
+                    selected: selected,
+                    onSelected: (_) => onSlotChanged(slot));
+              }).toList(),
+            ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: noteController,
+            minLines: 2,
+            maxLines: 4,
+            decoration: const InputDecoration(
+                labelText: 'Нотатка для клініки',
+                hintText: 'Причина візиту, симптоми або побажання щодо огляду'),
+          ),
+          const SizedBox(height: 20),
+          FilledButton(
+            onPressed: isSubmitting ? null : onSubmit,
+            child: Text(isSubmitting ? 'Створення...' : 'Підтвердити запис'),
+          ),
         ],
       ],
     );
   }
 
-  bool _sameDay(DateTime left, DateTime right) => left.year == right.year && left.month == right.month && left.day == right.day;
+  bool _sameDay(DateTime left, DateTime right) =>
+      left.year == right.year &&
+      left.month == right.month &&
+      left.day == right.day;
 }
 
 class _BookingData {

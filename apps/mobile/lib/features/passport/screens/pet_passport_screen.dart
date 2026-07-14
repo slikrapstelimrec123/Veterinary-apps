@@ -12,9 +12,11 @@ import '../../../features/pets/domain/pet.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/error_state.dart';
+import '../../../shared/services/private_pet_storage.dart';
 
 class PetPassportScreen extends StatefulWidget {
-  const PetPassportScreen({super.key, required this.petId, required this.petName});
+  const PetPassportScreen(
+      {super.key, required this.petId, required this.petName});
 
   final String petId;
   final String petName;
@@ -27,7 +29,8 @@ class _PetPassportScreenState extends State<PetPassportScreen> {
   final _repository = PetRepository();
   late Future<Pet?> _petFuture = _repository.getPet(widget.petId);
 
-  void _refresh() => setState(() => _petFuture = _repository.getPet(widget.petId));
+  void _refresh() =>
+      setState(() => _petFuture = _repository.getPet(widget.petId));
 
   @override
   Widget build(BuildContext context) {
@@ -42,9 +45,13 @@ class _PetPassportScreenState extends State<PetPassportScreen> {
             if (snapshot.connectionState == ConnectionState.waiting)
               const Center(child: CircularProgressIndicator())
             else if (snapshot.hasError)
-              ErrorState(message: 'Не вдалося завантажити паспорт.', onRetry: _refresh)
+              ErrorState(
+                  message: 'Не вдалося завантажити паспорт.', onRetry: _refresh)
             else if (pet == null)
-              const EmptyState(title: 'Тварину не знайдено', message: 'Профіль тварини недоступний.', icon: Icons.search_off_outlined)
+              const EmptyState(
+                  title: 'Тварину не знайдено',
+                  message: 'Профіль тварини недоступний.',
+                  icon: Icons.search_off_outlined)
             else
               _PassportContent(pet: pet, onChanged: _refresh),
           ],
@@ -112,20 +119,23 @@ class _PassportPhotoSectionState extends State<_PassportPhotoSection> {
     );
     if (source == null) return;
 
-    final picked = await ImagePicker().pickImage(source: source, imageQuality: 90);
+    final picked =
+        await ImagePicker().pickImage(source: source, imageQuality: 90);
     if (picked == null) return;
 
     setState(() => _uploading = true);
     try {
       if (!SupabaseConfig.useMockData) {
         final file = File(picked.path);
-        final ext = picked.path.split('.').last;
-        final path = 'passports/${widget.pet.id}.$ext';
-        final client = Supabase.instance.client;
-        await client.storage.from('pet-documents').upload(path, file,
-            fileOptions: const FileOptions(upsert: true));
-        final url = client.storage.from('pet-documents').getPublicUrl(path);
-        await client.from('pets').update({'passport_photo_url': url}).eq('id', widget.pet.id);
+        final path = await PrivatePetStorage.uploadImage(
+          petId: widget.pet.id,
+          category: 'passport',
+          file: file,
+          upsert: true,
+        );
+        await Supabase.instance.client
+            .from('pets')
+            .update({'passport_storage_path': path}).eq('id', widget.pet.id);
       }
       if (mounted) {
         widget.onChanged();
@@ -136,7 +146,9 @@ class _PassportPhotoSectionState extends State<_PassportPhotoSection> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Помилка: $e'), duration: const Duration(seconds: 8)),
+          SnackBar(
+              content: Text('Помилка: $e'),
+              duration: const Duration(seconds: 8)),
         );
       }
     } finally {
@@ -163,9 +175,11 @@ class _PassportPhotoSectionState extends State<_PassportPhotoSection> {
           children: [
             Row(
               children: [
-                const Icon(Icons.badge_outlined, size: 18, color: AppTheme.textSecondary),
+                const Icon(Icons.badge_outlined,
+                    size: 18, color: AppTheme.textSecondary),
                 const SizedBox(width: 8),
-                Text('Фото паспорта', style: Theme.of(context).textTheme.titleMedium),
+                Text('Фото паспорта',
+                    style: Theme.of(context).textTheme.titleMedium),
               ],
             ),
             const SizedBox(height: 12),
@@ -182,7 +196,8 @@ class _PassportPhotoSectionState extends State<_PassportPhotoSection> {
                     errorBuilder: (_, __, ___) => Container(
                       height: 180,
                       color: Colors.grey.shade200,
-                      child: const Icon(Icons.broken_image_outlined, color: Colors.grey, size: 40),
+                      child: const Icon(Icons.broken_image_outlined,
+                          color: Colors.grey, size: 40),
                     ),
                   ),
                 ),
@@ -202,7 +217,10 @@ class _PassportPhotoSectionState extends State<_PassportPhotoSection> {
                     child: OutlinedButton.icon(
                       onPressed: _uploading ? null : _pick,
                       icon: _uploading
-                          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2))
                           : const Icon(Icons.upload_outlined, size: 18),
                       label: const Text('Замінити'),
                     ),
@@ -216,19 +234,24 @@ class _PassportPhotoSectionState extends State<_PassportPhotoSection> {
                   height: 110,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    color:
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+                    border: Border.all(
+                        color: Theme.of(context).colorScheme.outlineVariant),
                   ),
                   child: _uploading
                       ? const Center(child: CircularProgressIndicator())
-                      : Column(
+                      : const Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.add_photo_alternate_outlined, size: 34, color: AppTheme.textSecondary),
-                            const SizedBox(height: 6),
-                            const Text('Завантажити фото паспорта',
-                                style: TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
+                            Icon(Icons.add_photo_alternate_outlined,
+                                size: 34, color: AppTheme.textSecondary),
+                            SizedBox(height: 6),
+                            Text('Завантажити фото паспорта',
+                                style: TextStyle(
+                                    fontSize: 13,
+                                    color: AppTheme.textSecondary)),
                           ],
                         ),
                 ),
@@ -252,7 +275,8 @@ class _PassportPhotoViewer extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
-        title: Text('Паспорт — $petName', style: const TextStyle(color: Colors.white)),
+        title: Text('Паспорт — $petName',
+            style: const TextStyle(color: Colors.white)),
       ),
       body: Center(
         child: InteractiveViewer(
@@ -261,8 +285,10 @@ class _PassportPhotoViewer extends StatelessWidget {
           child: Image.network(
             url,
             fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) =>
-                const Icon(Icons.broken_image_outlined, color: Colors.white, size: 64),
+            errorBuilder: (_, __, ___) => const Icon(
+                Icons.broken_image_outlined,
+                color: Colors.white,
+                size: 64),
           ),
         ),
       ),
@@ -290,7 +316,10 @@ class _PassportCard extends StatelessWidget {
                   backgroundColor: AppTheme.primary.withOpacity(0.12),
                   child: Text(
                     pet.name.isNotEmpty ? pet.name[0].toUpperCase() : '?',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: AppTheme.primary),
+                    style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.primary),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -298,10 +327,14 @@ class _PassportCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(pet.name, style: Theme.of(context).textTheme.titleLarge),
+                      Text(pet.name,
+                          style: Theme.of(context).textTheme.titleLarge),
                       const SizedBox(height: 2),
-                      Text('${pet.speciesLabel} · ${pet.breed ?? 'Породу не вказано'}'),
-                      Text(pet.ageLabel, style: const TextStyle(color: AppTheme.textSecondary)),
+                      Text(
+                          '${pet.speciesLabel} · ${pet.breed ?? 'Породу не вказано'}'),
+                      Text(pet.ageLabel,
+                          style:
+                              const TextStyle(color: AppTheme.textSecondary)),
                     ],
                   ),
                 ),
@@ -311,10 +344,13 @@ class _PassportCard extends StatelessWidget {
               const Divider(height: 24),
               Row(
                 children: [
-                  const Icon(Icons.memory_outlined, size: 16, color: AppTheme.textSecondary),
+                  const Icon(Icons.memory_outlined,
+                      size: 16, color: AppTheme.textSecondary),
                   const SizedBox(width: 6),
-                  const Text('Мікрочип: ', style: TextStyle(color: AppTheme.textSecondary)),
-                  Text(pet.microchipNumber!, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  const Text('Мікрочип: ',
+                      style: TextStyle(color: AppTheme.textSecondary)),
+                  Text(pet.microchipNumber!,
+                      style: const TextStyle(fontWeight: FontWeight.w600)),
                 ],
               ),
             ],
@@ -351,7 +387,8 @@ class _QrSection extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            Text('QR-код історії лікування', style: Theme.of(context).textTheme.titleMedium),
+            Text('QR-код історії лікування',
+                style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 12),
             QrImageView(
               data: _buildQrData(),
@@ -382,11 +419,14 @@ class _InfoSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final rows = <_InfoRow>[
       _InfoRow('Стать', pet.sexLabel),
-      if (pet.isNeutered != null) _InfoRow('Кастровано', pet.isNeutered! ? 'Так' : 'Ні'),
-      if (pet.birthDate != null) _InfoRow('Дата народження', _formatDate(pet.birthDate!)),
+      if (pet.isNeutered != null)
+        _InfoRow('Стерилізовано', pet.isNeutered! ? 'Так' : 'Ні'),
+      if (pet.birthDate != null)
+        _InfoRow('Дата народження', _formatDate(pet.birthDate!)),
       if (pet.weightKg != null) _InfoRow('Вага', '${pet.weightKg} кг'),
       if (pet.color != null) _InfoRow('Колір', pet.color!),
-      if (pet.notes != null && pet.notes!.isNotEmpty) _InfoRow('Нотатки', pet.notes!),
+      if (pet.notes != null && pet.notes!.isNotEmpty)
+        _InfoRow('Нотатки', pet.notes!),
     ];
 
     if (rows.isEmpty) return const SizedBox.shrink();
@@ -397,7 +437,8 @@ class _InfoSection extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Дані тварини', style: Theme.of(context).textTheme.titleMedium),
+            Text('Дані тварини',
+                style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 12),
             ...rows.map((r) => _InfoTile(label: r.label, value: r.value)),
           ],
@@ -430,12 +471,14 @@ class _InfoTile extends StatelessWidget {
         children: [
           Flexible(
             flex: 2,
-            child: Text(label, style: const TextStyle(color: AppTheme.textSecondary)),
+            child: Text(label,
+                style: const TextStyle(color: AppTheme.textSecondary)),
           ),
           const SizedBox(width: 8),
           Flexible(
             flex: 3,
-            child: Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
+            child: Text(value,
+                style: const TextStyle(fontWeight: FontWeight.w600)),
           ),
         ],
       ),

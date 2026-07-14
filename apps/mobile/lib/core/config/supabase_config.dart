@@ -8,10 +8,13 @@ class SupabaseConfig {
   static bool get isConfigured => url.isNotEmpty && anonKey.isNotEmpty;
 
   static bool get useMockData {
-    // In release builds, mock mode is NEVER allowed — crash loudly if Supabase is not configured
-    if (kReleaseMode && !isConfigured) {
-      throw StateError('SUPABASE_URL and SUPABASE_ANON_KEY must be set for release builds. '
-          'Build with: flutter build apk --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...');
+    if (kReleaseMode) {
+      if (!isConfigured) {
+        throw StateError(
+          'SUPABASE_URL and SUPABASE_ANON_KEY must be set for release builds.',
+        );
+      }
+      return false;
     }
     return forceMockMode || !isConfigured;
   }

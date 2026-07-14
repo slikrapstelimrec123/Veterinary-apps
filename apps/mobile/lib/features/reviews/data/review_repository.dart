@@ -10,22 +10,32 @@ class ReviewRepository {
   bool get _useMockData => SupabaseConfig.useMockData;
   SupabaseClient get _client => Supabase.instance.client;
 
-  Future<List<Review>> getClinicReviews(String clinicId, {bool includeNonPublished = false}) async {
+  Future<List<Review>> getClinicReviews(String clinicId,
+      {bool includeNonPublished = false}) async {
     if (_useMockData) {
-      return _sorted(MockData.reviews.where((review) => review.clinicId == clinicId && (includeNonPublished || review.status == 'published')));
+      return _sorted(MockData.reviews.where((review) =>
+          review.clinicId == clinicId &&
+          (includeNonPublished || review.status == 'published')));
     }
 
-    var query = _client.from('reviews').select('*, profiles(full_name), doctors(full_name)').eq('clinic_id', clinicId);
+    var query = _client
+        .from('reviews')
+        .select('*, profiles(full_name), doctors(full_name)')
+        .eq('clinic_id', clinicId);
     if (!includeNonPublished) {
       query = query.eq('status', 'published');
     }
     final rows = await query.order('created_at', ascending: false);
-    return (rows as List<dynamic>).whereType<Map<String, dynamic>>().map(Review.fromJson).toList();
+    return (rows as List<dynamic>)
+        .whereType<Map<String, dynamic>>()
+        .map(Review.fromJson)
+        .toList();
   }
 
   Future<List<Review>> getDoctorReviews(String doctorId) async {
     if (_useMockData) {
-      return _sorted(MockData.reviews.where((review) => review.doctorId == doctorId && review.status == 'published'));
+      return _sorted(MockData.reviews.where((review) =>
+          review.doctorId == doctorId && review.status == 'published'));
     }
 
     final rows = await _client
@@ -34,31 +44,50 @@ class ReviewRepository {
         .eq('doctor_id', doctorId)
         .eq('status', 'published')
         .order('created_at', ascending: false);
-    return (rows as List<dynamic>).whereType<Map<String, dynamic>>().map(Review.fromJson).toList();
+    return (rows as List<dynamic>)
+        .whereType<Map<String, dynamic>>()
+        .map(Review.fromJson)
+        .toList();
   }
 
   Future<RatingSummary> getClinicSummary(String clinicId) async {
     if (_useMockData) {
-      return _summary(MockData.reviews.where((review) => review.clinicId == clinicId && review.status == 'published'), secondary: (review) => review.clinicRating);
+      return _summary(
+          MockData.reviews.where((review) =>
+              review.clinicId == clinicId && review.status == 'published'),
+          secondary: (review) => review.clinicRating);
     }
 
-    final row = await _client.from('clinic_rating_summary').select('*').eq('clinic_id', clinicId).maybeSingle();
+    final row = await _client
+        .from('clinic_rating_summary')
+        .select('*')
+        .eq('clinic_id', clinicId)
+        .maybeSingle();
     return RatingSummary.fromJson(row, secondaryKey: 'average_clinic_rating');
   }
 
   Future<RatingSummary> getDoctorSummary(String doctorId) async {
     if (_useMockData) {
-      return _summary(MockData.reviews.where((review) => review.doctorId == doctorId && review.status == 'published'), secondary: (review) => review.doctorRating);
+      return _summary(
+          MockData.reviews.where((review) =>
+              review.doctorId == doctorId && review.status == 'published'),
+          secondary: (review) => review.doctorRating);
     }
 
-    final row = await _client.from('doctor_rating_summary').select('*').eq('doctor_id', doctorId).maybeSingle();
+    final row = await _client
+        .from('doctor_rating_summary')
+        .select('*')
+        .eq('doctor_id', doctorId)
+        .maybeSingle();
     return RatingSummary.fromJson(row, secondaryKey: 'average_doctor_rating');
   }
 
   Future<Review?> getReviewForAppointment(String appointmentId) async {
     if (_useMockData) {
       for (final review in MockData.reviews) {
-        if (review.appointmentId == appointmentId && review.ownerId == 'mock_pet_owner' && review.status != 'removed') {
+        if (review.appointmentId == appointmentId &&
+            review.ownerId == 'mock_pet_owner' &&
+            review.status != 'removed') {
           return review;
         }
       }
@@ -70,17 +99,24 @@ class ReviewRepository {
       return null;
     }
 
-    final row = await _client.from('reviews').select('*, profiles(full_name), doctors(full_name)').eq('appointment_id', appointmentId).eq('owner_id', userId).maybeSingle();
+    final row = await _client
+        .from('reviews')
+        .select('*, profiles(full_name), doctors(full_name)')
+        .eq('appointment_id', appointmentId)
+        .eq('owner_id', userId)
+        .maybeSingle();
     return row == null ? null : Review.fromJson(row);
   }
 
-  Future<bool> canLeaveReviewForAppointment(Appointment appointment, {VisitRecord? visitRecord}) async {
+  Future<bool> canLeaveReviewForAppointment(Appointment appointment,
+      {VisitRecord? visitRecord}) async {
     final existing = await getReviewForAppointment(appointment.id);
     if (existing != null) {
       return false;
     }
 
-    return appointment.status == 'completed' || visitRecord?.status == 'published';
+    return appointment.status == 'completed' ||
+        visitRecord?.status == 'published';
   }
 
   Future<Review> submitReview({
@@ -96,7 +132,8 @@ class ReviewRepository {
     String? comment,
     required bool isAnonymous,
   }) async {
-    final ownerId = _useMockData ? 'mock_pet_owner' : _client.auth.currentUser!.id;
+    final ownerId =
+        _useMockData ? 'mock_pet_owner' : _client.auth.currentUser!.id;
     final payload = <String, dynamic>{
       'clinic_id': clinicId,
       'doctor_id': doctorId,
@@ -115,7 +152,8 @@ class ReviewRepository {
     };
 
     if (_useMockData) {
-      if (MockData.reviews.any((review) => review.appointmentId == appointmentId && review.ownerId == ownerId)) {
+      if (MockData.reviews.any((review) =>
+          review.appointmentId == appointmentId && review.ownerId == ownerId)) {
         throw StateError('duplicate');
       }
       final review = Review.fromJson({
@@ -128,15 +166,21 @@ class ReviewRepository {
       return review;
     }
 
-    final row = await _client.from('reviews').insert(payload).select('*, profiles(full_name), doctors(full_name)').single();
+    final row = await _client
+        .from('reviews')
+        .insert(payload)
+        .select('*, profiles(full_name), doctors(full_name)')
+        .single();
     return Review.fromJson(row);
   }
 
   List<Review> _sorted(Iterable<Review> reviews) {
-    return reviews.toList()..sort((left, right) => right.createdAt.compareTo(left.createdAt));
+    return reviews.toList()
+      ..sort((left, right) => right.createdAt.compareTo(left.createdAt));
   }
 
-  RatingSummary _summary(Iterable<Review> source, {required int? Function(Review review) secondary}) {
+  RatingSummary _summary(Iterable<Review> source,
+      {required int? Function(Review review) secondary}) {
     final rows = source.toList();
     if (rows.isEmpty) {
       return const RatingSummary(averageRating: 0, reviewCount: 0);
@@ -144,10 +188,16 @@ class ReviewRepository {
 
     final secondaryRows = rows.map(secondary).whereType<int>().toList();
     return RatingSummary(
-      averageRating: rows.map((review) => review.rating).reduce((a, b) => a + b) / rows.length,
+      averageRating:
+          rows.map((review) => review.rating).reduce((a, b) => a + b) /
+              rows.length,
       reviewCount: rows.length,
-      secondaryAverage: secondaryRows.isEmpty ? null : secondaryRows.reduce((a, b) => a + b) / secondaryRows.length,
-      latestReviewDate: rows.map((review) => review.createdAt).reduce((a, b) => a.isAfter(b) ? a : b),
+      secondaryAverage: secondaryRows.isEmpty
+          ? null
+          : secondaryRows.reduce((a, b) => a + b) / secondaryRows.length,
+      latestReviewDate: rows
+          .map((review) => review.createdAt)
+          .reduce((a, b) => a.isAfter(b) ? a : b),
     );
   }
 }

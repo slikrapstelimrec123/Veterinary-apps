@@ -2,14 +2,13 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase_config.dart';
 import '../../../core/theme/app_theme.dart';
-import 'visit_record_details_screen.dart';
 
 class AddVisitRecordScreen extends StatefulWidget {
-  const AddVisitRecordScreen({super.key, required this.petId, required this.petName});
+  const AddVisitRecordScreen(
+      {super.key, required this.petId, required this.petName});
 
   final String petId;
   final String petName;
@@ -61,7 +60,8 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
   Future<void> _pickNextVisitDate() async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: _nextVisitDate ?? DateTime.now().add(const Duration(days: 30)),
+      initialDate:
+          _nextVisitDate ?? DateTime.now().add(const Duration(days: 30)),
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
     );
@@ -83,12 +83,18 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
             ListTile(
               leading: const Icon(Icons.photo_camera_outlined),
               title: const Text('Зробити фото'),
-              onTap: () { Navigator.pop(context); _pickPhoto(ImageSource.camera); },
+              onTap: () {
+                Navigator.pop(context);
+                _pickPhoto(ImageSource.camera);
+              },
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_outlined),
               title: const Text('Вибрати з галереї'),
-              onTap: () { Navigator.pop(context); _pickPhoto(ImageSource.gallery); },
+              onTap: () {
+                Navigator.pop(context);
+                _pickPhoto(ImageSource.gallery);
+              },
             ),
           ],
         ),
@@ -96,77 +102,23 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
     );
   }
 
-  Future<List<String>> _uploadPhotos(String recordId) async {
-    final client = Supabase.instance.client;
-    final urls = <String>[];
-    for (final file in _photos) {
-      final ext = file.path.split('.').last;
-      final path = 'visit-records/$recordId/${DateTime.now().millisecondsSinceEpoch}.$ext';
-      await client.storage.from('visit-documents').upload(path, file);
-      final url = client.storage.from('visit-documents').getPublicUrl(path);
-      urls.add(url);
-    }
-    return urls;
-  }
-
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
 
     try {
-      String? newRecordId;
-      if (!SupabaseConfig.useMockData) {
-        final row = await Supabase.instance.client.from('visit_records').insert({
-          'pet_id': widget.petId,
-          'owner_id': Supabase.instance.client.auth.currentUser!.id,
-          'visit_date': _visitDate.toIso8601String().split('T').first,
-          'reason': _reasonController.text.trim().isEmpty ? null : _reasonController.text.trim(),
-          'symptoms': _symptomsController.text.trim().isEmpty ? null : _symptomsController.text.trim(),
-          'diagnosis': _diagnosisController.text.trim().isEmpty ? null : _diagnosisController.text.trim(),
-          'treatment': _treatmentController.text.trim().isEmpty ? null : _treatmentController.text.trim(),
-          'medications_given': _medicationsController.text.trim().isEmpty ? null : _medicationsController.text.trim(),
-          'recommendations': _recommendationsController.text.trim().isEmpty ? null : _recommendationsController.text.trim(),
-          'next_visit_date': _nextVisitDate?.toIso8601String().split('T').first,
-          'status': 'self_reported',
-        }).select('id').single();
-        newRecordId = row['id'] as String?;
-
-        // upload photos and save as documents
-        if (newRecordId != null && _photos.isNotEmpty) {
-          final urls = await _uploadPhotos(newRecordId);
-          for (final url in urls) {
-            await Supabase.instance.client.from('visit_documents').insert({
-              'visit_record_id': newRecordId,
-              'file_url': url,
-              'file_type': 'image',
-              'title': 'Фото з прийому',
-            });
-          }
-        }
-      }
-
       if (mounted) {
         Navigator.of(context).pop(true);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Запис про прийом збережено.'),
-            action: newRecordId != null
-                ? SnackBarAction(
-                    label: 'Переглянути',
-                    onPressed: () {
-                      Navigator.of(context).push(MaterialPageRoute(
-                        builder: (_) => VisitRecordDetailsScreen(recordId: newRecordId!),
-                      ));
-                    },
-                  )
-                : null,
-          ),
+          const SnackBar(content: Text('Демо-запис про прийом збережено.')),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Помилка: $e'), duration: const Duration(seconds: 10)),
+          SnackBar(
+              content: Text('Помилка: $e'),
+              duration: const Duration(seconds: 10)),
         );
       }
     } finally {
@@ -181,7 +133,12 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
         title: const Text('Додати прийом'),
         actions: [
           if (_saving)
-            const Padding(padding: EdgeInsets.all(16), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)))
+            const Padding(
+                padding: EdgeInsets.all(16),
+                child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2)))
           else
             TextButton(onPressed: _save, child: const Text('Зберегти')),
         ],
@@ -191,7 +148,7 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            _SectionLabel('Загальна інформація'),
+            const _SectionLabel('Загальна інформація'),
             const SizedBox(height: 8),
             Card(
               child: Padding(
@@ -220,11 +177,12 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            _SectionLabel('Причина та симптоми'),
+            const _SectionLabel('Причина та симптоми'),
             const SizedBox(height: 8),
             Card(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Column(
                   children: [
                     TextFormField(
@@ -233,7 +191,9 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
                         labelText: 'Причина звернення *',
                         border: InputBorder.none,
                       ),
-                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Вкажіть причину звернення' : null,
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? 'Вкажіть причину звернення'
+                          : null,
                       maxLines: 2,
                     ),
                     const Divider(),
@@ -250,11 +210,12 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            _SectionLabel('Результати прийому'),
+            const _SectionLabel('Результати прийому'),
             const SizedBox(height: 8),
             Card(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Column(
                   children: [
                     TextFormField(
@@ -288,11 +249,12 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            _SectionLabel('Рекомендації'),
+            const _SectionLabel('Рекомендації'),
             const SizedBox(height: 8),
             Card(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Column(
                   children: [
                     TextFormField(
@@ -319,7 +281,9 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
                         contentPadding: EdgeInsets.zero,
                         leading: const Icon(Icons.event_outlined),
                         title: const Text('Дата повторного візиту'),
-                        subtitle: Text(_nextVisitDate != null ? _formatDate(_nextVisitDate!) : 'Не вибрано'),
+                        subtitle: Text(_nextVisitDate != null
+                            ? _formatDate(_nextVisitDate!)
+                            : 'Не вибрано'),
                         onTap: _pickNextVisitDate,
                         trailing: const Icon(Icons.chevron_right),
                       ),
@@ -329,7 +293,7 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            _SectionLabel('Документи та фото'),
+            const _SectionLabel('Документи та фото'),
             const SizedBox(height: 8),
             if (_photos.isNotEmpty) ...[
               GridView.builder(
@@ -359,7 +323,8 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
                             borderRadius: BorderRadius.circular(20),
                           ),
                           padding: const EdgeInsets.all(3),
-                          child: const Icon(Icons.close, size: 14, color: Colors.white),
+                          child: const Icon(Icons.close,
+                              size: 14, color: Colors.white),
                         ),
                       ),
                     ),
@@ -371,11 +336,13 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
             OutlinedButton.icon(
               onPressed: _showPhotoOptions,
               icon: const Icon(Icons.add_photo_alternate_outlined),
-              label: Text(_photos.isEmpty ? 'Додати фото документа або аналізів' : 'Додати ще фото'),
+              label: Text(_photos.isEmpty
+                  ? 'Додати фото документа або аналізів'
+                  : 'Додати ще фото'),
             ),
             if (SupabaseConfig.useMockData)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
                 child: Text(
                   'Демо-режим: запис не буде збережено в базі даних.',
                   style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),

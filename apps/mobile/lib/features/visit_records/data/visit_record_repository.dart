@@ -11,7 +11,10 @@ class VisitRecordRepository {
 
   Future<List<VisitRecord>> getVisitRecordsForPet(String petId) async {
     if (_useMockData) {
-      return MockData.visitRecords.where((record) => record.petId == petId && record.status == 'published').toList()
+      return MockData.visitRecords
+          .where(
+              (record) => record.petId == petId && record.status == 'published')
+          .toList()
         ..sort((a, b) => b.visitDate.compareTo(a.visitDate));
     }
 
@@ -21,7 +24,10 @@ class VisitRecordRepository {
         .eq('pet_id', petId)
         .order('visit_date', ascending: false);
 
-    return (rows as List<dynamic>).whereType<Map<String, dynamic>>().map(VisitRecord.fromJson).toList();
+    return (rows as List<dynamic>)
+        .whereType<Map<String, dynamic>>()
+        .map(VisitRecord.fromJson)
+        .toList();
   }
 
   Future<VisitRecord?> getVisitRecord(String id) async {
@@ -41,7 +47,8 @@ class VisitRecordRepository {
     return row == null ? null : VisitRecord.fromJson(row);
   }
 
-  Future<VisitRecord?> getVisitRecordForAppointment(String appointmentId) async {
+  Future<VisitRecord?> getVisitRecordForAppointment(
+      String appointmentId) async {
     if (_useMockData) {
       for (final record in MockData.visitRecords) {
         if (record.appointmentId == appointmentId) return record;
@@ -60,32 +67,47 @@ class VisitRecordRepository {
 
   Future<List<VisitDocument>> getDocumentsForPet(String petId) async {
     if (_useMockData) {
-      return MockData.documents.where((document) => document.petId == petId && document.isVisibleToOwner).toList();
+      return MockData.documents
+          .where((document) =>
+              document.petId == petId && document.isVisibleToOwner)
+          .toList();
     }
 
     final rows = await _client
         .from('visit_documents')
-        .select('id,visit_record_id,pet_id,title,document_type,file_name,file_type,file_size,description,storage_bucket,storage_path,is_visible_to_owner,created_at')
+        .select(
+            'id,visit_record_id,pet_id,title,document_type,file_name,file_type,file_size,description,storage_bucket,storage_path,is_visible_to_owner,created_at')
         .eq('pet_id', petId)
         .eq('is_visible_to_owner', true)
         .order('created_at', ascending: false);
 
-    return (rows as List<dynamic>).whereType<Map<String, dynamic>>().map(VisitDocument.fromJson).toList();
+    return (rows as List<dynamic>)
+        .whereType<Map<String, dynamic>>()
+        .map(VisitDocument.fromJson)
+        .toList();
   }
 
   Future<List<VisitDocument>> getDocumentsForVisit(String visitRecordId) async {
     if (_useMockData) {
-      return MockData.documents.where((document) => document.visitRecordId == visitRecordId && document.isVisibleToOwner).toList();
+      return MockData.documents
+          .where((document) =>
+              document.visitRecordId == visitRecordId &&
+              document.isVisibleToOwner)
+          .toList();
     }
 
     final rows = await _client
         .from('visit_documents')
-        .select('id,visit_record_id,pet_id,title,document_type,file_name,file_type,file_size,description,storage_bucket,storage_path,is_visible_to_owner,created_at')
+        .select(
+            'id,visit_record_id,pet_id,title,document_type,file_name,file_type,file_size,description,storage_bucket,storage_path,is_visible_to_owner,created_at')
         .eq('visit_record_id', visitRecordId)
         .eq('is_visible_to_owner', true)
         .order('created_at', ascending: false);
 
-    return (rows as List<dynamic>).whereType<Map<String, dynamic>>().map(VisitDocument.fromJson).toList();
+    return (rows as List<dynamic>)
+        .whereType<Map<String, dynamic>>()
+        .map(VisitDocument.fromJson)
+        .toList();
   }
 
   Future<String?> getSignedDocumentUrl(VisitDocument document) async {
@@ -97,7 +119,8 @@ class VisitRecordRepository {
       return null;
     }
 
-    return _client.storage.from(document.storageBucket).createSignedUrl(document.storagePath!, 60);
+    return _client.storage
+        .from(document.storageBucket)
+        .createSignedUrl(document.storagePath!, 60);
   }
-
 }

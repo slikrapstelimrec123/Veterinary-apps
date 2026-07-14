@@ -54,9 +54,13 @@ class PetMedication {
       dosage: json['dosage'] as String?,
       category: json['category'] as String?,
       notes: json['notes'] as String?,
-      nextDoseDate: json['next_dose_date'] != null ? DateTime.tryParse(json['next_dose_date'] as String) : null,
+      nextDoseDate: json['next_dose_date'] != null
+          ? DateTime.tryParse(json['next_dose_date'] as String)
+          : null,
       reminderEnabled: json['reminder_enabled'] as bool? ?? false,
-      createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at'] as String) : null,
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'] as String)
+          : null,
     );
   }
 

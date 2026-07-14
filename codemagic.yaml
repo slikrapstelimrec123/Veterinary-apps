@@ -1,0 +1,76 @@
+workflows:
+  lappo-ios-testflight:
+    name: Lappo iOS - Internal TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 120
+
+    integrations:
+      app_store_connect: codemagic
+
+    environment:
+      groups:
+        - lappo_supabase
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.lappo.app
+      flutter: stable
+      xcode: 26.4
+      cocoapods: default
+      vars:
+        FLUTTER_APP_PATH: apps/mobile
+
+    cache:
+      cache_paths:
+        - $HOME/.pub-cache
+        - apps/mobile/ios/Pods
+
+    scripts:
+      - name: Verify protected environment
+        script: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "SUPABASE_URL and SUPABASE_ANON_KEY must be configured in the lappo_supabase group."
+            exit 1
+          fi
+
+      - name: Get Flutter packages
+        script: |
+          cd "$CM_BUILD_DIR/$FLUTTER_APP_PATH"
+          flutter pub get
+
+      - name: Install CocoaPods dependencies
+        script: |
+          cd "$CM_BUILD_DIR/$FLUTTER_APP_PATH/ios"
+          pod install
+
+      - name: Flutter analyze
+        script: |
+          cd "$CM_BUILD_DIR/$FLUTTER_APP_PATH"
+          flutter analyze
+
+      - name: Flutter tests
+        script: |
+          cd "$CM_BUILD_DIR/$FLUTTER_APP_PATH"
+          flutter test
+
+      - name: Configure App Store signing
+        script: |
+          cd "$CM_BUILD_DIR/$FLUTTER_APP_PATH"
+          xcode-project use-profiles --custom-export-options='{"testFlightInternalTestingOnly": true}'
+
+      - name: Build signed IPA
+        script: |
+          cd "$CM_BUILD_DIR/$FLUTTER_APP_PATH"
+          flutter build ipa --release \
+            --build-name=1.0.0 \
+            --build-number="$PROJECT_BUILD_NUMBER" \
+            --dart-define=SUPABASE_URL="$SUPABASE_URL" \
+            --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY" \
+            --export-options-plist=/Users/builder/export_options.plist
+
+    artifacts:
+      - apps/mobile/build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      app_store_connect:
+        auth: integration

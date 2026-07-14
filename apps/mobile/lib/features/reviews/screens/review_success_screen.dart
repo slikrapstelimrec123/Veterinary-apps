@@ -16,9 +16,11 @@ class ReviewSuccessScreen extends StatelessWidget {
             padding: const EdgeInsets.all(24),
             child: Column(
               children: [
-                const Icon(Icons.check_circle_outline, size: 56, color: AppTheme.success),
+                const Icon(Icons.check_circle_outline,
+                    size: 56, color: AppTheme.success),
                 const SizedBox(height: 16),
-                Text('Відгук опубліковано', style: Theme.of(context).textTheme.titleLarge),
+                Text('Відгук опубліковано',
+                    style: Theme.of(context).textTheme.titleLarge),
                 const SizedBox(height: 8),
                 const Text(
                   'Ваш відгук допомагає іншим власникам тварин обирати надійну допомогу.',
@@ -30,7 +32,9 @@ class ReviewSuccessScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        FilledButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Готово')),
+        FilledButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Готово')),
       ],
     );
   }

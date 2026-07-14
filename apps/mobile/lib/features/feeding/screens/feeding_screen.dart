@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../core/config/supabase_config.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/empty_state.dart';
@@ -31,17 +29,33 @@ class _FeedingScreenState extends State<FeedingScreen> {
   }
 
   Future<void> _load({bool showLoading = true}) async {
-    if (showLoading && mounted) setState(() { _loading = true; _error = null; });
+    if (showLoading && mounted) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    }
     try {
       final data = await _repo.getFeedings(widget.petId);
-      if (mounted) setState(() { _feedings = data; _loading = false; });
+      if (mounted) {
+        setState(() {
+          _feedings = data;
+          _loading = false;
+        });
+      }
     } catch (e) {
-      if (mounted) setState(() { _error = e.toString(); _loading = false; });
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _loading = false;
+        });
+      }
     }
   }
 
   Future<void> _add() async {
-    final result = await Navigator.of(context).push<PetFeeding>(MaterialPageRoute(
+    final result =
+        await Navigator.of(context).push<PetFeeding>(MaterialPageRoute(
       builder: (_) => AddFeedingScreen(petId: widget.petId),
     ));
     if (result != null && mounted) {
@@ -53,11 +67,13 @@ class _FeedingScreenState extends State<FeedingScreen> {
   }
 
   Future<void> _edit(PetFeeding feeding) async {
-    final result = await Navigator.of(context).push<PetFeeding>(MaterialPageRoute(
+    final result =
+        await Navigator.of(context).push<PetFeeding>(MaterialPageRoute(
       builder: (_) => EditFeedingScreen(feeding: feeding),
     ));
     if (result != null && mounted) {
-      setState(() => _feedings = _feedings?.map((f) => f.id == result.id ? result : f).toList());
+      setState(() => _feedings =
+          _feedings?.map((f) => f.id == result.id ? result : f).toList());
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Запис оновлено.')),
       );
@@ -71,16 +87,20 @@ class _FeedingScreenState extends State<FeedingScreen> {
         title: const Text('Видалити запис?'),
         content: Text('Видалити "${feeding.foodName}"?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Скасувати')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Скасувати')),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Видалити', style: TextStyle(color: AppTheme.danger)),
+            child: const Text('Видалити',
+                style: TextStyle(color: AppTheme.danger)),
           ),
         ],
       ),
     );
     if (confirmed == true) {
-      setState(() => _feedings = _feedings?.where((f) => f.id != feeding.id).toList());
+      setState(() =>
+          _feedings = _feedings?.where((f) => f.id != feeding.id).toList());
       try {
         await _repo.deleteFeeding(feeding.id);
       } catch (_) {
@@ -98,7 +118,8 @@ class _FeedingScreenState extends State<FeedingScreen> {
       title: 'Харчування',
       subtitle: widget.petName,
       actions: [
-        IconButton(icon: const Icon(Icons.add), tooltip: 'Додати', onPressed: _add),
+        IconButton(
+            icon: const Icon(Icons.add), tooltip: 'Додати', onPressed: _add),
       ],
       children: [
         if (_loading)
@@ -108,21 +129,29 @@ class _FeedingScreenState extends State<FeedingScreen> {
         else if ((_feedings ?? []).isEmpty)
           EmptyState(
             title: 'Записів немає',
-            message: 'Додайте поточний корм та ведіть історію харчування вашого улюбленця.',
+            message:
+                'Додайте поточний корм та ведіть історію харчування вашого улюбленця.',
             icon: Icons.restaurant_outlined,
-            action: FilledButton(onPressed: _add, child: const Text('Додати корм')),
+            action:
+                FilledButton(onPressed: _add, child: const Text('Додати корм')),
           )
         else ...[
           if (current.isNotEmpty) ...[
-            _SectionLabel('Поточний корм'),
+            const _SectionLabel('Поточний корм'),
             const SizedBox(height: 8),
-            ...current.map((f) => _FeedingCard(feeding: f, onEdit: () => _edit(f), onDelete: () => _delete(f))),
+            ...current.map((f) => _FeedingCard(
+                feeding: f,
+                onEdit: () => _edit(f),
+                onDelete: () => _delete(f))),
             const SizedBox(height: 16),
           ],
           if (history.isNotEmpty) ...[
-            _SectionLabel('Історія харчування'),
+            const _SectionLabel('Історія харчування'),
             const SizedBox(height: 8),
-            ...history.map((f) => _FeedingCard(feeding: f, onEdit: () => _edit(f), onDelete: () => _delete(f))),
+            ...history.map((f) => _FeedingCard(
+                feeding: f,
+                onEdit: () => _edit(f),
+                onDelete: () => _delete(f))),
           ],
           const SizedBox(height: 8),
           OutlinedButton.icon(
@@ -146,7 +175,8 @@ class _SectionLabel extends StatelessWidget {
 }
 
 class _FeedingCard extends StatelessWidget {
-  const _FeedingCard({required this.feeding, required this.onEdit, required this.onDelete});
+  const _FeedingCard(
+      {required this.feeding, required this.onEdit, required this.onDelete});
   final PetFeeding feeding;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -171,22 +201,30 @@ class _FeedingCard extends StatelessWidget {
                           children: [
                             Expanded(
                               child: Text(feeding.foodName,
-                                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 15)),
                             ),
                             if (feeding.isCurrent)
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 2),
                                 decoration: BoxDecoration(
                                   color: AppTheme.success.withOpacity(0.15),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: const Text('Зараз',
-                                    style: TextStyle(fontSize: 11, color: AppTheme.success, fontWeight: FontWeight.w700)),
+                                    style: TextStyle(
+                                        fontSize: 11,
+                                        color: AppTheme.success,
+                                        fontWeight: FontWeight.w700)),
                               ),
                           ],
                         ),
                         if (feeding.brand != null)
-                          Text(feeding.brand!, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                          Text(feeding.brand!,
+                              style: const TextStyle(
+                                  color: AppTheme.textSecondary, fontSize: 13)),
                       ],
                     ),
                   ),
@@ -206,22 +244,32 @@ class _FeedingCard extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               if (feeding.foodType != null)
-                _InfoRow(icon: Icons.category_outlined, label: 'Тип', value: feeding.foodTypeLabel),
+                _InfoRow(
+                    icon: Icons.category_outlined,
+                    label: 'Тип',
+                    value: feeding.foodTypeLabel),
               _InfoRow(
                 icon: Icons.calendar_today_outlined,
                 label: 'З',
                 value: _fmt(feeding.startDate),
               ),
               if (feeding.endDate != null)
-                _InfoRow(icon: Icons.event_outlined, label: 'По', value: _fmt(feeding.endDate!)),
+                _InfoRow(
+                    icon: Icons.event_outlined,
+                    label: 'По',
+                    value: _fmt(feeding.endDate!)),
               if (feeding.rating != null)
                 _InfoRow(
                   icon: Icons.star_outline,
                   label: 'Оцінка',
-                  value: '${'★' * feeding.rating!}${'☆' * (5 - feeding.rating!)}',
+                  value:
+                      '${'★' * feeding.rating!}${'☆' * (5 - feeding.rating!)}',
                 ),
               if (feeding.notes != null && feeding.notes!.isNotEmpty)
-                _InfoRow(icon: Icons.notes_outlined, label: 'Нотатки', value: feeding.notes!),
+                _InfoRow(
+                    icon: Icons.notes_outlined,
+                    label: 'Нотатки',
+                    value: feeding.notes!),
             ],
           ),
         ),
@@ -234,7 +282,8 @@ class _FeedingCard extends StatelessWidget {
 }
 
 class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.icon, required this.label, required this.value});
+  const _InfoRow(
+      {required this.icon, required this.label, required this.value});
   final IconData icon;
   final String label;
   final String value;
@@ -248,8 +297,15 @@ class _InfoRow extends StatelessWidget {
         children: [
           Icon(icon, size: 15, color: AppTheme.textSecondary),
           const SizedBox(width: 6),
-          SizedBox(width: 70, child: Text(label, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13))),
-          Expanded(child: Text(value, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13))),
+          SizedBox(
+              width: 70,
+              child: Text(label,
+                  style: const TextStyle(
+                      color: AppTheme.textSecondary, fontSize: 13))),
+          Expanded(
+              child: Text(value,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w600, fontSize: 13))),
         ],
       ),
     );
@@ -324,11 +380,15 @@ class _AddFeedingScreenState extends State<AddFeedingScreen> {
         id: '',
         petId: widget.petId,
         foodName: _nameController.text.trim(),
-        brand: _brandController.text.trim().isEmpty ? null : _brandController.text.trim(),
+        brand: _brandController.text.trim().isEmpty
+            ? null
+            : _brandController.text.trim(),
         foodType: _foodType,
         startDate: _startDate,
         endDate: _endDate,
-        notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+        notes: _notesController.text.trim().isEmpty
+            ? null
+            : _notesController.text.trim(),
         rating: _rating,
       );
 
@@ -337,7 +397,8 @@ class _AddFeedingScreenState extends State<AddFeedingScreen> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Не вдалося зберегти. Спробуйте ще раз.')),
+          const SnackBar(
+              content: Text('Не вдалося зберегти. Спробуйте ще раз.')),
         );
       }
     } finally {
@@ -347,24 +408,24 @@ class _AddFeedingScreenState extends State<AddFeedingScreen> {
 
   @override
   Widget build(BuildContext context) => _FeedingForm(
-    title: 'Додати корм',
-    formKey: _formKey,
-    nameController: _nameController,
-    brandController: _brandController,
-    notesController: _notesController,
-    foodType: _foodType,
-    startDate: _startDate,
-    endDate: _endDate,
-    rating: _rating,
-    saving: _saving,
-    types: _types,
-    onTypeChanged: (v) => setState(() => _foodType = v),
-    onPickStart: _pickStart,
-    onPickEnd: _pickEnd,
-    onClearEnd: () => setState(() => _endDate = null),
-    onRatingChanged: (v) => setState(() => _rating = v),
-    onSave: _save,
-  );
+        title: 'Додати корм',
+        formKey: _formKey,
+        nameController: _nameController,
+        brandController: _brandController,
+        notesController: _notesController,
+        foodType: _foodType,
+        startDate: _startDate,
+        endDate: _endDate,
+        rating: _rating,
+        saving: _saving,
+        types: _types,
+        onTypeChanged: (v) => setState(() => _foodType = v),
+        onPickStart: _pickStart,
+        onPickEnd: _pickEnd,
+        onClearEnd: () => setState(() => _endDate = null),
+        onRatingChanged: (v) => setState(() => _rating = v),
+        onSave: _save,
+      );
 }
 
 class EditFeedingScreen extends StatefulWidget {
@@ -377,9 +438,12 @@ class EditFeedingScreen extends StatefulWidget {
 
 class _EditFeedingScreenState extends State<EditFeedingScreen> {
   final _formKey = GlobalKey<FormState>();
-  late final _nameController = TextEditingController(text: widget.feeding.foodName);
-  late final _brandController = TextEditingController(text: widget.feeding.brand ?? '');
-  late final _notesController = TextEditingController(text: widget.feeding.notes ?? '');
+  late final _nameController =
+      TextEditingController(text: widget.feeding.foodName);
+  late final _brandController =
+      TextEditingController(text: widget.feeding.brand ?? '');
+  late final _notesController =
+      TextEditingController(text: widget.feeding.notes ?? '');
 
   late String _foodType = widget.feeding.foodType ?? 'dry';
   late DateTime _startDate = widget.feeding.startDate;
@@ -433,11 +497,15 @@ class _EditFeedingScreenState extends State<EditFeedingScreen> {
         id: widget.feeding.id,
         petId: widget.feeding.petId,
         foodName: _nameController.text.trim(),
-        brand: _brandController.text.trim().isEmpty ? null : _brandController.text.trim(),
+        brand: _brandController.text.trim().isEmpty
+            ? null
+            : _brandController.text.trim(),
         foodType: _foodType,
         startDate: _startDate,
         endDate: _endDate,
-        notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+        notes: _notesController.text.trim().isEmpty
+            ? null
+            : _notesController.text.trim(),
         rating: _rating,
         createdAt: widget.feeding.createdAt,
       );
@@ -447,7 +515,8 @@ class _EditFeedingScreenState extends State<EditFeedingScreen> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Не вдалося зберегти. Спробуйте ще раз.')),
+          const SnackBar(
+              content: Text('Не вдалося зберегти. Спробуйте ще раз.')),
         );
       }
     } finally {
@@ -457,24 +526,24 @@ class _EditFeedingScreenState extends State<EditFeedingScreen> {
 
   @override
   Widget build(BuildContext context) => _FeedingForm(
-    title: 'Редагувати корм',
-    formKey: _formKey,
-    nameController: _nameController,
-    brandController: _brandController,
-    notesController: _notesController,
-    foodType: _foodType,
-    startDate: _startDate,
-    endDate: _endDate,
-    rating: _rating,
-    saving: _saving,
-    types: _types,
-    onTypeChanged: (v) => setState(() => _foodType = v),
-    onPickStart: _pickStart,
-    onPickEnd: _pickEnd,
-    onClearEnd: () => setState(() => _endDate = null),
-    onRatingChanged: (v) => setState(() => _rating = v),
-    onSave: _save,
-  );
+        title: 'Редагувати корм',
+        formKey: _formKey,
+        nameController: _nameController,
+        brandController: _brandController,
+        notesController: _notesController,
+        foodType: _foodType,
+        startDate: _startDate,
+        endDate: _endDate,
+        rating: _rating,
+        saving: _saving,
+        types: _types,
+        onTypeChanged: (v) => setState(() => _foodType = v),
+        onPickStart: _pickStart,
+        onPickEnd: _pickEnd,
+        onClearEnd: () => setState(() => _endDate = null),
+        onRatingChanged: (v) => setState(() => _rating = v),
+        onSave: _save,
+      );
 }
 
 class _FeedingForm extends StatelessWidget {
@@ -526,7 +595,12 @@ class _FeedingForm extends StatelessWidget {
         title: Text(title),
         actions: [
           if (saving)
-            const Padding(padding: EdgeInsets.all(16), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)))
+            const Padding(
+                padding: EdgeInsets.all(16),
+                child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2)))
           else
             TextButton(onPressed: onSave, child: const Text('Зберегти')),
         ],
@@ -536,11 +610,13 @@ class _FeedingForm extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            Text('Основна інформація', style: Theme.of(context).textTheme.titleMedium),
+            Text('Основна інформація',
+                style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             Card(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Column(
                   children: [
                     TextFormField(
@@ -550,7 +626,9 @@ class _FeedingForm extends StatelessWidget {
                         border: InputBorder.none,
                         hintText: 'напр. Royal Canin Adult, Acana...',
                       ),
-                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Вкажіть назву' : null,
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? 'Вкажіть назву'
+                          : null,
                     ),
                     const Divider(),
                     TextFormField(
@@ -565,15 +643,20 @@ class _FeedingForm extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            Text('Тип харчування', style: Theme.of(context).textTheme.titleMedium),
+            Text('Тип харчування',
+                style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             Card(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 child: DropdownButtonFormField<String>(
                   value: foodType,
                   decoration: const InputDecoration(border: InputBorder.none),
-                  items: types.map((t) => DropdownMenuItem(value: t.$1, child: Text(t.$2))).toList(),
+                  items: types
+                      .map((t) =>
+                          DropdownMenuItem(value: t.$1, child: Text(t.$2)))
+                      .toList(),
                   onChanged: (v) => onTypeChanged(v ?? 'dry'),
                 ),
               ),
@@ -597,7 +680,9 @@ class _FeedingForm extends StatelessWidget {
                     ListTile(
                       leading: const Icon(Icons.event_outlined),
                       title: const Text('Дата закінчення'),
-                      subtitle: Text(endDate != null ? _fmt(endDate!) : 'Не вказано (поточний корм)'),
+                      subtitle: Text(endDate != null
+                          ? _fmt(endDate!)
+                          : 'Не вказано (поточний корм)'),
                       onTap: onPickEnd,
                       trailing: endDate != null
                           ? IconButton(
@@ -611,7 +696,8 @@ class _FeedingForm extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            Text('Оцінка корму', style: Theme.of(context).textTheme.titleMedium),
+            Text('Оцінка корму',
+                style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             Card(
               child: Padding(
@@ -622,11 +708,16 @@ class _FeedingForm extends StatelessWidget {
                     final star = i + 1;
                     return IconButton(
                       icon: Icon(
-                        star <= (rating ?? 0) ? Icons.star_rounded : Icons.star_outline_rounded,
-                        color: star <= (rating ?? 0) ? Colors.amber : AppTheme.textSecondary,
+                        star <= (rating ?? 0)
+                            ? Icons.star_rounded
+                            : Icons.star_outline_rounded,
+                        color: star <= (rating ?? 0)
+                            ? Colors.amber
+                            : AppTheme.textSecondary,
                         size: 36,
                       ),
-                      onPressed: () => onRatingChanged(rating == star ? null : star),
+                      onPressed: () =>
+                          onRatingChanged(rating == star ? null : star),
                     );
                   }),
                 ),
@@ -637,7 +728,8 @@ class _FeedingForm extends StatelessWidget {
             const SizedBox(height: 8),
             Card(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: TextFormField(
                   controller: notesController,
                   decoration: const InputDecoration(
@@ -650,7 +742,9 @@ class _FeedingForm extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-            FilledButton(onPressed: saving ? null : onSave, child: const Text('Зберегти')),
+            FilledButton(
+                onPressed: saving ? null : onSave,
+                child: const Text('Зберегти')),
             const SizedBox(height: 24),
           ],
         ),

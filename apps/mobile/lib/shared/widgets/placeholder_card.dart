@@ -38,4 +38,3 @@ class PlaceholderCard extends StatelessWidget {
     );
   }
 }
-

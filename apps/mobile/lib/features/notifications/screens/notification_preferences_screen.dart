@@ -9,10 +9,12 @@ class NotificationPreferencesScreen extends StatefulWidget {
   const NotificationPreferencesScreen({super.key});
 
   @override
-  State<NotificationPreferencesScreen> createState() => _NotificationPreferencesScreenState();
+  State<NotificationPreferencesScreen> createState() =>
+      _NotificationPreferencesScreenState();
 }
 
-class _NotificationPreferencesScreenState extends State<NotificationPreferencesScreen> {
+class _NotificationPreferencesScreenState
+    extends State<NotificationPreferencesScreen> {
   final repository = NotificationRepository();
   late Future<NotificationPreferences> future = repository.getPreferences();
   NotificationPreferences? preferences;
@@ -30,7 +32,8 @@ class _NotificationPreferencesScreenState extends State<NotificationPreferencesS
     try {
       await repository.savePreferences(value);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Налаштування сповіщень збережено.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Налаштування сповіщень збережено.')));
     } finally {
       if (mounted) setState(() => isSaving = false);
     }
@@ -54,41 +57,53 @@ class _NotificationPreferencesScreenState extends State<NotificationPreferencesS
             if (snapshot.connectionState == ConnectionState.waiting)
               const Center(child: CircularProgressIndicator())
             else if (snapshot.hasError || value == null)
-              ErrorState(message: 'Не вдалося завантажити налаштування.', onRetry: refresh)
+              ErrorState(
+                  message: 'Не вдалося завантажити налаштування.',
+                  onRetry: refresh)
             else ...[
               _SwitchCard(
                 title: 'Сповіщення у застосунку',
-                subtitle: 'Основні оновлення будуть показані в розділі сповіщень.',
+                subtitle:
+                    'Основні оновлення будуть показані в розділі сповіщень.',
                 value: value.inAppEnabled,
-                onChanged: (next) => setState(() => preferences = value.copyWith(inAppEnabled: next)),
+                onChanged: (next) => setState(
+                    () => preferences = value.copyWith(inAppEnabled: next)),
               ),
               _SwitchCard(
                 title: 'Нагадування про записи',
                 subtitle: 'Нагадування за 24 години та за 2 години до прийому.',
                 value: value.appointmentRemindersEnabled,
-                onChanged: (next) => setState(() => preferences = value.copyWith(appointmentRemindersEnabled: next)),
+                onChanged: (next) => setState(() => preferences =
+                    value.copyWith(appointmentRemindersEnabled: next)),
               ),
               _SwitchCard(
                 title: 'Оновлення лікування',
-                subtitle: 'Нові записи лікування, документи та рекомендації повторного візиту.',
+                subtitle:
+                    'Нові записи лікування, документи та рекомендації повторного візиту.',
                 value: value.treatmentUpdatesEnabled,
-                onChanged: (next) => setState(() => preferences = value.copyWith(treatmentUpdatesEnabled: next)),
+                onChanged: (next) => setState(() => preferences =
+                    value.copyWith(treatmentUpdatesEnabled: next)),
               ),
               _SwitchCard(
                 title: 'Запити на відгук',
-                subtitle: 'Нагадування залишити відгук після завершеного прийому.',
+                subtitle:
+                    'Нагадування залишити відгук після завершеного прийому.',
                 value: value.reviewRequestsEnabled,
-                onChanged: (next) => setState(() => preferences = value.copyWith(reviewRequestsEnabled: next)),
+                onChanged: (next) => setState(() =>
+                    preferences = value.copyWith(reviewRequestsEnabled: next)),
               ),
               const Card(
                 child: ListTile(
                   leading: Icon(Icons.block_outlined),
                   title: Text('Маркетингові сповіщення вимкнені'),
-                  subtitle: Text('Рекламні повідомлення не надсилаються в MVP.'),
+                  subtitle:
+                      Text('Рекламні повідомлення не надсилаються в MVP.'),
                 ),
               ),
               const SizedBox(height: 12),
-              FilledButton(onPressed: isSaving ? null : save, child: Text(isSaving ? 'Збереження...' : 'Зберегти')),
+              FilledButton(
+                  onPressed: isSaving ? null : save,
+                  child: Text(isSaving ? 'Збереження...' : 'Зберегти')),
             ],
           ],
         );
@@ -98,7 +113,11 @@ class _NotificationPreferencesScreenState extends State<NotificationPreferencesS
 }
 
 class _SwitchCard extends StatelessWidget {
-  const _SwitchCard({required this.title, required this.subtitle, required this.value, required this.onChanged});
+  const _SwitchCard(
+      {required this.title,
+      required this.subtitle,
+      required this.value,
+      required this.onChanged});
 
   final String title;
   final String subtitle;

@@ -47,7 +47,8 @@ class AppNotification {
       title: json['title'] as String? ?? '',
       body: json['body'] as String? ?? '',
       status: json['status'] as String? ?? 'unread',
-      createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.now(),
+      createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
+          DateTime.now(),
       appointmentId: json['appointment_id'] as String?,
       visitRecordId: json['visit_record_id'] as String?,
       documentId: json['document_id'] as String?,

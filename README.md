@@ -255,7 +255,7 @@ Admin trust/support pages:
 - `/data-processing`
 - `/support`
 
-Mobile settings include privacy, terms, beta feedback, data export placeholder, and account deletion placeholder.
+Mobile settings include privacy, terms, beta feedback, a data export request path, and in-app account deletion initiation.
 
 ## Demo Data
 

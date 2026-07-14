@@ -1,4 +1,4 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/auth/auth_state.dart';
@@ -51,15 +51,23 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return AppScaffold(
       title: 'Увійти',
-      subtitle: auth.useMockData ? 'Демо-режим використовує локальний акаунт власника тварини.' : 'Відкрийте історію здоров’я своїх тварин.',
+      subtitle: auth.useMockData
+          ? 'Демо-режим використовує локальний акаунт власника тварини.'
+          : 'Відкрийте історію здоров’я своїх тварин.',
       children: [
         if (localError != null || auth.errorMessage != null) ...[
-          Text(localError ?? auth.errorMessage!, style: const TextStyle(color: Color(0xFF9F1239))),
+          Text(localError ?? auth.errorMessage!,
+              style: const TextStyle(color: Color(0xFF9F1239))),
           const SizedBox(height: 12),
         ],
-        TextField(controller: emailController, decoration: const InputDecoration(labelText: 'Електронна пошта')),
+        TextField(
+            controller: emailController,
+            decoration: const InputDecoration(labelText: 'Електронна пошта')),
         const SizedBox(height: 12),
-        TextField(controller: passwordController, obscureText: true, decoration: const InputDecoration(labelText: 'Пароль')),
+        TextField(
+            controller: passwordController,
+            obscureText: true,
+            decoration: const InputDecoration(labelText: 'Пароль')),
         const SizedBox(height: 20),
         FilledButton(
           onPressed: auth.isLoading ? null : submit,
@@ -67,24 +75,29 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         const SizedBox(height: 12),
         OutlinedButton(
-          onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const RegisterScreen())),
+          onPressed: () => Navigator.of(context)
+              .push(MaterialPageRoute(builder: (_) => const RegisterScreen())),
           child: const Text('Створити акаунт власника тварини'),
         ),
         TextButton(
-          onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ForgotPasswordScreen())),
+          onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ForgotPasswordScreen())),
           child: const Text('Забули пароль?'),
         ),
         if (!auth.useMockData) ...[
           const SizedBox(height: 8),
           const Row(children: [
             Expanded(child: Divider()),
-            Padding(padding: EdgeInsets.symmetric(horizontal: 12), child: Text('або', style: TextStyle(color: AppTheme.textSecondary))),
+            Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12),
+                child: Text('або',
+                    style: TextStyle(color: AppTheme.textSecondary))),
             Expanded(child: Divider()),
           ]),
           const SizedBox(height: 8),
           _SocialButton(
             label: 'Увійти через Google',
-            icon: _GoogleIcon(),
+            icon: const _GoogleIcon(),
             onPressed: auth.isLoading ? null : () => auth.signInWithGoogle(),
           ),
           if (defaultTargetPlatform == TargetPlatform.iOS) ...[
@@ -102,7 +115,8 @@ class _LoginScreenState extends State<LoginScreen> {
 }
 
 class _SocialButton extends StatelessWidget {
-  const _SocialButton({required this.label, required this.icon, required this.onPressed});
+  const _SocialButton(
+      {required this.label, required this.icon, required this.onPressed});
   final String label;
   final Widget icon;
   final VoidCallback? onPressed;
@@ -132,7 +146,11 @@ class _GoogleIcon extends StatelessWidget {
       child: Stack(
         children: [
           Center(
-            child: Text('G', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF4285F4))),
+            child: Text('G',
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF4285F4))),
           ),
         ],
       ),

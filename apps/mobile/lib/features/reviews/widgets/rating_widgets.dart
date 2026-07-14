@@ -40,7 +40,8 @@ class StarRatingInput extends StatelessWidget {
 }
 
 class RatingSummaryCard extends StatelessWidget {
-  const RatingSummaryCard({super.key, required this.summary, required this.emptyText});
+  const RatingSummaryCard(
+      {super.key, required this.summary, required this.emptyText});
 
   final RatingSummary summary;
   final String emptyText;
@@ -55,7 +56,8 @@ class RatingSummaryCard extends StatelessWidget {
                 children: [
                   const Icon(Icons.star, color: Color(0xFFF59E0B)),
                   const SizedBox(width: 8),
-                  Text(summary.averageRating.toStringAsFixed(1), style: Theme.of(context).textTheme.titleLarge),
+                  Text(summary.averageRating.toStringAsFixed(1),
+                      style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(width: 8),
                   Text('на основі ${summary.reviewCount} відгуків'),
                 ],
@@ -82,14 +84,22 @@ class ReviewCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                ...List.generate(5, (index) => Icon(index < review.rating ? Icons.star : Icons.star_border, color: const Color(0xFFF59E0B), size: 18)),
+                ...List.generate(
+                    5,
+                    (index) => Icon(
+                        index < review.rating ? Icons.star : Icons.star_border,
+                        color: const Color(0xFFF59E0B),
+                        size: 18)),
                 const Spacer(),
                 Text(date, style: const TextStyle(color: Colors.black54)),
               ],
             ),
             const SizedBox(height: 8),
-            Text(review.authorLabel, style: const TextStyle(fontWeight: FontWeight.w800)),
-            if (review.doctorName != null) Text('Лікар: ${review.doctorName}', style: const TextStyle(color: Colors.black54)),
+            Text(review.authorLabel,
+                style: const TextStyle(fontWeight: FontWeight.w800)),
+            if (review.doctorName != null)
+              Text('Лікар: ${review.doctorName}',
+                  style: const TextStyle(color: Colors.black54)),
             if (review.comment != null && review.comment!.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(review.comment!),

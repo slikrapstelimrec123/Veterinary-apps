@@ -31,4 +31,3 @@ class AuthGate extends StatelessWidget {
     return RoleMessageScreen(user: user);
   }
 }
-

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/empty_state.dart';
@@ -26,7 +26,8 @@ class _ClinicListScreenState extends State<ClinicListScreen> {
   }
 
   void search() {
-    setState(() => clinicsFuture = repository.getPublishedClinics(query: searchController.text));
+    setState(() => clinicsFuture =
+        repository.getPublishedClinics(query: searchController.text));
   }
 
   @override
@@ -38,14 +39,16 @@ class _ClinicListScreenState extends State<ClinicListScreen> {
 
         return AppScaffold(
           title: 'Клініки',
-          subtitle: 'Оберіть опубліковану клініку, перегляньте послуги й лікарів та запишіть тварину на візит.',
+          subtitle:
+              'Оберіть опубліковану клініку, перегляньте послуги й лікарів та запишіть тварину на візит.',
           children: [
             TextField(
               controller: searchController,
               decoration: InputDecoration(
                 labelText: 'Пошук клініки або міста',
                 prefixIcon: const Icon(Icons.search),
-                suffixIcon: IconButton(icon: const Icon(Icons.arrow_forward), onPressed: search),
+                suffixIcon: IconButton(
+                    icon: const Icon(Icons.arrow_forward), onPressed: search),
               ),
               onSubmitted: (_) => search(),
             ),
@@ -53,9 +56,13 @@ class _ClinicListScreenState extends State<ClinicListScreen> {
             if (snapshot.connectionState == ConnectionState.waiting)
               const Center(child: CircularProgressIndicator())
             else if (snapshot.hasError)
-              ErrorState(message: 'Не вдалося завантажити клініки.', onRetry: search)
+              ErrorState(
+                  message: 'Не вдалося завантажити клініки.', onRetry: search)
             else if (clinics.isEmpty)
-              const EmptyState(title: 'Клініки не знайдено', message: 'Спробуйте інше місто або назву клініки.', icon: Icons.local_hospital_outlined)
+              const EmptyState(
+                  title: 'Клініки не знайдено',
+                  message: 'Спробуйте інше місто або назву клініки.',
+                  icon: Icons.local_hospital_outlined)
             else
               ...clinics.map((clinic) => _ClinicCard(clinic: clinic)),
           ],
@@ -83,7 +90,8 @@ class _ClinicCard extends StatelessWidget {
           title: Text(clinic.name),
           subtitle: Text(clinic.locationLabel),
           trailing: const Icon(Icons.chevron_right),
-          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ClinicProfileScreen(clinicId: clinic.id))),
+          onTap: () => Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => ClinicProfileScreen(clinicId: clinic.id))),
         ),
       ),
     );

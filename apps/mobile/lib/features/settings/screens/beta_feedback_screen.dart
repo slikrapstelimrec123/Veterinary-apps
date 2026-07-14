@@ -52,7 +52,8 @@ class _BetaFeedbackScreenState extends State<BetaFeedbackScreen> {
       }
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Дякуємо, відгук надіслано beta-команді.')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Дякуємо, відгук надіслано beta-команді.')));
       Navigator.of(context).pop();
     } catch (_) {
       setState(() => error = 'Не вдалося надіслати відгук. Спробуйте пізніше.');
@@ -77,8 +78,10 @@ class _BetaFeedbackScreenState extends State<BetaFeedbackScreen> {
           items: const [
             DropdownMenuItem(value: 'bug', child: Text('Помилка')),
             DropdownMenuItem(value: 'usability', child: Text('Зручність')),
-            DropdownMenuItem(value: 'feature_request', child: Text('Побажання')),
-            DropdownMenuItem(value: 'data_issue', child: Text('Проблема з даними')),
+            DropdownMenuItem(
+                value: 'feature_request', child: Text('Побажання')),
+            DropdownMenuItem(
+                value: 'data_issue', child: Text('Проблема з даними')),
             DropdownMenuItem(value: 'other', child: Text('Інше')),
           ],
           onChanged: (value) => setState(() => category = value ?? 'other'),
@@ -102,10 +105,14 @@ class _BetaFeedbackScreenState extends State<BetaFeedbackScreen> {
           minLines: 4,
           maxLines: 7,
           maxLength: 2000,
-          decoration: const InputDecoration(labelText: 'Повідомлення', hintText: 'Що сталося або що варто покращити?'),
+          decoration: const InputDecoration(
+              labelText: 'Повідомлення',
+              hintText: 'Що сталося або що варто покращити?'),
         ),
         const SizedBox(height: 16),
-        FilledButton(onPressed: isSubmitting ? null : submit, child: Text(isSubmitting ? 'Надсилання...' : 'Надіслати')),
+        FilledButton(
+            onPressed: isSubmitting ? null : submit,
+            child: Text(isSubmitting ? 'Надсилання...' : 'Надіслати')),
       ],
     );
   }

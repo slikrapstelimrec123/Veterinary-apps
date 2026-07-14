@@ -1,4 +1,4 @@
-﻿class Appointment {
+class Appointment {
   const Appointment({
     required this.id,
     required this.petId,
@@ -37,7 +37,8 @@
 
   DateTime get startsAt {
     final parts = startTime.split(':').map(int.parse).toList();
-    return DateTime(appointmentDate.year, appointmentDate.month, appointmentDate.day, parts[0], parts.length > 1 ? parts[1] : 0);
+    return DateTime(appointmentDate.year, appointmentDate.month,
+        appointmentDate.day, parts[0], parts.length > 1 ? parts[1] : 0);
   }
 
   bool get canOwnerCancel => status == 'pending' || status == 'confirmed';
@@ -90,19 +91,31 @@
     return Appointment(
       id: json['id'] as String,
       petId: json['pet_id'] as String? ?? '',
-      petName: pet is Map<String, dynamic> ? pet['name'] as String? ?? '' : json['pet_name'] as String? ?? '',
+      petName: pet is Map<String, dynamic>
+          ? pet['name'] as String? ?? ''
+          : json['pet_name'] as String? ?? '',
       clinicId: json['clinic_id'] as String? ?? '',
-      clinicName: clinic is Map<String, dynamic> ? clinic['name'] as String? ?? '' : json['clinic_name'] as String? ?? '',
+      clinicName: clinic is Map<String, dynamic>
+          ? clinic['name'] as String? ?? ''
+          : json['clinic_name'] as String? ?? '',
       serviceId: json['service_id'] as String? ?? '',
-      serviceName: service is Map<String, dynamic> ? service['name'] as String? ?? '' : json['service_name'] as String? ?? '',
+      serviceName: service is Map<String, dynamic>
+          ? service['name'] as String? ?? ''
+          : json['service_name'] as String? ?? '',
       doctorId: json['doctor_id'] as String?,
-      doctorName: doctor is Map<String, dynamic> ? doctor['full_name'] as String? : json['doctor_name'] as String?,
-      appointmentDate: DateTime.tryParse(json['appointment_date'] as String? ?? '') ?? DateTime.now(),
+      doctorName: doctor is Map<String, dynamic>
+          ? doctor['full_name'] as String?
+          : json['doctor_name'] as String?,
+      appointmentDate:
+          DateTime.tryParse(json['appointment_date'] as String? ?? '') ??
+              DateTime.now(),
       startTime: _shortTime(json['start_time'] as String? ?? '09:00'),
       endTime: _shortTime(json['end_time'] as String? ?? '09:30'),
       status: json['status'] as String? ?? 'pending',
-      ownerNote: json['owner_note'] as String? ?? json['owner_comment'] as String?,
-      clinicNote: json['clinic_note'] as String? ?? json['clinic_comment'] as String?,
+      ownerNote:
+          json['owner_note'] as String? ?? json['owner_comment'] as String?,
+      clinicNote:
+          json['clinic_note'] as String? ?? json['clinic_comment'] as String?,
       cancellationReason: json['cancellation_reason'] as String?,
     );
   }
@@ -128,4 +141,5 @@
   }
 }
 
-String _shortTime(String value) => value.length >= 5 ? value.substring(0, 5) : value;
+String _shortTime(String value) =>
+    value.length >= 5 ? value.substring(0, 5) : value;

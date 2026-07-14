@@ -30,7 +30,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       return;
     }
 
-    setState(() { _sending = true; _error = null; });
+    setState(() {
+      _sending = true;
+      _error = null;
+    });
 
     try {
       if (SupabaseConfig.useMockData) {
@@ -38,11 +41,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       } else {
         await Supabase.instance.client.auth.resetPasswordForEmail(email);
       }
-      if (mounted) setState(() => _sent = true);
+      if (mounted) {
+        setState(() => _sent = true);
+      }
     } catch (_) {
-      if (mounted) setState(() => _error = 'Не вдалося надіслати лист. Спробуйте ще раз.');
+      if (mounted) {
+        setState(() => _error = 'Не вдалося надіслати лист. Спробуйте ще раз.');
+      }
     } finally {
-      if (mounted) setState(() => _sending = false);
+      if (mounted) {
+        setState(() => _sending = false);
+      }
     }
   }
 
@@ -57,9 +66,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   padding: const EdgeInsets.all(24),
                   child: Column(
                     children: [
-                      const Icon(Icons.mark_email_read_outlined, size: 48, color: Color(0xFF4CAF50)),
+                      const Icon(Icons.mark_email_read_outlined,
+                          size: 48, color: Color(0xFF4CAF50)),
                       const SizedBox(height: 16),
-                      Text('Лист надіслано', style: Theme.of(context).textTheme.titleLarge),
+                      Text('Лист надіслано',
+                          style: Theme.of(context).textTheme.titleLarge),
                       const SizedBox(height: 8),
                       Text(
                         'Перевірте пошту ${_emailController.text.trim()} та перейдіть за посиланням для зміни пароля.',
@@ -77,11 +88,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               ),
             ]
           : [
-              const Text('Введіть вашу електронну пошту — ми надішлемо посилання для відновлення пароля.'),
+              const Text(
+                  'Введіть вашу електронну пошту — ми надішлемо посилання для відновлення пароля.'),
               const SizedBox(height: 16),
               Card(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: TextField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
@@ -100,7 +113,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               FilledButton(
                 onPressed: _sending ? null : _send,
                 child: _sending
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
                     : const Text('Надіслати посилання'),
               ),
             ],

@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/auth/auth_state.dart';
 import '../../../core/config/supabase_config.dart';
+import '../../../shared/widgets/city_autocomplete_field.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -16,6 +17,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late final TextEditingController _nameController = TextEditingController();
   late final TextEditingController _phoneController = TextEditingController();
   late final TextEditingController _emailController = TextEditingController();
+  late final TextEditingController _cityController = TextEditingController();
   bool _saving = false;
   bool _initialized = false;
   String _currentEmail = '';
@@ -28,6 +30,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       final user = AuthScope.of(context).currentUser;
       _nameController.text = user?.fullName ?? '';
       _phoneController.text = user?.phone ?? '';
+      _cityController.text = user?.city ?? '';
       if (!SupabaseConfig.useMockData) {
         _currentEmail = Supabase.instance.client.auth.currentUser?.email ?? '';
       } else {
@@ -42,6 +45,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _nameController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
+    _cityController.dispose();
     super.dispose();
   }
 
@@ -54,8 +58,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         title: const Text('Підтвердження'),
         content: const Text('Зберегти зміни профілю?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Скасувати')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Зберегти')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Скасувати')),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Зберегти')),
         ],
       ),
     );
@@ -73,7 +81,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         if (uid != null) {
           await Supabase.instance.client.from('profiles').update({
             'full_name': _nameController.text.trim(),
-            'phone': _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
+            'phone': _phoneController.text.trim().isEmpty
+                ? null
+                : _phoneController.text.trim(),
+            'city': _cityController.text.trim(),
           }).eq('id', uid);
         }
 
@@ -88,7 +99,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         if (emailChanged) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Профіль оновлено. На нову адресу надіслано лист для підтвердження.'),
+              content: Text(
+                  'Профіль оновлено. На нову адресу надіслано лист для підтвердження.'),
               duration: Duration(seconds: 6),
             ),
           );
@@ -102,7 +114,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Помилка: $e'), duration: const Duration(seconds: 8)),
+          SnackBar(
+              content: Text('Помилка: $e'),
+              duration: const Duration(seconds: 8)),
         );
       }
     } finally {
@@ -117,7 +131,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         title: const Text('Редагувати профіль'),
         actions: [
           if (_saving)
-            const Padding(padding: EdgeInsets.all(16), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)))
+            const Padding(
+                padding: EdgeInsets.all(16),
+                child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2)))
           else
             TextButton(onPressed: _save, child: const Text('Зберегти')),
         ],
@@ -129,7 +148,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           children: [
             Card(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Column(
                   children: [
                     TextFormField(
@@ -139,7 +159,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         border: InputBorder.none,
                         prefixIcon: Icon(Icons.person_outline),
                       ),
-                      validator: (v) => (v == null || v.trim().isEmpty) ? "Введіть ім'я" : null,
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? "Введіть ім'я"
+                          : null,
                       textCapitalization: TextCapitalization.words,
                     ),
                     const Divider(),
@@ -153,16 +175,26 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       ),
                       keyboardType: TextInputType.phone,
                     ),
+                    const Divider(),
+                    CityAutocompleteField(
+                      controller: _cityController,
+                      label: 'Місто *',
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? 'Оберіть місто'
+                          : null,
+                    ),
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 16),
-            Text('Електронна адреса', style: Theme.of(context).textTheme.titleMedium),
+            Text('Електронна адреса',
+                style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             Card(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: TextFormField(
                   controller: _emailController,
                   decoration: const InputDecoration(
@@ -174,25 +206,32 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   autocorrect: false,
                   onChanged: (_) => setState(() {}),
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'Введіть email';
+                    if (v == null || v.trim().isEmpty) {
+                      return 'Введіть email';
+                    }
                     final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
-                    if (!emailRegex.hasMatch(v.trim())) return 'Некоректний email';
+                    if (!emailRegex.hasMatch(v.trim())) {
+                      return 'Некоректний email';
+                    }
                     return null;
                   },
                 ),
               ),
             ),
-            if (_emailController.text.trim() != _currentEmail && _emailController.text.isNotEmpty)
+            if (_emailController.text.trim() != _currentEmail &&
+                _emailController.text.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 6, left: 4),
                 child: Row(
                   children: [
-                    const Icon(Icons.info_outline, size: 14, color: Colors.orange),
+                    const Icon(Icons.info_outline,
+                        size: 14, color: Colors.orange),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         'Після збереження на нову адресу буде надіслано лист для підтвердження.',
-                        style: TextStyle(fontSize: 12, color: Colors.orange.shade700),
+                        style: TextStyle(
+                            fontSize: 12, color: Colors.orange.shade700),
                       ),
                     ),
                   ],

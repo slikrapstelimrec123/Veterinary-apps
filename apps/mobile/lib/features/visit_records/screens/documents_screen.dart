@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/empty_state.dart';
@@ -22,10 +22,12 @@ class DocumentsScreen extends StatefulWidget {
 
 class _DocumentsScreenState extends State<DocumentsScreen> {
   final repository = VisitRecordRepository();
-  late Future<List<VisitDocument>> documentsFuture = repository.getDocumentsForPet(widget.petId);
+  late Future<List<VisitDocument>> documentsFuture =
+      repository.getDocumentsForPet(widget.petId);
 
   void refresh() {
-    setState(() => documentsFuture = repository.getDocumentsForPet(widget.petId));
+    setState(
+        () => documentsFuture = repository.getDocumentsForPet(widget.petId));
   }
 
   @override
@@ -42,7 +44,9 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
             if (snapshot.connectionState == ConnectionState.waiting)
               const Center(child: CircularProgressIndicator())
             else if (snapshot.hasError)
-              ErrorState(message: 'Не вдалося завантажити документи.', onRetry: refresh)
+              ErrorState(
+                  message: 'Не вдалося завантажити документи.',
+                  onRetry: refresh)
             else if (documents.isEmpty)
               const EmptyState(
                 title: 'Документів ще немає',
@@ -50,7 +54,8 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                 icon: Icons.folder_open_outlined,
               )
             else
-              ...documents.map((document) => _DocumentTile(document: document, repository: repository)),
+              ...documents.map((document) =>
+                  _DocumentTile(document: document, repository: repository)),
           ],
         );
       },
@@ -70,7 +75,8 @@ class _DocumentTile extends StatelessWidget {
       child: ListTile(
         leading: const Icon(Icons.description_outlined),
         title: Text(document.title),
-        subtitle: Text('${document.type} - ${document.fileSizeLabel} - ${document.createdAt.toIso8601String().split('T').first}'),
+        subtitle: Text(
+            '${document.type} - ${document.fileSizeLabel} - ${document.createdAt.toIso8601String().split('T').first}'),
         trailing: const Icon(Icons.lock_outline),
         onTap: () async {
           final url = await repository.getSignedDocumentUrl(document);
@@ -79,7 +85,10 @@ class _DocumentTile extends StatelessWidget {
           }
 
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(url == null ? 'Безпечний перегляд файлу поки недоступний у демо-режимі.' : 'Приватне посилання для цього сеансу створено.')),
+            SnackBar(
+                content: Text(url == null
+                    ? 'Безпечний перегляд файлу поки недоступний у демо-режимі.'
+                    : 'Приватне посилання для цього сеансу створено.')),
           );
         },
       ),

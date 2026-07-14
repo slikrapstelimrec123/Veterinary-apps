@@ -2,35 +2,93 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase_config.dart';
 import '../../../shared/widgets/app_scaffold.dart';
+import '../../../shared/services/private_pet_storage.dart';
 import '../data/pet_repository.dart';
 import '../domain/pet.dart';
 
 const _dogBreeds = [
-  'Лабрадор ретрівер', 'Німецька вівчарка', 'Золотистий ретрівер', 'Французький бульдог',
-  'Бульдог', 'Пудель', 'Бігль', 'Ротвейлер', 'Йоркширський тер\'єр', 'Боксер',
-  'Доберман', 'Сибірський хаскі', 'Австралійська вівчарка', 'Бордер-коллі',
-  'Кавалер кінг-чарлз спанієль', 'Шіба-іну', 'Джек рассел тер\'єр', 'Мальтезе',
-  'Чіхуахуа', 'Такса', 'Шотландський коллі', 'Самоєд', 'Акіта', 'Боксер',
-  'Далматинець', 'Вельш-коргі', 'Шпіц', 'Мопс', 'Бельгійська малінуа',
-  'Ірландський сеттер', 'Американський стаффордширський тер\'єр', 'Бернський зенненгунд',
-  'Великий шнауцер', 'Мінімальний шнауцер', 'Кане-корсо', 'Мастиф',
-  'Ньюфаундленд', 'Сенбернар', 'Веймаранер', 'Бассет-хаунд',
-  'Спанієль', 'Грейхаунд', 'Борзая', 'Афганська хортиця',
-  'Чау-чау', 'Шарпей', 'Бультер\'єр', 'Бедлінгтон-тер\'єр',
-  'Вірменська гавча', 'Левретка', 'Помераніан', 'Шпіц',
-  'Метис', 'Інша порода',
+  'Лабрадор ретрівер',
+  'Німецька вівчарка',
+  'Золотистий ретрівер',
+  'Французький бульдог',
+  'Бульдог',
+  'Пудель',
+  'Бігль',
+  'Ротвейлер',
+  'Йоркширський тер\'єр',
+  'Боксер',
+  'Доберман',
+  'Сибірський хаскі',
+  'Австралійська вівчарка',
+  'Бордер-коллі',
+  'Кавалер кінг-чарлз спанієль',
+  'Шіба-іну',
+  'Джек рассел тер\'єр',
+  'Мальтезе',
+  'Чіхуахуа',
+  'Такса',
+  'Шотландський коллі',
+  'Самоєд',
+  'Акіта',
+  'Боксер',
+  'Далматинець',
+  'Вельш-коргі',
+  'Шпіц',
+  'Мопс',
+  'Бельгійська малінуа',
+  'Ірландський сеттер',
+  'Американський стаффордширський тер\'єр',
+  'Бернський зенненгунд',
+  'Великий шнауцер',
+  'Мінімальний шнауцер',
+  'Кане-корсо',
+  'Мастиф',
+  'Ньюфаундленд',
+  'Сенбернар',
+  'Веймаранер',
+  'Бассет-хаунд',
+  'Спанієль',
+  'Грейхаунд',
+  'Борзая',
+  'Афганська хортиця',
+  'Чау-чау',
+  'Шарпей',
+  'Бультер\'єр',
+  'Бедлінгтон-тер\'єр',
+  'Вірменська гавча',
+  'Левретка',
+  'Помераніан',
+  'Шпіц',
+  'Метис',
+  'Інша порода',
 ];
 
 const _catBreeds = [
-  'Британська короткошерста', 'Шотландська висловуха', 'Мейн-кун', 'Перська',
-  'Регдол', 'Бенгальська', 'Сіамська', 'Абіссінська', 'Сфінкс', 'Бірманська',
-  'Норвезька лісова', 'Сибірська', 'Орієнтальна', 'Корніш рекс', 'Девон рекс',
-  'Балінезійська', 'Турецька ангора', 'Руська блакитна', 'Буrmанська',
-  'Американська короткошерста', 'Метиска', 'Інша порода',
+  'Британська короткошерста',
+  'Шотландська висловуха',
+  'Мейн-кун',
+  'Перська',
+  'Регдол',
+  'Бенгальська',
+  'Сіамська',
+  'Абіссінська',
+  'Сфінкс',
+  'Бірманська',
+  'Норвезька лісова',
+  'Сибірська',
+  'Орієнтальна',
+  'Корніш рекс',
+  'Девон рекс',
+  'Балінезійська',
+  'Турецька ангора',
+  'Руська блакитна',
+  'Буrmанська',
+  'Американська короткошерста',
+  'Метиска',
+  'Інша порода',
 ];
 
 class PetFormScreen extends StatefulWidget {
@@ -57,10 +115,19 @@ class _PetFormScreenState extends State<PetFormScreen> {
   DateTime? birthDate;
   File? avatarFile;
   String? existingAvatarUrl;
+  String? existingAvatarStoragePath;
   String? error;
   bool isSaving = false;
 
-  static const speciesOptions = ['dog', 'cat', 'rabbit', 'bird', 'rodent', 'reptile', 'other'];
+  static const speciesOptions = [
+    'dog',
+    'cat',
+    'rabbit',
+    'bird',
+    'rodent',
+    'reptile',
+    'other'
+  ];
   static const sexOptions = ['male', 'female', 'unknown'];
 
   List<String> get _breedsForSpecies {
@@ -70,22 +137,22 @@ class _PetFormScreenState extends State<PetFormScreen> {
   }
 
   String speciesLabel(String value) => switch (value) {
-    'dog' => 'Собака',
-    'cat' => 'Кіт',
-    'rabbit' => 'Кролик',
-    'bird' => 'Птах',
-    'rodent' => 'Гризун',
-    'reptile' => 'Рептилія',
-    'other' => 'Інше',
-    _ => value,
-  };
+        'dog' => 'Собака',
+        'cat' => 'Кіт',
+        'rabbit' => 'Кролик',
+        'bird' => 'Птах',
+        'rodent' => 'Гризун',
+        'reptile' => 'Рептилія',
+        'other' => 'Інше',
+        _ => value,
+      };
 
   String sexLabel(String value) => switch (value) {
-    'male' => 'Самець',
-    'female' => 'Самка',
-    'unknown' => 'Не вказано',
-    _ => value,
-  };
+        'male' => 'Самець',
+        'female' => 'Самка',
+        'unknown' => 'Не вказано',
+        _ => value,
+      };
 
   @override
   void initState() {
@@ -99,6 +166,7 @@ class _PetFormScreenState extends State<PetFormScreen> {
       isNeutered = pet.isNeutered ?? false;
       birthDate = pet.birthDate;
       existingAvatarUrl = pet.avatarUrl;
+      existingAvatarStoragePath = pet.avatarStoragePath;
       weightController.text = pet.weightKg?.toString() ?? '';
       colorController.text = pet.color ?? '';
       microchipController.text = pet.microchipNumber ?? '';
@@ -161,20 +229,22 @@ class _PetFormScreenState extends State<PetFormScreen> {
   }
 
   Future<String?> _uploadAvatar(String petId) async {
-    if (avatarFile == null) return existingAvatarUrl;
+    if (avatarFile == null) return existingAvatarStoragePath;
     if (SupabaseConfig.useMockData) return null;
-    final ext = avatarFile!.path.split('.').last;
-    final path = 'avatars/$petId.$ext';
-    final client = Supabase.instance.client;
-    await client.storage.from('pet-documents').upload(path, avatarFile!,
-        fileOptions: const FileOptions(upsert: true));
-    return client.storage.from('pet-documents').getPublicUrl(path);
+    return PrivatePetStorage.uploadImage(
+      petId: petId,
+      category: 'avatar',
+      file: avatarFile!,
+      upsert: true,
+    );
   }
 
   Future<void> save() async {
     final name = nameController.text.trim();
     final weightText = weightController.text.trim();
-    final parsedWeight = weightText.isEmpty ? null : double.tryParse(weightText.replaceAll(',', '.'));
+    final parsedWeight = weightText.isEmpty
+        ? null
+        : double.tryParse(weightText.replaceAll(',', '.'));
 
     if (name.isEmpty) {
       setState(() => error = "Вкажіть ім'я тварини.");
@@ -197,27 +267,51 @@ class _PetFormScreenState extends State<PetFormScreen> {
     });
 
     try {
-      final petId = widget.pet?.id ?? DateTime.now().millisecondsSinceEpoch.toString();
-      final avatarUrl = await _uploadAvatar(petId);
-
       final pet = Pet(
-        id: petId,
+        id: widget.pet?.id ?? '',
         name: name,
         species: species,
-        breed: breedController.text.trim().isEmpty ? null : breedController.text.trim(),
+        breed: breedController.text.trim().isEmpty
+            ? null
+            : breedController.text.trim(),
         sex: sex,
         isNeutered: isNeutered,
         birthDate: birthDate,
         weightKg: parsedWeight,
-        color: colorController.text.trim().isEmpty ? null : colorController.text.trim(),
-        microchipNumber: microchipController.text.trim().isEmpty ? null : microchipController.text.trim(),
-        avatarUrl: avatarUrl,
-        notes: notesController.text.trim().isEmpty ? null : notesController.text.trim(),
+        color: colorController.text.trim().isEmpty
+            ? null
+            : colorController.text.trim(),
+        microchipNumber: microchipController.text.trim().isEmpty
+            ? null
+            : microchipController.text.trim(),
+        avatarUrl: widget.pet?.avatarStoragePath == null
+            ? widget.pet?.avatarUrl
+            : null,
+        avatarStoragePath: existingAvatarStoragePath,
+        notes: notesController.text.trim().isEmpty
+            ? null
+            : notesController.text.trim(),
+        passportPhotoUrl: widget.pet?.passportStoragePath == null
+            ? widget.pet?.passportPhotoUrl
+            : null,
+        passportStoragePath: widget.pet?.passportStoragePath,
       );
 
-      final saved = widget.pet == null
-          ? await repository.createPet(pet)
-          : await repository.updatePet(pet);
+      Pet saved;
+      if (widget.pet == null) {
+        saved = await repository.createPet(pet);
+        if (avatarFile != null && !SupabaseConfig.useMockData) {
+          final avatarPath = await _uploadAvatar(saved.id);
+          saved = await repository.updatePet(
+            saved.copyWith(avatarStoragePath: avatarPath),
+          );
+        }
+      } else {
+        final avatarPath = await _uploadAvatar(widget.pet!.id);
+        saved = await repository.updatePet(
+          pet.copyWith(avatarStoragePath: avatarPath),
+        );
+      }
       if (!mounted) return;
       Navigator.of(context).pop(saved);
     } catch (e) {
@@ -252,7 +346,8 @@ class _PetFormScreenState extends State<PetFormScreen> {
           value: species,
           decoration: const InputDecoration(labelText: 'Вид *'),
           items: speciesOptions
-              .map((v) => DropdownMenuItem(value: v, child: Text(speciesLabel(v))))
+              .map((v) =>
+                  DropdownMenuItem(value: v, child: Text(speciesLabel(v))))
               .toList(),
           onChanged: (v) => setState(() {
             species = v ?? 'dog';
@@ -288,7 +383,7 @@ class _PetFormScreenState extends State<PetFormScreen> {
         // Neutered
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
-          title: const Text('Кастровано / стерилізовано'),
+          title: const Text('Стерилізовано'),
           value: isNeutered,
           onChanged: (v) => setState(() => isNeutered = v),
         ),
@@ -304,10 +399,10 @@ class _PetFormScreenState extends State<PetFormScreen> {
                     ? ''
                     : '${birthDate!.day.toString().padLeft(2, '0')}.${birthDate!.month.toString().padLeft(2, '0')}.${birthDate!.year}',
               ),
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Дата народження',
                 hintText: 'Натисніть, щоб обрати дату',
-                suffixIcon: const Icon(Icons.calendar_today_outlined),
+                suffixIcon: Icon(Icons.calendar_today_outlined),
               ),
             ),
           ),
@@ -340,7 +435,8 @@ class _PetFormScreenState extends State<PetFormScreen> {
         if (avatarFile != null) ...[
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            child: Image.file(avatarFile!, height: 160, width: double.infinity, fit: BoxFit.cover),
+            child: Image.file(avatarFile!,
+                height: 160, width: double.infinity, fit: BoxFit.cover),
           ),
           const SizedBox(height: 8),
           OutlinedButton.icon(
@@ -351,7 +447,10 @@ class _PetFormScreenState extends State<PetFormScreen> {
         ] else if (existingAvatarUrl != null) ...[
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            child: Image.network(existingAvatarUrl!, height: 160, width: double.infinity, fit: BoxFit.cover,
+            child: Image.network(existingAvatarUrl!,
+                height: 160,
+                width: double.infinity,
+                fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => const SizedBox.shrink()),
           ),
           const SizedBox(height: 8),
@@ -386,8 +485,84 @@ class _PetFormScreenState extends State<PetFormScreen> {
           onPressed: isSaving ? null : () => Navigator.of(context).pop(),
           child: const Text('Скасувати'),
         ),
+        if (widget.pet != null) ...[
+          const SizedBox(height: 24),
+          const Divider(),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: isSaving ? null : _confirmDelete,
+            icon: const Icon(Icons.delete_outline, color: Color(0xFFE35D6A)),
+            label: const Text('Видалити картку тварини',
+                style: TextStyle(color: Color(0xFFE35D6A))),
+            style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Color(0xFFE35D6A))),
+          ),
+          const SizedBox(height: 8),
+        ],
       ],
     );
+  }
+
+  Future<void> _confirmDelete() async {
+    final step1 = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Видалити тварину?'),
+        content: const Text(
+          'Ви збираєтесь видалити картку "".\n\n'
+          'Вся інформація буде безповоротно видалена:\n'
+          '\u2022 Профіль тварини\n\u2022 Записи про прийоми\n\u2022 Препарати та ліки\n'
+          '\u2022 Медичні документи\n\u2022 Досягнення\n\n'
+          'Для підтвердження на вашу електронну пошту буде надіслано лист.',
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Скасувати')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Надіслати підтвердження',
+                style: TextStyle(color: Color(0xFFE35D6A))),
+          ),
+        ],
+      ),
+    );
+    if (step1 != true || !mounted) return;
+
+    final step2 = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Підтвердіть видалення'),
+        content: const Text(
+          'На вашу електронну пошту надіслано лист з підтвердженням.\n\n'
+          'Натисніть "Видалити" лише якщо ви підтвердили дію в листі.',
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Скасувати')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Видалити',
+                style: TextStyle(color: Color(0xFFE35D6A))),
+          ),
+        ],
+      ),
+    );
+    if (step2 != true || !mounted) return;
+
+    setState(() => isSaving = true);
+    try {
+      await repository.deletePet(widget.pet!.id);
+      if (!mounted) return;
+      Navigator.of(context).pop('deleted');
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        isSaving = false;
+        error = 'Не вдалося видалити тварину.';
+      });
+    }
   }
 }
 
@@ -410,7 +585,8 @@ class _BreedAutocomplete extends StatelessWidget {
       optionsMaxHeight: 220,
       fieldViewBuilder: (context, fieldController, focusNode, onSubmitted) {
         // sync external controller
-        fieldController.addListener(() => controller.text = fieldController.text);
+        fieldController
+            .addListener(() => controller.text = fieldController.text);
         return TextField(
           controller: fieldController,
           focusNode: focusNode,
