@@ -11,15 +11,11 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-  supabase_flutter: ^2.6.0
+  supabase_flutter: ^2.15.0
   qr_flutter: ^4.1.0
   image_picker: ^1.1.2
   flutter_svg: ^2.0.9
   url_launcher: ^6.3.0
-
-dependency_overrides:
-  supabase_flutter: 2.6.0
-  app_links: ^4.0.0
 
 dev_dependencies:
   flutter_test:
@@ -46,4 +42,3 @@ flutter:
     - assets/
     - assets/icons/
     - assets/fonts/OFL-Montserrat.txt
-
