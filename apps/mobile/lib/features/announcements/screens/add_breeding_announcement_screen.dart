@@ -38,7 +38,7 @@ class _AddBreedingAnnouncementScreenState
     super.dispose();
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
 
@@ -66,12 +66,21 @@ class _AddBreedingAnnouncementScreenState
           ? null
           : _locationController.text.trim(),
       createdAt: DateTime.now(),
-      ownerId: 'mock_pet_owner',
+      ownerId: _repo.currentUserId,
+      petId: widget.pet.id,
     );
 
-    _repo.addBreedingAnnouncement(announcement);
-    setState(() => _saving = false);
-    Navigator.of(context).pop(true);
+    try {
+      await _repo.addBreedingAnnouncement(announcement);
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Не вдалося опублікувати оголошення: $error')),
+      );
+    }
   }
 
   @override

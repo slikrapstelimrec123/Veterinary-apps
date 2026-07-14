@@ -15,6 +15,7 @@ class BreedingAnnouncement {
     required this.createdAt,
     this.isActive = true,
     this.ownerId,
+    this.petId,
   });
 
   final String id;
@@ -32,6 +33,45 @@ class BreedingAnnouncement {
   final DateTime createdAt;
   final bool isActive;
   final String? ownerId;
+  final String? petId;
+
+  factory BreedingAnnouncement.fromJson(Map<String, dynamic> json) {
+    return BreedingAnnouncement(
+      id: json['id'] as String,
+      ownerName: json['contact_name'] as String,
+      phone: json['contact_phone'] as String,
+      breed: json['breed'] as String,
+      myDogName: json['pet_name'] as String,
+      myDogGender: (json['gender'] as String?) ?? 'unknown',
+      myDogAge: (json['age_years'] as num?)?.toInt() ?? 0,
+      myDogPhotoUrl: json['photo_url'] as String?,
+      desiredBreed: json['desired_breed'] as String?,
+      conditions: json['conditions'] as String?,
+      notes: json['description'] as String?,
+      location: json['city'] as String?,
+      createdAt: DateTime.parse(json['created_at'] as String),
+      isActive: json['status'] == 'active',
+      ownerId: json['owner_id'] as String?,
+      petId: json['pet_id'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toInsertJson({required String currentOwnerId}) => {
+        'owner_id': currentOwnerId,
+        'pet_id': petId,
+        'announcement_type': 'breeding',
+        'contact_name': ownerName,
+        'contact_phone': phone,
+        'breed': breed,
+        'pet_name': myDogName,
+        'gender': myDogGender,
+        'age_years': myDogAge,
+        'photo_url': myDogPhotoUrl,
+        'desired_breed': desiredBreed,
+        'conditions': conditions,
+        'description': notes,
+        'city': location,
+      };
 
   String get genderLabel => myDogGender == 'male' ? 'Самець' : 'Самка';
   String get ageLabel {

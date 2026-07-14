@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../core/config/supabase_config.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/city_autocomplete_field.dart';
 import '../data/announcement_repository.dart';
@@ -27,42 +26,6 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen>
 
   @override
   Widget build(BuildContext context) {
-    if (!SupabaseConfig.useMockData) {
-      return Scaffold(
-        backgroundColor: AppTheme.background,
-        appBar: AppBar(
-          backgroundColor: AppTheme.background,
-          title: const Text(
-            'Оголошення',
-            style: TextStyle(fontWeight: FontWeight.w800),
-          ),
-        ),
-        body: const Center(
-          child: Padding(
-            padding: EdgeInsets.all(32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.shield_outlined, size: 48, color: AppTheme.primary),
-                SizedBox(height: 16),
-                Text(
-                  'Розділ готується до запуску',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Ми відкриємо оголошення після підключення перевірки, скарг і блокування небезпечного контенту.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: AppTheme.textSecondary),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
@@ -275,8 +238,6 @@ class _SaleTabState extends State<_SaleTab> {
 
 // ─── My Announcements Tab ─────────────────────────────────────────────────────
 
-const _myOwnerId = 'mock_pet_owner';
-
 class _MyAnnouncementsTab extends StatefulWidget {
   const _MyAnnouncementsTab();
 
@@ -295,19 +256,11 @@ class _MyAnnouncementsTabState extends State<_MyAnnouncementsTab>
     super.dispose();
   }
 
-  Future<List<SaleAnnouncement>> _mySale(bool active) async {
-    final all = await _repo.getSaleAnnouncements();
-    return all
-        .where((a) => a.ownerId == _myOwnerId && a.isActive == active)
-        .toList();
-  }
+  Future<List<SaleAnnouncement>> _mySale(bool active) =>
+      _repo.getMySaleAnnouncements(active: active);
 
-  Future<List<BreedingAnnouncement>> _myBreeding(bool active) async {
-    final all = await _repo.getBreedingAnnouncements();
-    return all
-        .where((a) => a.ownerId == _myOwnerId && a.isActive == active)
-        .toList();
-  }
+  Future<List<BreedingAnnouncement>> _myBreeding(bool active) =>
+      _repo.getMyBreedingAnnouncements(active: active);
 
   @override
   Widget build(BuildContext context) {
@@ -406,25 +359,26 @@ class _MyAnnouncementsList extends StatelessWidget {
                       createdAt: s.createdAt,
                       active: s.isActive,
                       icon: Icons.pets,
-                      onToggle: () {
-                        AnnouncementRepository.toggleSaleActive(s.id);
+                      onToggle: () async {
+                        await AnnouncementRepository().toggleSaleActive(s.id);
                         onToggle();
                       },
-                      onDelete: () {
-                        AnnouncementRepository.deleteSaleAnnouncement(s.id);
+                      onDelete: () async {
+                        await AnnouncementRepository().deleteSaleAnnouncement(s.id);
                         onToggle();
                       },
                       onEdit: () => Navigator.of(context)
                           .push(MaterialPageRoute(
                             builder: (_) => _EditSaleScreen(
                                 item: s,
-                                onDelete: () {
-                                  AnnouncementRepository.deleteSaleAnnouncement(
-                                      s.id);
+                                onDelete: () async {
+                                  await AnnouncementRepository()
+                                      .deleteSaleAnnouncement(s.id);
                                   onToggle();
                                 },
-                                onToggle: () {
-                                  AnnouncementRepository.toggleSaleActive(s.id);
+                                onToggle: () async {
+                                  await AnnouncementRepository()
+                                      .toggleSaleActive(s.id);
                                   onToggle();
                                 }),
                           ))
@@ -449,26 +403,27 @@ class _MyAnnouncementsList extends StatelessWidget {
                       createdAt: b.createdAt,
                       active: b.isActive,
                       icon: Icons.favorite_outlined,
-                      onToggle: () {
-                        AnnouncementRepository.toggleBreedingActive(b.id);
+                      onToggle: () async {
+                        await AnnouncementRepository().toggleBreedingActive(b.id);
                         onToggle();
                       },
-                      onDelete: () {
-                        AnnouncementRepository.deleteBreedingAnnouncement(b.id);
+                      onDelete: () async {
+                        await AnnouncementRepository()
+                            .deleteBreedingAnnouncement(b.id);
                         onToggle();
                       },
                       onEdit: () => Navigator.of(context)
                           .push(MaterialPageRoute(
                             builder: (_) => _EditBreedingScreen(
                                 item: b,
-                                onDelete: () {
-                                  AnnouncementRepository
+                                onDelete: () async {
+                                  await AnnouncementRepository()
                                       .deleteBreedingAnnouncement(b.id);
                                   onToggle();
                                 },
-                                onToggle: () {
-                                  AnnouncementRepository.toggleBreedingActive(
-                                      b.id);
+                                onToggle: () async {
+                                  await AnnouncementRepository()
+                                      .toggleBreedingActive(b.id);
                                   onToggle();
                                 }),
                           ))
@@ -633,30 +588,34 @@ class _EditSaleScreenState extends State<_EditSaleScreen> {
     super.dispose();
   }
 
-  void _save() {
+  Future<void> _save() async {
     final price = int.tryParse(_price.text.trim()) ?? widget.item.price;
-    AnnouncementRepository.updateSaleAnnouncement(SaleAnnouncement(
-      id: widget.item.id,
-      ownerName: widget.item.ownerName,
-      phone: widget.item.phone,
-      breed:
-          _breed.text.trim().isEmpty ? widget.item.breed : _breed.text.trim(),
-      puppyName:
-          _name.text.trim().isEmpty ? widget.item.puppyName : _name.text.trim(),
-      gender: widget.item.gender,
-      birthDate: widget.item.birthDate,
-      price: price,
-      photoUrl: widget.item.photoUrl,
-      color: widget.item.color,
-      hasVaccinations: widget.item.hasVaccinations,
-      hasPedigree: widget.item.hasPedigree,
-      hasChip: widget.item.hasChip,
-      notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
-      location: _location.text.trim().isEmpty ? null : _location.text.trim(),
-      createdAt: widget.item.createdAt,
-      isActive: widget.item.isActive,
-      ownerId: widget.item.ownerId,
-    ));
+    await AnnouncementRepository().updateSaleAnnouncement(
+      SaleAnnouncement(
+        id: widget.item.id,
+        ownerName: widget.item.ownerName,
+        phone: widget.item.phone,
+        breed:
+            _breed.text.trim().isEmpty ? widget.item.breed : _breed.text.trim(),
+        puppyName:
+            _name.text.trim().isEmpty ? widget.item.puppyName : _name.text.trim(),
+        gender: widget.item.gender,
+        birthDate: widget.item.birthDate,
+        price: price,
+        photoUrl: widget.item.photoUrl,
+        color: widget.item.color,
+        hasVaccinations: widget.item.hasVaccinations,
+        hasPedigree: widget.item.hasPedigree,
+        hasChip: widget.item.hasChip,
+        notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
+        location: _location.text.trim().isEmpty ? null : _location.text.trim(),
+        createdAt: widget.item.createdAt,
+        isActive: widget.item.isActive,
+        ownerId: widget.item.ownerId,
+        petId: widget.item.petId,
+      ),
+    );
+    if (!mounted) return;
     Navigator.of(context).pop();
   }
 
@@ -739,8 +698,8 @@ class _EditBreedingScreenState extends State<_EditBreedingScreen> {
     super.dispose();
   }
 
-  void _save() {
-    AnnouncementRepository.updateBreedingAnnouncement(BreedingAnnouncement(
+  Future<void> _save() async {
+    await AnnouncementRepository().updateBreedingAnnouncement(BreedingAnnouncement(
       id: widget.item.id,
       ownerName: widget.item.ownerName,
       phone: widget.item.phone,
@@ -760,7 +719,9 @@ class _EditBreedingScreenState extends State<_EditBreedingScreen> {
       createdAt: widget.item.createdAt,
       isActive: widget.item.isActive,
       ownerId: widget.item.ownerId,
+      petId: widget.item.petId,
     ));
+    if (!mounted) return;
     Navigator.of(context).pop();
   }
 
@@ -1255,6 +1216,11 @@ class _BreedingDetailScreen extends StatelessWidget {
             icon: const Icon(Icons.phone),
             label: Text('Зателефонувати: ${item.phone}'),
           ),
+          if (item.ownerId != AnnouncementRepository().currentUserId)
+            _SafetyActions(
+              announcementId: item.id,
+              ownerId: item.ownerId,
+            ),
         ],
       ),
     );
@@ -1378,6 +1344,11 @@ class _SaleDetailScreen extends StatelessWidget {
             icon: const Icon(Icons.phone),
             label: Text('Зателефонувати: ${item.phone}'),
           ),
+          if (item.ownerId != AnnouncementRepository().currentUserId)
+            _SafetyActions(
+              announcementId: item.id,
+              ownerId: item.ownerId,
+            ),
         ],
       ),
     );
@@ -1385,6 +1356,102 @@ class _SaleDetailScreen extends StatelessWidget {
 }
 
 // ─── Shared Detail Widgets ────────────────────────────────────────────────────
+
+class _SafetyActions extends StatefulWidget {
+  const _SafetyActions({required this.announcementId, required this.ownerId});
+
+  final String announcementId;
+  final String? ownerId;
+
+  @override
+  State<_SafetyActions> createState() => _SafetyActionsState();
+}
+
+class _SafetyActionsState extends State<_SafetyActions> {
+  final _repository = AnnouncementRepository();
+  bool _busy = false;
+
+  Future<void> _report() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Поскаржитися на оголошення?'),
+        content: const Text(
+          'Модератори перевірять оголошення. Не використовуйте скаргу для особистих суперечок.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Скасувати')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Надіслати')),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await _run(() => _repository.reportAnnouncement(widget.announcementId),
+        success: 'Скаргу надіслано на перевірку.');
+  }
+
+  Future<void> _block() async {
+    if (widget.ownerId == null) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Заблокувати користувача?'),
+        content: const Text('Ви більше не бачитимете його оголошення.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Скасувати')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Заблокувати')),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await _run(() => _repository.blockOwner(widget.ownerId!),
+        success: 'Користувача заблоковано.');
+    if (mounted) Navigator.of(context).pop();
+  }
+
+  Future<void> _run(Future<void> Function() operation,
+      {required String success}) async {
+    setState(() => _busy = true);
+    try {
+      await operation();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(success)));
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Не вдалося виконати дію: $error')),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: _busy ? null : _report,
+              icon: const Icon(Icons.flag_outlined),
+              label: const Text('Поскаржитися'),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: _busy || widget.ownerId == null ? null : _block,
+              icon: const Icon(Icons.block_outlined),
+              label: const Text('Заблокувати'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class _DetailSection extends StatelessWidget {
   const _DetailSection({required this.title, required this.children});
