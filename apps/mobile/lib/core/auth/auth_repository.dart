@@ -97,19 +97,21 @@ class AuthRepository {
     return RegisterResult.success;
   }
 
-  Future<void> signInWithGoogle() async {
-    if (!isConfigured) return;
-    await _client.auth.signInWithOAuth(
+  Future<bool> signInWithGoogle() async {
+    if (!isConfigured) return false;
+    return _client.auth.signInWithOAuth(
       OAuthProvider.google,
       redirectTo: 'lappo://auth/callback',
+      authScreenLaunchMode: LaunchMode.externalApplication,
     );
   }
 
-  Future<void> signInWithApple() async {
-    if (!isConfigured) return;
-    await _client.auth.signInWithOAuth(
+  Future<bool> signInWithApple() async {
+    if (!isConfigured) return false;
+    return _client.auth.signInWithOAuth(
       OAuthProvider.apple,
       redirectTo: 'lappo://auth/callback',
+      authScreenLaunchMode: LaunchMode.externalApplication,
     );
   }
 

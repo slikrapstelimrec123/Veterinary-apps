@@ -1,14 +1,23 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 import 'auth_repository.dart';
 export 'auth_repository.dart' show RegisterResult;
 import 'current_user.dart';
 
 class AuthState extends ChangeNotifier {
-  AuthState(this._repository);
+  AuthState(this._repository) {
+    if (_repository.isConfigured) {
+      _authSubscription = supabase
+          .Supabase.instance.client.auth.onAuthStateChange
+          .listen(_handleAuthChange);
+    }
+  }
 
   final AuthRepository _repository;
+  StreamSubscription<supabase.AuthState>? _authSubscription;
 
   CurrentUser? currentUser;
   bool isLoading = true;
@@ -17,6 +26,25 @@ class AuthState extends ChangeNotifier {
   bool get isAuthenticated => currentUser != null;
   bool get isConfigured => _repository.isConfigured;
   bool get useMockData => _repository.useMockData;
+
+  Future<void> _handleAuthChange(supabase.AuthState state) async {
+    if (state.event == supabase.AuthChangeEvent.signedOut) {
+      currentUser = null;
+      errorMessage = null;
+      notifyListeners();
+      return;
+    }
+
+    if (state.session == null) return;
+
+    try {
+      currentUser = await _repository.getCurrentUser();
+      errorMessage = null;
+    } catch (_) {
+      errorMessage = 'Не вдалося завершити вхід. Спробуйте ще раз.';
+    }
+    notifyListeners();
+  }
 
   Future<void> bootstrap() async {
     isLoading = true;
@@ -79,7 +107,7 @@ class AuthState extends ChangeNotifier {
           errorMessage =
               'Не вдалося створити акаунт. Перевірте поля й спробуйте ще раз.';
       }
-    } on AuthException catch (e) {
+    } on supabase.AuthException catch (e) {
       if (e.message.toLowerCase().contains('already registered') ||
           e.message.toLowerCase().contains('already exists') ||
           e.statusCode == '422') {
@@ -100,7 +128,11 @@ class AuthState extends ChangeNotifier {
     errorMessage = null;
     notifyListeners();
     try {
-      await _repository.signInWithGoogle();
+      final launched = await _repository.signInWithGoogle();
+      if (!launched) {
+        errorMessage = 'Не вдалося відкрити вхід через Google.';
+        notifyListeners();
+      }
     } catch (_) {
       errorMessage = 'Не вдалося увійти через Google. Спробуйте ще раз.';
       notifyListeners();
@@ -111,7 +143,11 @@ class AuthState extends ChangeNotifier {
     errorMessage = null;
     notifyListeners();
     try {
-      await _repository.signInWithApple();
+      final launched = await _repository.signInWithApple();
+      if (!launched) {
+        errorMessage = 'Не вдалося відкрити вхід через Apple.';
+        notifyListeners();
+      }
     } catch (_) {
       errorMessage = 'Не вдалося увійти через Apple. Спробуйте ще раз.';
       notifyListeners();
@@ -122,6 +158,12 @@ class AuthState extends ChangeNotifier {
     await _repository.logout();
     currentUser = null;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _authSubscription?.cancel();
+    super.dispose();
   }
 }
 
