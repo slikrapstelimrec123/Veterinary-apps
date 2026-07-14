@@ -32,7 +32,7 @@ class AppTheme {
         centerTitle: false,
         elevation: 0,
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: surface,
         elevation: 0,
         margin: EdgeInsets.zero,
@@ -74,7 +74,7 @@ class AppTheme {
         ),
         subtitleTextStyle: TextStyle(color: textSecondary, fontSize: 12),
       ),
-      tabBarTheme: const TabBarTheme(
+      tabBarTheme: const TabBarThemeData(
         labelStyle: TextStyle(
           fontFamily: 'Montserrat',
           fontWeight: FontWeight.w700,
