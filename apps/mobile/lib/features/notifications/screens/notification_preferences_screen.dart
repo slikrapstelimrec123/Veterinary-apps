@@ -34,6 +34,15 @@ class _NotificationPreferencesScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Налаштування сповіщень збережено.')));
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Не вдалося зберегти налаштування. Спробуйте ще раз.',
+          ),
+        ),
+      );
     } finally {
       if (mounted) setState(() => isSaving = false);
     }

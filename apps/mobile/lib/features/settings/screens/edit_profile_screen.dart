@@ -51,6 +51,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    final auth = AuthScope.of(context);
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -76,18 +77,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       final newEmail = _emailController.text.trim();
       final emailChanged = newEmail.isNotEmpty && newEmail != _currentEmail;
 
-      if (!SupabaseConfig.useMockData) {
-        final uid = Supabase.instance.client.auth.currentUser?.id;
-        if (uid != null) {
-          await Supabase.instance.client.from('profiles').update({
-            'full_name': _nameController.text.trim(),
-            'phone': _phoneController.text.trim().isEmpty
-                ? null
-                : _phoneController.text.trim(),
-            'city': _cityController.text.trim(),
-          }).eq('id', uid);
-        }
+      await auth.updateProfile(
+        fullName: _nameController.text.trim(),
+        phone: _phoneController.text.trim().isEmpty
+            ? null
+            : _phoneController.text.trim(),
+        city: _cityController.text.trim(),
+      );
 
+      if (!SupabaseConfig.useMockData) {
         if (emailChanged) {
           await Supabase.instance.client.auth.updateUser(
             UserAttributes(email: newEmail),

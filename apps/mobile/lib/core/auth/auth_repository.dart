@@ -47,6 +47,49 @@ class AuthRepository {
     );
   }
 
+  Future<CurrentUser> updateProfile({
+    required String fullName,
+    required String city,
+    String? phone,
+  }) async {
+    if (useMockData) {
+      return CurrentUser(
+        id: 'mock_pet_owner',
+        email: 'owner@example.com',
+        fullName: fullName,
+        role: UserRole.petOwner,
+        phone: phone,
+        city: city,
+      );
+    }
+
+    final user = _client.auth.currentUser;
+    if (user == null) {
+      throw const AuthException('Authentication required');
+    }
+
+    final profile = await _client
+        .from('profiles')
+        .update({
+          'full_name': fullName,
+          'phone': phone,
+          'city': city,
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        })
+        .eq('id', user.id)
+        .select('id,email,full_name,role,phone,city')
+        .single();
+
+    return CurrentUser(
+      id: profile['id'] as String,
+      email: profile['email'] as String? ?? user.email ?? '',
+      fullName: profile['full_name'] as String? ?? fullName,
+      role: CurrentUser.roleFromString(profile['role'] as String?),
+      phone: profile['phone'] as String?,
+      city: profile['city'] as String?,
+    );
+  }
+
   Future<CurrentUser?> login(
       {required String email, required String password}) async {
     if (!isConfigured) {

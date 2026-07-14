@@ -6,6 +6,7 @@ import '../../../core/auth/auth_state.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../notifications/screens/notification_preferences_screen.dart';
 import 'account_deletion_screen.dart';
+import 'data_export_screen.dart';
 import 'edit_profile_screen.dart';
 import 'legal_text_screen.dart';
 
@@ -40,7 +41,13 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 title: Text(user?.fullName ?? 'Власник тварини',
                     style: const TextStyle(fontWeight: FontWeight.w700)),
-                subtitle: Text(user?.email ?? ''),
+                subtitle: Text(
+                  [user?.email, user?.phone]
+                      .whereType<String>()
+                      .where((value) => value.isNotEmpty)
+                      .join('\n'),
+                ),
+                isThreeLine: user?.phone?.isNotEmpty == true,
                 trailing: IconButton(
                   icon: const Icon(Icons.edit_outlined),
                   tooltip: 'Редагувати профіль',
@@ -138,12 +145,8 @@ class SettingsScreen extends StatelessWidget {
               Divider(height: 1),
               _SettingsLink(
                 icon: Icons.download_outlined,
-                title: 'Запит на експорт даних',
-                screen: LegalTextScreen.placeholder(
-                  title: 'Запит на експорт даних',
-                  body:
-                      'Автоматичний експорт медичних даних буде реалізовано пізніше. Зверніться до підтримки для ручного запиту.',
-                ),
+                title: 'Експорт даних і файлів',
+                screen: DataExportScreen(),
               ),
               Divider(height: 1),
               _SettingsLink(

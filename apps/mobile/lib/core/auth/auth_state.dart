@@ -34,9 +34,8 @@ class AuthState extends ChangeNotifier {
   bool get useMockData => _repository.useMockData;
 
   Future<void> _handleOAuthCallback(Uri uri) async {
-    final isOAuthCallback = uri.scheme == 'lappo' &&
-        uri.host == 'auth' &&
-        uri.path == '/callback';
+    final isOAuthCallback =
+        uri.scheme == 'lappo' && uri.host == 'auth' && uri.path == '/callback';
     if (!isOAuthCallback) return;
 
     isLoading = true;
@@ -195,6 +194,19 @@ class AuthState extends ChangeNotifier {
   Future<void> logout() async {
     await _repository.logout();
     currentUser = null;
+    notifyListeners();
+  }
+
+  Future<void> updateProfile({
+    required String fullName,
+    required String city,
+    String? phone,
+  }) async {
+    currentUser = await _repository.updateProfile(
+      fullName: fullName,
+      city: city,
+      phone: phone,
+    );
     notifyListeners();
   }
 

@@ -72,18 +72,10 @@ class NotificationRepository {
       return MockData.notificationPreferences;
     }
 
-    final userId = _client.auth.currentUser!.id;
-    await _client.from('notification_preferences').upsert(
-        const NotificationPreferences().toJson(userId),
-        onConflict: 'user_id');
-    final row = await _client
-        .from('notification_preferences')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle();
-    return row == null
-        ? const NotificationPreferences()
-        : NotificationPreferences.fromJson(row);
+    final row = await _client.rpc('get_my_notification_preferences');
+    return NotificationPreferences.fromJson(
+      Map<String, dynamic>.from(row as Map),
+    );
   }
 
   Future<void> savePreferences(NotificationPreferences preferences) async {
@@ -92,8 +84,15 @@ class NotificationRepository {
       return;
     }
 
-    await _client.from('notification_preferences').upsert(
-        preferences.toJson(_client.auth.currentUser!.id),
-        onConflict: 'user_id');
+    await _client.rpc(
+      'save_my_notification_preferences',
+      params: {
+        'p_in_app_enabled': preferences.inAppEnabled,
+        'p_appointment_reminders_enabled':
+            preferences.appointmentRemindersEnabled,
+        'p_treatment_updates_enabled': preferences.treatmentUpdatesEnabled,
+        'p_review_requests_enabled': preferences.reviewRequestsEnabled,
+      },
+    );
   }
 }
