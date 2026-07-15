@@ -112,9 +112,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
               content: Text('Не вдалося зберегти профіль. Спробуйте ще раз.'),
-              duration: const Duration(seconds: 8)),
+              duration: Duration(seconds: 8)),
         );
       }
     } finally {
