@@ -1445,10 +1445,10 @@ class _SafetyActionsState extends State<_SafetyActions> {
       await operation();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(success)));
-    } catch (error) {
+    } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Не вдалося виконати дію: $error')),
+        const SnackBar(content: Text('Не вдалося виконати дію. Спробуйте ще раз.')),
       );
     } finally {
       if (mounted) setState(() => _busy = false);

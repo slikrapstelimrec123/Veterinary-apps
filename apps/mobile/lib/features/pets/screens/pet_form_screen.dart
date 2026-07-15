@@ -314,8 +314,9 @@ class _PetFormScreenState extends State<PetFormScreen> {
       }
       if (!mounted) return;
       Navigator.of(context).pop(saved);
-    } catch (e) {
-      setState(() => error = 'Помилка збереження: ${e.toString()}');
+    } catch (_) {
+      setState(() => error =
+          'Не вдалося зберегти тварину. Перевірте дані та спробуйте ще раз.');
     } finally {
       if (mounted) setState(() => isSaving = false);
     }

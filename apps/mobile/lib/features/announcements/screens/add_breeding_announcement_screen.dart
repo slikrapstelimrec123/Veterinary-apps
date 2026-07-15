@@ -75,11 +75,12 @@ class _AddBreedingAnnouncementScreenState
       await _repo.addBreedingAnnouncement(announcement);
       if (!mounted) return;
       Navigator.of(context).pop(true);
-    } catch (error) {
+    } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Не вдалося опублікувати оголошення: $error')),
+        const SnackBar(
+            content: Text('Не вдалося опублікувати оголошення. Спробуйте ще раз.')),
       );
     }
   }

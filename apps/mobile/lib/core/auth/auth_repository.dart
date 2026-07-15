@@ -114,6 +114,7 @@ class AuthRepository {
     final response = await _client.auth.signUp(
       email: email,
       password: password,
+      emailRedirectTo: 'lappo://auth/callback',
       data: {
         'full_name': fullName,
         'role': 'pet_owner',
@@ -164,5 +165,10 @@ class AuthRepository {
     }
 
     await _client.auth.signOut();
+  }
+
+  Future<void> updatePassword(String password) async {
+    if (!isConfigured) return;
+    await _client.auth.updateUser(UserAttributes(password: password));
   }
 }

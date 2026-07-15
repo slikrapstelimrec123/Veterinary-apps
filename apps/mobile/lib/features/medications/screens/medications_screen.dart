@@ -146,10 +146,10 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
           _loading = false;
         });
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         setState(() {
-          _error = e.toString();
+          _error = 'Не вдалося завантажити дані про ліки.';
           _loading = false;
         });
       }

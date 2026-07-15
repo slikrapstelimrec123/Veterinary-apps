@@ -17,8 +17,9 @@ class _DataExportScreenState extends State<DataExportScreen> {
 
   Future<void> _export() async {
     setState(() => _isExporting = true);
+    DataExportResult? result;
     try {
-      final result = await _service.createExport();
+      result = await _service.createExport();
       if (!mounted) return;
       await Share.shareXFiles(
           [XFile(result.file.path, mimeType: 'application/zip')],
@@ -34,6 +35,15 @@ class _DataExportScreenState extends State<DataExportScreen> {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('Не вдалося створити експорт. Спробуйте ще раз.')));
     } finally {
+      final temporaryFile = result?.file;
+      if (temporaryFile != null) {
+        try {
+          if (await temporaryFile.exists()) await temporaryFile.delete();
+        } catch (_) {
+          // The OS may still hold the shared file briefly; the temporary
+          // directory remains isolated and will be cleaned by the platform.
+        }
+      }
       if (mounted) setState(() => _isExporting = false);
     }
   }

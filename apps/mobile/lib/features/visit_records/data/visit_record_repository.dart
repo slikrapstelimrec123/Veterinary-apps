@@ -6,6 +6,13 @@ import '../domain/visit_document.dart';
 import '../domain/visit_record.dart';
 
 class VisitRecordRepository {
+  static const _ownerSafeColumns =
+      'id,appointment_id,clinic_id,doctor_id,pet_id,created_by,visit_date,'
+      'reason,diagnosis,treatment_notes,recommendations,follow_up_at,status,'
+      'created_at,updated_at,owner_id,reason_for_visit,symptoms,'
+      'procedures_performed,prescribed_medications,next_visit_recommended,'
+      'next_visit_date';
+
   bool get _useMockData => SupabaseConfig.useMockData;
   SupabaseClient get _client => Supabase.instance.client;
 
@@ -20,7 +27,7 @@ class VisitRecordRepository {
 
     final rows = await _client
         .from('visit_records')
-        .select('*')
+        .select(_ownerSafeColumns)
         .eq('pet_id', petId)
         .order('visit_date', ascending: false);
 
@@ -40,7 +47,7 @@ class VisitRecordRepository {
 
     final row = await _client
         .from('visit_records')
-        .select('*')
+        .select(_ownerSafeColumns)
         .eq('id', id)
         .maybeSingle();
 
@@ -58,7 +65,7 @@ class VisitRecordRepository {
 
     final row = await _client
         .from('visit_records')
-        .select('*')
+        .select(_ownerSafeColumns)
         .eq('appointment_id', appointmentId)
         .maybeSingle();
 

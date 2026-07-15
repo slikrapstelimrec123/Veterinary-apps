@@ -27,6 +27,7 @@ class AuthState extends ChangeNotifier {
 
   CurrentUser? currentUser;
   bool isLoading = true;
+  bool passwordRecoveryRequired = false;
   String? errorMessage;
 
   bool get isAuthenticated => currentUser != null;
@@ -34,9 +35,12 @@ class AuthState extends ChangeNotifier {
   bool get useMockData => _repository.useMockData;
 
   Future<void> _handleOAuthCallback(Uri uri) async {
-    final isOAuthCallback =
-        uri.scheme == 'lappo' && uri.host == 'auth' && uri.path == '/callback';
-    if (!isOAuthCallback) return;
+    final isAuthLink = uri.scheme == 'lappo' &&
+        uri.host == 'auth' &&
+        (uri.path == '/callback' || uri.path == '/reset-password');
+    if (!isAuthLink) return;
+
+    final isPasswordRecovery = uri.path == '/reset-password';
 
     isLoading = true;
     errorMessage = null;
@@ -44,22 +48,27 @@ class AuthState extends ChangeNotifier {
 
     try {
       await supabase.Supabase.instance.client.auth.getSessionFromUrl(uri);
-      currentUser = await _repository.getCurrentUser();
-      if (currentUser == null) {
-        throw StateError('Профіль користувача не знайдено.');
+      passwordRecoveryRequired = isPasswordRecovery;
+      if (!isPasswordRecovery) {
+        currentUser = await _repository.getCurrentUser();
+        if (currentUser == null) {
+          throw StateError('Профіль користувача не знайдено.');
+        }
       }
     } on supabase.AuthException catch (error) {
-      errorMessage = 'Не вдалося завершити вхід: ${error.message}';
-    } catch (error) {
-      errorMessage = 'Не вдалося завершити вхід: $error';
+      errorMessage = error.message.toLowerCase().contains('expired')
+          ? 'Посилання недійсне або вже протерміноване. Запросіть нове.'
+          : 'Не вдалося завершити безпечний вхід. Спробуйте ще раз.';
+    } catch (_) {
+      errorMessage = 'Не вдалося завершити безпечний вхід. Спробуйте ще раз.';
     } finally {
       isLoading = false;
       notifyListeners();
     }
   }
 
-  void _handleDeepLinkError(Object error) {
-    errorMessage = 'Не вдалося відкрити посилання входу: $error';
+  void _handleDeepLinkError(Object _) {
+    errorMessage = 'Не вдалося відкрити безпечне посилання. Спробуйте ще раз.';
     isLoading = false;
     notifyListeners();
   }
@@ -67,12 +76,21 @@ class AuthState extends ChangeNotifier {
   Future<void> _handleAuthChange(supabase.AuthState state) async {
     if (state.event == supabase.AuthChangeEvent.signedOut) {
       currentUser = null;
+      passwordRecoveryRequired = false;
       errorMessage = null;
       notifyListeners();
       return;
     }
 
     if (state.session == null) return;
+
+    if (state.event == supabase.AuthChangeEvent.passwordRecovery) {
+      passwordRecoveryRequired = true;
+      isLoading = false;
+      errorMessage = null;
+      notifyListeners();
+      return;
+    }
 
     try {
       currentUser = await _repository.getCurrentUser();
@@ -151,10 +169,12 @@ class AuthState extends ChangeNotifier {
         errorMessage =
             'Ця електронна пошта вже зареєстрована. Спробуйте увійти.';
       } else {
-        errorMessage = 'Помилка: ${e.message}';
+        errorMessage =
+            'Не вдалося створити акаунт. Перевірте дані та спробуйте ще раз.';
       }
-    } catch (e) {
-      errorMessage = 'Помилка: ${e.toString()}';
+    } catch (_) {
+      errorMessage =
+          'Не вдалося створити акаунт. Перевірте дані та спробуйте ще раз.';
     } finally {
       isLoading = false;
       notifyListeners();
@@ -194,7 +214,30 @@ class AuthState extends ChangeNotifier {
   Future<void> logout() async {
     await _repository.logout();
     currentUser = null;
+    passwordRecoveryRequired = false;
     notifyListeners();
+  }
+
+  Future<bool> updatePassword(String password) async {
+    isLoading = true;
+    errorMessage = null;
+    notifyListeners();
+    try {
+      await _repository.updatePassword(password);
+      passwordRecoveryRequired = false;
+      currentUser = await _repository.getCurrentUser();
+      return true;
+    } on supabase.AuthException {
+      errorMessage =
+          'Не вдалося змінити пароль. Запросіть нове посилання та спробуйте ще раз.';
+      return false;
+    } catch (_) {
+      errorMessage = 'Не вдалося змінити пароль. Спробуйте ще раз.';
+      return false;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
   }
 
   Future<void> updateProfile({

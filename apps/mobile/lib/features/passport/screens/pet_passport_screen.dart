@@ -143,12 +143,12 @@ class _PassportPhotoSectionState extends State<_PassportPhotoSection> {
           const SnackBar(content: Text('Фото паспорта збережено.')),
         );
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Помилка: $e'),
-              duration: const Duration(seconds: 8)),
+          const SnackBar(
+              content: Text('Не вдалося зберегти фото паспорта.'),
+              duration: Duration(seconds: 6)),
         );
       }
     } finally {

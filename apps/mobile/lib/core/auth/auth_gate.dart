@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../features/auth/screens/login_screen.dart';
+import '../../features/auth/screens/reset_password_screen.dart';
 import '../../features/auth/screens/role_message_screen.dart';
 import '../navigation/app_shell.dart';
 import 'auth_state.dart';
@@ -16,6 +17,10 @@ class AuthGate extends StatelessWidget {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
+    }
+
+    if (auth.passwordRecoveryRequired) {
+      return const ResetPasswordScreen();
     }
 
     final user = auth.currentUser;

@@ -61,12 +61,12 @@ class _IncomingTransfersScreenState extends State<IncomingTransfersScreen> {
             backgroundColor: AppTheme.success),
       );
       _refresh();
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
             content: Text(
-                '\u041f\u043e\u043c\u0438\u043b\u043a\u0430: ${e.toString()}'),
+                '\u041d\u0435 \u0432\u0434\u0430\u043b\u043e\u0441\u044f \u043f\u0440\u0438\u0439\u043d\u044f\u0442\u0438 \u0437\u0430\u043f\u0438\u0442. \u0421\u043f\u0440\u043e\u0431\u0443\u0439\u0442\u0435 \u0449\u0435 \u0440\u0430\u0437.'),
             backgroundColor: AppTheme.danger),
       );
     }
@@ -96,12 +96,12 @@ class _IncomingTransfersScreenState extends State<IncomingTransfersScreen> {
     try {
       await _repo.declineTransfer(transfer.id);
       _refresh();
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
             content: Text(
-                '\u041f\u043e\u043c\u0438\u043b\u043a\u0430: ${e.toString()}'),
+                '\u041d\u0435 \u0432\u0434\u0430\u043b\u043e\u0441\u044f \u0432\u0456\u0434\u0445\u0438\u043b\u0438\u0442\u0438 \u0437\u0430\u043f\u0438\u0442. \u0421\u043f\u0440\u043e\u0431\u0443\u0439\u0442\u0435 \u0449\u0435 \u0440\u0430\u0437.'),
             backgroundColor: AppTheme.danger),
       );
     }

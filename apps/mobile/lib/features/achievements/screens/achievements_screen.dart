@@ -469,12 +469,12 @@ class _AchievementFormState extends State<_AchievementForm> {
       );
       await widget.onSave(a);
       if (mounted) Navigator.of(context).pop(true);
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Помилка: $e'),
-              duration: const Duration(seconds: 10)),
+          const SnackBar(
+              content: Text('Не вдалося зберегти подію. Спробуйте ще раз.'),
+              duration: Duration(seconds: 6)),
         );
       }
     } finally {

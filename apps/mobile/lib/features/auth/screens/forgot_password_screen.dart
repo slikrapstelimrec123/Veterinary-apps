@@ -39,7 +39,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       if (SupabaseConfig.useMockData) {
         await Future.delayed(const Duration(seconds: 1));
       } else {
-        await Supabase.instance.client.auth.resetPasswordForEmail(email);
+        await Supabase.instance.client.auth.resetPasswordForEmail(
+          email,
+          redirectTo: 'lappo://auth/reset-password',
+        );
       }
       if (mounted) {
         setState(() => _sent = true);

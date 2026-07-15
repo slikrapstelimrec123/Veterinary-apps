@@ -43,10 +43,10 @@ class _FeedingScreenState extends State<FeedingScreen> {
           _loading = false;
         });
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         setState(() {
-          _error = e.toString();
+          _error = 'Не вдалося завантажити дані про харчування.';
           _loading = false;
         });
       }
