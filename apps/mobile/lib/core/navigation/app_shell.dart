@@ -73,7 +73,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
           table: 'notifications',
           filter: PostgresChangeFilter(
             type: PostgresChangeFilterType.eq,
-            column: 'recipient_user_id',
+            column: 'user_id',
             value: user.id,
           ),
           callback: (payload) {

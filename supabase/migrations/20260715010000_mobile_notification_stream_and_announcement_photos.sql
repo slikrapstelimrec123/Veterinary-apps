@@ -6,6 +6,10 @@ alter table public.pet_achievements
   add column if not exists award_image_path text,
   add column if not exists event_photo_path text;
 
+alter table public.notifications
+  add column if not exists pet_id uuid references public.pets(id) on delete set null,
+  add column if not exists data jsonb not null default '{}'::jsonb;
+
 alter table public.announcements
   add column if not exists photo_storage_path text;
 
@@ -49,32 +53,6 @@ using (
   and public.can_read_published_announcement_photo(name)
 );
 
-alter table public.notifications
-  drop constraint if exists notifications_type_check;
-alter table public.notifications
-  add constraint notifications_type_check check (
-    type in (
-      'appointment_created',
-      'appointment_confirmed',
-      'appointment_cancelled_by_clinic',
-      'appointment_reminder_24h',
-      'appointment_reminder_2h',
-      'visit_record_published',
-      'document_uploaded',
-      'next_visit_recommended',
-      'review_request',
-      'clinic_message_placeholder',
-      'new_appointment_request',
-      'appointment_cancelled_by_owner',
-      'appointment_upcoming_today',
-      'visit_record_missing',
-      'review_received',
-      'subscription_limit_warning',
-      'subscription_upgrade_request_status',
-      'pet_transfer_request'
-    )
-  );
-
 create or replace function public.notify_pet_transfer_recipient()
 returns trigger
 language plpgsql
@@ -90,7 +68,7 @@ begin
 
   select name into pet_name from public.pets where id = new.pet_id;
   insert into public.notifications (
-    recipient_user_id,
+    user_id,
     pet_id,
     type,
     title,
@@ -115,7 +93,7 @@ after insert on public.pet_transfers
 for each row execute function public.notify_pet_transfer_recipient();
 
 insert into public.notifications (
-  recipient_user_id,
+  user_id,
   pet_id,
   type,
   title,
