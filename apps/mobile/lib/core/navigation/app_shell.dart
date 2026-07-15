@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../features/announcements/screens/announcements_screen.dart';
 import '../../features/medications/data/medication_repository.dart';
 import '../../features/medications/screens/medications_screen.dart';
 import '../../features/notifications/data/notification_repository.dart';
+import '../../features/notifications/domain/app_notification.dart';
 import '../../features/notifications/screens/notifications_screen.dart';
 import '../../features/pets/data/pet_repository.dart';
 import '../../features/pets/domain/pet.dart';
@@ -17,6 +19,8 @@ import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/error_state.dart';
 import '../../shared/widgets/pet_avatar.dart';
 import '../auth/auth_state.dart';
+import '../config/supabase_config.dart';
+import '../notifications/local_notification_service.dart';
 import '../theme/app_theme.dart';
 
 class AppShell extends StatefulWidget {
@@ -28,8 +32,54 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   int _index = 0;
+  RealtimeChannel? _notificationChannel;
   final notificationRepository = NotificationRepository();
   late Future<int> unreadFuture = notificationRepository.getUnreadCount();
+
+  @override
+  void initState() {
+    super.initState();
+    _configureSystemNotifications();
+  }
+
+  Future<void> _configureSystemNotifications() async {
+    if (SupabaseConfig.useMockData) return;
+
+    final client = Supabase.instance.client;
+    final user = client.auth.currentUser;
+    if (user == null) return;
+
+    await LocalNotificationService.instance.initialize();
+    await LocalNotificationService.instance.requestPermission();
+
+    _notificationChannel = client
+        .channel('mobile-notifications-${user.id}')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.insert,
+          schema: 'public',
+          table: 'notifications',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'recipient_user_id',
+            value: user.id,
+          ),
+          callback: (payload) {
+            final notification = AppNotification.fromJson(payload.newRecord);
+            LocalNotificationService.instance.show(notification);
+            if (mounted) refreshUnreadCount();
+          },
+        )
+        .subscribe();
+  }
+
+  @override
+  void dispose() {
+    final channel = _notificationChannel;
+    if (channel != null && SupabaseConfig.isConfigured) {
+      Supabase.instance.client.removeChannel(channel);
+    }
+    super.dispose();
+  }
 
   void refreshUnreadCount() {
     setState(() {
@@ -519,7 +569,7 @@ class _HomePetPreview extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Card(
         child: ListTile(
-          leading: PetAvatar(name: pet.name),
+          leading: PetAvatar(name: pet.name, avatarUrl: pet.avatarUrl),
           title: Text(pet.name,
               style: const TextStyle(fontWeight: FontWeight.w700)),
           subtitle:

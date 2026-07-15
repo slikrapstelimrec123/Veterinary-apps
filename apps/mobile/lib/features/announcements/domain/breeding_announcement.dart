@@ -8,6 +8,7 @@ class BreedingAnnouncement {
     required this.myDogGender,
     required this.myDogAge,
     this.myDogPhotoUrl,
+    this.photoStoragePath,
     this.desiredBreed,
     this.conditions,
     this.notes,
@@ -26,6 +27,7 @@ class BreedingAnnouncement {
   final String myDogGender;
   final int myDogAge;
   final String? myDogPhotoUrl;
+  final String? photoStoragePath;
   final String? desiredBreed;
   final String? conditions;
   final String? notes;
@@ -45,6 +47,7 @@ class BreedingAnnouncement {
       myDogGender: (json['gender'] as String?) ?? 'unknown',
       myDogAge: (json['age_years'] as num?)?.toInt() ?? 0,
       myDogPhotoUrl: json['photo_url'] as String?,
+      photoStoragePath: json['photo_storage_path'] as String?,
       desiredBreed: json['desired_breed'] as String?,
       conditions: json['conditions'] as String?,
       notes: json['description'] as String?,
@@ -67,6 +70,7 @@ class BreedingAnnouncement {
         'gender': myDogGender,
         'age_years': myDogAge,
         'photo_url': myDogPhotoUrl,
+        'photo_storage_path': photoStoragePath,
         'desired_breed': desiredBreed,
         'conditions': conditions,
         'description': notes,

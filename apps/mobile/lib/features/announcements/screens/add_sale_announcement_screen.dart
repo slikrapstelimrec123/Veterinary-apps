@@ -55,6 +55,7 @@ class _AddSaleAnnouncementScreenState extends State<AddSaleAnnouncementScreen> {
       birthDate: widget.pet.birthDate ?? DateTime.now(),
       price: _isFree ? 0 : (int.tryParse(_priceController.text.trim()) ?? 0),
       photoUrl: widget.pet.avatarUrl,
+      photoStoragePath: widget.pet.avatarStoragePath,
       color: widget.pet.color,
       hasVaccinations: _hasVaccinations,
       hasPedigree: _hasPedigree,

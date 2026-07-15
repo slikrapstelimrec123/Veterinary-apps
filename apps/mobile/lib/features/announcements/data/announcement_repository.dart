@@ -1,6 +1,8 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase_config.dart';
+import '../../../shared/services/private_pet_storage.dart';
+import '../../pets/data/pet_repository.dart';
 import '../domain/breeding_announcement.dart';
 import '../domain/sale_announcement.dart';
 
@@ -30,8 +32,9 @@ class AnnouncementRepository {
     if (breed != null && breed.isNotEmpty) query = query.ilike('breed', '%$breed%');
     if (city != null && city.isNotEmpty) query = query.ilike('city', '%$city%');
     final rows = await query.order('created_at', ascending: false);
-    return (rows as List)
-        .map((row) => BreedingAnnouncement.fromJson(row as Map<String, dynamic>))
+    final hydratedRows = await _hydrateMyPetPhotos(rows as List);
+    return hydratedRows
+        .map(BreedingAnnouncement.fromJson)
         .toList();
   }
 
@@ -47,8 +50,9 @@ class AnnouncementRepository {
     if (breed != null && breed.isNotEmpty) query = query.ilike('breed', '%$breed%');
     if (city != null && city.isNotEmpty) query = query.ilike('city', '%$city%');
     final rows = await query.order('created_at', ascending: false);
-    return (rows as List)
-        .map((row) => SaleAnnouncement.fromJson(row as Map<String, dynamic>))
+    final hydratedRows = await _hydrateMyPetPhotos(rows as List);
+    return hydratedRows
+        .map(SaleAnnouncement.fromJson)
         .toList();
   }
 
@@ -70,8 +74,9 @@ class AnnouncementRepository {
         .eq('owner_id', currentUserId!)
         .eq('status', active ? 'active' : 'inactive')
         .order('created_at', ascending: false);
-    return (rows as List)
-        .map((row) => SaleAnnouncement.fromJson(row as Map<String, dynamic>))
+    final hydratedRows = await _hydrateMyPetPhotos(rows as List);
+    return hydratedRows
+        .map(SaleAnnouncement.fromJson)
         .toList();
   }
 
@@ -89,8 +94,9 @@ class AnnouncementRepository {
         .eq('owner_id', currentUserId!)
         .eq('status', active ? 'active' : 'inactive')
         .order('created_at', ascending: false);
-    return (rows as List)
-        .map((row) => BreedingAnnouncement.fromJson(row as Map<String, dynamic>))
+    final hydratedRows = await _hydrateMyPetPhotos(rows as List);
+    return hydratedRows
+        .map(BreedingAnnouncement.fromJson)
         .toList();
   }
 
@@ -129,6 +135,7 @@ class AnnouncementRepository {
             id: item.id, ownerName: item.ownerName, phone: item.phone,
             breed: item.breed, puppyName: item.puppyName, gender: item.gender,
             birthDate: item.birthDate, price: item.price, photoUrl: item.photoUrl,
+            photoStoragePath: item.photoStoragePath,
             color: item.color, hasVaccinations: item.hasVaccinations,
             hasPedigree: item.hasPedigree, hasChip: item.hasChip,
             notes: item.notes, location: item.location, createdAt: item.createdAt,
@@ -144,6 +151,7 @@ class AnnouncementRepository {
             breed: item.breed, myDogName: item.myDogName,
             myDogGender: item.myDogGender, myDogAge: item.myDogAge,
             myDogPhotoUrl: item.myDogPhotoUrl, desiredBreed: item.desiredBreed,
+            photoStoragePath: item.photoStoragePath,
             conditions: item.conditions, notes: item.notes,
             location: item.location, createdAt: item.createdAt,
             isActive: !item.isActive, ownerId: item.ownerId, petId: item.petId,
@@ -217,6 +225,36 @@ class AnnouncementRepository {
       'blocker_id': _requireUserId(),
       'blocked_user_id': ownerId,
     });
+  }
+
+  Future<List<Map<String, dynamic>>> _hydrateMyPetPhotos(List rows) async {
+    final result = rows
+        .map((row) => Map<String, dynamic>.from(row as Map))
+        .toList();
+    final userId = currentUserId;
+    final repository = PetRepository();
+    await Future.wait(result.map((row) async {
+      final storagePath = row['photo_storage_path'] as String?;
+      if (storagePath?.isNotEmpty == true) {
+        try {
+          row['photo_url'] = await PrivatePetStorage.signedUrl(storagePath);
+          return;
+        } catch (_) {
+          // Fall through to the owner's pet record for legacy announcements.
+        }
+      }
+      final petId = row['pet_id'] as String?;
+      if (userId == null || petId == null || row['owner_id'] != userId) return;
+      try {
+        final pet = await repository.getPet(petId);
+        if (pet?.avatarUrl?.isNotEmpty == true) {
+          row['photo_url'] = pet!.avatarUrl;
+        }
+      } catch (_) {
+        // Keep the announcement usable when its optional pet photo is unavailable.
+      }
+    }));
+    return result;
   }
 
   List<String> getBreedingBreeds() => _sorted(_breedingMock.map((e) => e.breed));

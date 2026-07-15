@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/foundation.dart';
 
 import '../../../core/auth/auth_state.dart';
 import '../../../shared/widgets/app_scaffold.dart';
@@ -70,10 +69,8 @@ class SettingsScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        if (!kReleaseMode) ...[
-          _InviteCard(),
-          const SizedBox(height: 12),
-        ],
+        _InviteCard(),
+        const SizedBox(height: 12),
         Card(
           child: Column(
             children: [

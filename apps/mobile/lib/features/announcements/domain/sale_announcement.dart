@@ -9,6 +9,7 @@ class SaleAnnouncement {
     required this.birthDate,
     required this.price,
     this.photoUrl,
+    this.photoStoragePath,
     this.color,
     this.hasVaccinations,
     this.hasPedigree,
@@ -30,6 +31,7 @@ class SaleAnnouncement {
   final DateTime birthDate;
   final int price;
   final String? photoUrl;
+  final String? photoStoragePath;
   final String? color;
   final bool? hasVaccinations;
   final bool? hasPedigree;
@@ -53,6 +55,7 @@ class SaleAnnouncement {
           DateTime.now(),
       price: (json['price_amount'] as num?)?.toInt() ?? 0,
       photoUrl: json['photo_url'] as String?,
+      photoStoragePath: json['photo_storage_path'] as String?,
       color: json['color'] as String?,
       hasVaccinations: json['has_vaccinations'] as bool?,
       hasPedigree: json['has_pedigree'] as bool?,
@@ -78,6 +81,7 @@ class SaleAnnouncement {
         'birth_date': birthDate.toIso8601String().split('T').first,
         'price_amount': price,
         'photo_url': photoUrl,
+        'photo_storage_path': photoStoragePath,
         'color': color,
         'has_vaccinations': hasVaccinations,
         'has_pedigree': hasPedigree,

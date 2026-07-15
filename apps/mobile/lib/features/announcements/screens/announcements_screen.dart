@@ -603,6 +603,7 @@ class _EditSaleScreenState extends State<_EditSaleScreen> {
         birthDate: widget.item.birthDate,
         price: price,
         photoUrl: widget.item.photoUrl,
+        photoStoragePath: widget.item.photoStoragePath,
         color: widget.item.color,
         hasVaccinations: widget.item.hasVaccinations,
         hasPedigree: widget.item.hasPedigree,
@@ -711,6 +712,7 @@ class _EditBreedingScreenState extends State<_EditBreedingScreen> {
       myDogGender: widget.item.myDogGender,
       myDogAge: widget.item.myDogAge,
       myDogPhotoUrl: widget.item.myDogPhotoUrl,
+      photoStoragePath: widget.item.photoStoragePath,
       desiredBreed: widget.item.desiredBreed,
       conditions:
           _conditions.text.trim().isEmpty ? null : _conditions.text.trim(),
