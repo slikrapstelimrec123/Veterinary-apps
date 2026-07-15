@@ -30,8 +30,9 @@ class AppShell extends StatefulWidget {
   State<AppShell> createState() => _AppShellState();
 }
 
-class _AppShellState extends State<AppShell> {
+class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   int _index = 0;
+  final _tabVersions = List<int>.filled(5, 0);
   RealtimeChannel? _notificationChannel;
   final notificationRepository = NotificationRepository();
   late Future<int> unreadFuture = notificationRepository.getUnreadCount();
@@ -39,7 +40,19 @@ class _AppShellState extends State<AppShell> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _configureSystemNotifications();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed || !mounted) return;
+    setState(() {
+      for (var index = 0; index < _tabVersions.length; index++) {
+        _tabVersions[index]++;
+      }
+      unreadFuture = notificationRepository.getUnreadCount();
+    });
   }
 
   Future<void> _configureSystemNotifications() async {
@@ -66,7 +79,10 @@ class _AppShellState extends State<AppShell> {
           callback: (payload) {
             final notification = AppNotification.fromJson(payload.newRecord);
             LocalNotificationService.instance.show(notification);
-            if (mounted) refreshUnreadCount();
+            if (mounted) {
+              _tabVersions[3]++;
+              refreshUnreadCount();
+            }
           },
         )
         .subscribe();
@@ -74,6 +90,7 @@ class _AppShellState extends State<AppShell> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     final channel = _notificationChannel;
     if (channel != null && SupabaseConfig.isConfigured) {
       Supabase.instance.client.removeChannel(channel);
@@ -90,11 +107,16 @@ class _AppShellState extends State<AppShell> {
   @override
   Widget build(BuildContext context) {
     final tabs = [
-      HomeScreen(onOpenPets: () => setState(() => _index = 1)),
-      const PetListScreen(),
-      const AnnouncementsScreen(),
-      const NotificationsScreen(),
-      const SettingsScreen(),
+      HomeScreen(
+          key: ValueKey('home-${_tabVersions[0]}'),
+          onOpenPets: () => setState(() {
+                _index = 1;
+                _tabVersions[1]++;
+              })),
+      PetListScreen(key: ValueKey('pets-${_tabVersions[1]}')),
+      AnnouncementsScreen(key: ValueKey('announcements-${_tabVersions[2]}')),
+      NotificationsScreen(key: ValueKey('notifications-${_tabVersions[3]}')),
+      SettingsScreen(key: ValueKey('settings-${_tabVersions[4]}')),
     ];
 
     return Scaffold(
@@ -107,7 +129,10 @@ class _AppShellState extends State<AppShell> {
             selectedIndex: _index,
             labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
             onDestinationSelected: (value) {
-              setState(() => _index = value);
+              setState(() {
+                _index = value;
+                _tabVersions[value]++;
+              });
               if (value == 3) refreshUnreadCount();
             },
             destinations: [

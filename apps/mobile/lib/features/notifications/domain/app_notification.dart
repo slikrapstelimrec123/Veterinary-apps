@@ -10,6 +10,7 @@ class AppNotification {
     this.visitRecordId,
     this.documentId,
     this.reviewId,
+    this.transferId,
   });
 
   final String id;
@@ -22,6 +23,7 @@ class AppNotification {
   final String? visitRecordId;
   final String? documentId;
   final String? reviewId;
+  final String? transferId;
 
   bool get isUnread => status == 'unread';
 
@@ -37,10 +39,14 @@ class AppNotification {
       visitRecordId: visitRecordId,
       documentId: documentId,
       reviewId: reviewId,
+      transferId: transferId,
     );
   }
 
   factory AppNotification.fromJson(Map<String, dynamic> json) {
+    final data = json['data'] is Map
+        ? Map<String, dynamic>.from(json['data'] as Map)
+        : const <String, dynamic>{};
     return AppNotification(
       id: json['id'] as String,
       type: json['type'] as String? ?? 'clinic_message_placeholder',
@@ -53,6 +59,7 @@ class AppNotification {
       visitRecordId: json['visit_record_id'] as String?,
       documentId: json['document_id'] as String?,
       reviewId: json['review_id'] as String?,
+      transferId: data['transfer_id'] as String?,
     );
   }
 }

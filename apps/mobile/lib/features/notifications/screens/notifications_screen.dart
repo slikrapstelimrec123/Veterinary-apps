@@ -22,12 +22,22 @@ class NotificationsScreen extends StatefulWidget {
 class _NotificationsScreenState extends State<NotificationsScreen> {
   final repository = NotificationRepository();
   final _transferRepo = PetTransferRepository();
-  late final Future<List<PetTransfer>> _transfersFuture =
-      _transferRepo.getIncomingTransfers();
-  late Future<List<AppNotification>> future = repository.getNotifications();
+  late Future<List<PetTransfer>> _transfersFuture;
+  late Future<List<AppNotification>> future;
+
+  @override
+  void initState() {
+    super.initState();
+    _reloadFutures();
+  }
+
+  void _reloadFutures() {
+    _transfersFuture = _transferRepo.getIncomingTransfers();
+    future = repository.getNotifications();
+  }
 
   void refresh() {
-    setState(() => future = repository.getNotifications());
+    setState(_reloadFutures);
   }
 
   Future<void> markAllAsRead() async {
@@ -39,7 +49,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     await repository.markAsRead(notification.id);
     if (!mounted) return;
 
-    if (notification.appointmentId != null) {
+    if (notification.transferId != null) {
+      await Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => const IncomingTransfersScreen()));
+    } else if (notification.appointmentId != null) {
       await Navigator.of(context).push(MaterialPageRoute(
           builder: (_) => AppointmentDetailsScreen(
               appointmentId: notification.appointmentId!)));
@@ -79,10 +92,24 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               future: _transfersFuture,
               builder: (context, ts) {
                 final transfers = ts.data ?? [];
-                if (transfers.isEmpty) return const SizedBox.shrink();
+                if (transfers.isEmpty) {
+                  if (notifications.isEmpty &&
+                      snapshot.connectionState != ConnectionState.waiting &&
+                      !snapshot.hasError) {
+                    return const EmptyState(
+                      title: 'Сповіщень поки немає',
+                      message: 'Важливі оновлення з’являться тут.',
+                      icon: Icons.notifications_none_outlined,
+                    );
+                  }
+                  return const SizedBox.shrink();
+                }
                 return GestureDetector(
-                  onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => const IncomingTransfersScreen())),
+                  onTap: () async {
+                    await Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => const IncomingTransfersScreen()));
+                    if (mounted) refresh();
+                  },
                   child: Card(
                     color: AppTheme.primary.withValues(alpha: 0.08),
                     margin: const EdgeInsets.only(bottom: 16),
@@ -114,12 +141,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               ErrorState(
                   message: 'Не вдалося завантажити сповіщення.',
                   onRetry: refresh)
-            else if (notifications.isEmpty)
-              const EmptyState(
-                title: 'Сповіщень поки немає',
-                message: 'Важливі оновлення з’являться тут.',
-                icon: Icons.notifications_none_outlined,
-              )
             else ...[
               if (unread.isNotEmpty) ...[
                 Text('Непрочитані',
@@ -181,6 +202,7 @@ class _NotificationTile extends StatelessWidget {
 }
 
 IconData notificationIcon(String type) {
+  if (type.contains('transfer')) return Icons.pets_outlined;
   if (type.contains('appointment')) return Icons.event_available_outlined;
   if (type.contains('visit') || type.contains('document')) {
     return Icons.medical_information_outlined;

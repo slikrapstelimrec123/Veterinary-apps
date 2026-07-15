@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/config/supabase_config.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/city_autocomplete_field.dart';
 import '../data/announcement_repository.dart';
@@ -17,9 +19,34 @@ class AnnouncementsScreen extends StatefulWidget {
 class _AnnouncementsScreenState extends State<AnnouncementsScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tab = TabController(length: 3, vsync: this);
+  RealtimeChannel? _channel;
+  int _version = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    if (!SupabaseConfig.useMockData) {
+      final client = Supabase.instance.client;
+      _channel = client
+          .channel('mobile-announcements')
+          .onPostgresChanges(
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'announcements',
+            callback: (_) {
+              if (mounted) setState(() => _version++);
+            },
+          )
+          .subscribe();
+    }
+  }
 
   @override
   void dispose() {
+    final channel = _channel;
+    if (channel != null && SupabaseConfig.isConfigured) {
+      Supabase.instance.client.removeChannel(channel);
+    }
     _tab.dispose();
     super.dispose();
   }
@@ -56,10 +83,10 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen>
       ),
       body: TabBarView(
         controller: _tab,
-        children: const [
-          _BreedingTab(),
-          _SaleTab(),
-          _MyAnnouncementsTab(),
+        children: [
+          _BreedingTab(key: ValueKey('breeding-$_version')),
+          _SaleTab(key: ValueKey('sale-$_version')),
+          _MyAnnouncementsTab(key: ValueKey('mine-$_version')),
         ],
       ),
     );
@@ -69,7 +96,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen>
 // ─── Breeding Tab ─────────────────────────────────────────────────────────────
 
 class _BreedingTab extends StatefulWidget {
-  const _BreedingTab();
+  const _BreedingTab({super.key});
 
   @override
   State<_BreedingTab> createState() => _BreedingTabState();
@@ -154,7 +181,7 @@ class _BreedingTabState extends State<_BreedingTab> {
 // ─── Sale Tab ─────────────────────────────────────────────────────────────────
 
 class _SaleTab extends StatefulWidget {
-  const _SaleTab();
+  const _SaleTab({super.key});
 
   @override
   State<_SaleTab> createState() => _SaleTabState();
@@ -239,7 +266,7 @@ class _SaleTabState extends State<_SaleTab> {
 // ─── My Announcements Tab ─────────────────────────────────────────────────────
 
 class _MyAnnouncementsTab extends StatefulWidget {
-  const _MyAnnouncementsTab();
+  const _MyAnnouncementsTab({super.key});
 
   @override
   State<_MyAnnouncementsTab> createState() => _MyAnnouncementsTabState();
