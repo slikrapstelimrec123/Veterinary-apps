@@ -19,15 +19,16 @@ class _DataExportScreenState extends State<DataExportScreen> {
     setState(() => _isExporting = true);
     DataExportResult? result;
     try {
-      result = await _service.createExport();
+      final exportResult = await _service.createExport();
+      result = exportResult;
       if (!mounted) return;
       await Share.shareXFiles(
-          [XFile(result.file.path, mimeType: 'application/zip')],
+          [XFile(exportResult.file.path, mimeType: 'application/zip')],
           subject: 'Експорт даних Lappo');
       if (!mounted) return;
-      final details = result.warnings.isEmpty
-          ? 'Архів створено. Додано файлів: ${result.exportedFileCount}.'
-          : 'Архів створено, але деякі дані недоступні. Додано файлів: ${result.exportedFileCount}.';
+      final details = exportResult.warnings.isEmpty
+          ? 'Архів створено. Додано файлів: ${exportResult.exportedFileCount}.'
+          : 'Архів створено, але деякі дані недоступні. Додано файлів: ${exportResult.exportedFileCount}.';
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(details), duration: const Duration(seconds: 6)));
     } catch (_) {
