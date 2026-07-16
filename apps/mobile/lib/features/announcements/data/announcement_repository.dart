@@ -29,8 +29,9 @@ class AnnouncementRepository {
         .eq('announcement_type', 'breeding')
         .eq('status', 'active')
         .eq('moderation_status', 'published');
-    if (breed != null && breed.isNotEmpty)
+    if (breed != null && breed.isNotEmpty) {
       query = query.ilike('breed', '%$breed%');
+    }
     if (city != null && city.isNotEmpty) query = query.ilike('city', '%$city%');
     final rows = await query.order('created_at', ascending: false);
     final hydratedRows = await _hydrateMyPetPhotos(rows as List);
@@ -46,8 +47,9 @@ class AnnouncementRepository {
         .eq('announcement_type', 'sale')
         .eq('status', 'active')
         .eq('moderation_status', 'published');
-    if (breed != null && breed.isNotEmpty)
+    if (breed != null && breed.isNotEmpty) {
       query = query.ilike('breed', '%$breed%');
+    }
     if (city != null && city.isNotEmpty) query = query.ilike('city', '%$city%');
     final rows = await query.order('created_at', ascending: false);
     final hydratedRows = await _hydrateMyPetPhotos(rows as List);
