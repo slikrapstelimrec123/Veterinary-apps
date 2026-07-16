@@ -386,12 +386,14 @@ class _MyAnnouncementsList extends StatelessWidget {
                       createdAt: s.createdAt,
                       active: s.isActive,
                       icon: Icons.pets,
+                      photoUrl: s.photoUrl,
                       onToggle: () async {
                         await AnnouncementRepository().toggleSaleActive(s.id);
                         onToggle();
                       },
                       onDelete: () async {
-                        await AnnouncementRepository().deleteSaleAnnouncement(s.id);
+                        await AnnouncementRepository()
+                            .deleteSaleAnnouncement(s.id);
                         onToggle();
                       },
                       onEdit: () => Navigator.of(context)
@@ -430,8 +432,10 @@ class _MyAnnouncementsList extends StatelessWidget {
                       createdAt: b.createdAt,
                       active: b.isActive,
                       icon: Icons.favorite_outlined,
+                      photoUrl: b.myDogPhotoUrl,
                       onToggle: () async {
-                        await AnnouncementRepository().toggleBreedingActive(b.id);
+                        await AnnouncementRepository()
+                            .toggleBreedingActive(b.id);
                         onToggle();
                       },
                       onDelete: () async {
@@ -473,6 +477,7 @@ class _MyAnnouncementCard extends StatelessWidget {
     required this.createdAt,
     required this.active,
     required this.icon,
+    this.photoUrl,
     required this.onToggle,
     required this.onDelete,
     required this.onEdit,
@@ -484,6 +489,7 @@ class _MyAnnouncementCard extends StatelessWidget {
   final DateTime createdAt;
   final bool active;
   final IconData icon;
+  final String? photoUrl;
   final VoidCallback onToggle;
   final VoidCallback onDelete;
   final VoidCallback onEdit;
@@ -523,9 +529,20 @@ class _MyAnnouncementCard extends StatelessWidget {
                     .withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon,
-                  color: active ? AppTheme.primary : AppTheme.textSecondary,
-                  size: 22),
+              clipBehavior: Clip.antiAlias,
+              child: photoUrl?.isNotEmpty == true
+                  ? Image.network(
+                      photoUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Icon(icon,
+                          color: active
+                              ? AppTheme.primary
+                              : AppTheme.textSecondary,
+                          size: 22),
+                    )
+                  : Icon(icon,
+                      color: active ? AppTheme.primary : AppTheme.textSecondary,
+                      size: 22),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -602,6 +619,8 @@ class _EditSaleScreenState extends State<_EditSaleScreen> {
       TextEditingController(text: widget.item.price.toString());
   late final TextEditingController _location =
       TextEditingController(text: widget.item.location ?? '');
+  late final TextEditingController _phone =
+      TextEditingController(text: widget.item.phone);
   late final TextEditingController _notes =
       TextEditingController(text: widget.item.notes ?? '');
 
@@ -611,6 +630,7 @@ class _EditSaleScreenState extends State<_EditSaleScreen> {
     _name.dispose();
     _price.dispose();
     _location.dispose();
+    _phone.dispose();
     _notes.dispose();
     super.dispose();
   }
@@ -621,11 +641,13 @@ class _EditSaleScreenState extends State<_EditSaleScreen> {
       SaleAnnouncement(
         id: widget.item.id,
         ownerName: widget.item.ownerName,
-        phone: widget.item.phone,
+        phone:
+            _phone.text.trim().isEmpty ? widget.item.phone : _phone.text.trim(),
         breed:
             _breed.text.trim().isEmpty ? widget.item.breed : _breed.text.trim(),
-        puppyName:
-            _name.text.trim().isEmpty ? widget.item.puppyName : _name.text.trim(),
+        puppyName: _name.text.trim().isEmpty
+            ? widget.item.puppyName
+            : _name.text.trim(),
         gender: widget.item.gender,
         birthDate: widget.item.birthDate,
         price: price,
@@ -667,6 +689,11 @@ class _EditSaleScreenState extends State<_EditSaleScreen> {
               label: 'Ціна (грн)',
               controller: _price,
               keyboardType: TextInputType.number),
+          const SizedBox(height: 12),
+          _EditField(
+              label: 'Телефон',
+              controller: _phone,
+              keyboardType: TextInputType.phone),
           const SizedBox(height: 12),
           CityAutocompleteField(controller: _location, filled: true),
           const SizedBox(height: 12),
@@ -713,6 +740,8 @@ class _EditBreedingScreenState extends State<_EditBreedingScreen> {
       TextEditingController(text: widget.item.conditions ?? '');
   late final TextEditingController _location =
       TextEditingController(text: widget.item.location ?? '');
+  late final TextEditingController _phone =
+      TextEditingController(text: widget.item.phone);
   late final TextEditingController _notes =
       TextEditingController(text: widget.item.notes ?? '');
 
@@ -722,15 +751,18 @@ class _EditBreedingScreenState extends State<_EditBreedingScreen> {
     _dogName.dispose();
     _conditions.dispose();
     _location.dispose();
+    _phone.dispose();
     _notes.dispose();
     super.dispose();
   }
 
   Future<void> _save() async {
-    await AnnouncementRepository().updateBreedingAnnouncement(BreedingAnnouncement(
+    await AnnouncementRepository()
+        .updateBreedingAnnouncement(BreedingAnnouncement(
       id: widget.item.id,
       ownerName: widget.item.ownerName,
-      phone: widget.item.phone,
+      phone:
+          _phone.text.trim().isEmpty ? widget.item.phone : _phone.text.trim(),
       breed:
           _breed.text.trim().isEmpty ? widget.item.breed : _breed.text.trim(),
       myDogName: _dogName.text.trim().isEmpty
@@ -772,6 +804,11 @@ class _EditBreedingScreenState extends State<_EditBreedingScreen> {
           const SizedBox(height: 12),
           _EditField(
               label: 'Умови в\'язки', controller: _conditions, maxLines: 3),
+          const SizedBox(height: 12),
+          _EditField(
+              label: 'Телефон',
+              controller: _phone,
+              keyboardType: TextInputType.phone),
           const SizedBox(height: 12),
           CityAutocompleteField(controller: _location, filled: true),
           const SizedBox(height: 12),
@@ -875,7 +912,9 @@ class _Chip extends StatelessWidget {
         onTap: onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+          constraints: const BoxConstraints(minHeight: 32),
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
           decoration: BoxDecoration(
             color: selected ? AppTheme.primary : AppTheme.surface,
             borderRadius: BorderRadius.circular(20),
@@ -886,6 +925,7 @@ class _Chip extends StatelessWidget {
             label,
             style: TextStyle(
               fontSize: 13,
+              height: 1,
               fontWeight: FontWeight.w600,
               color: selected ? Colors.white : AppTheme.textSecondary,
             ),
@@ -1174,8 +1214,16 @@ class _BreedingDetailScreen extends StatelessWidget {
                           color: AppTheme.accent.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: const Icon(Icons.favorite_outlined,
-                            color: AppTheme.accent, size: 28),
+                        clipBehavior: Clip.antiAlias,
+                        child: item.myDogPhotoUrl?.isNotEmpty == true
+                            ? Image.network(item.myDogPhotoUrl!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => const Icon(
+                                    Icons.favorite_outlined,
+                                    color: AppTheme.accent,
+                                    size: 28))
+                            : const Icon(Icons.favorite_outlined,
+                                color: AppTheme.accent, size: 28),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -1286,8 +1334,14 @@ class _SaleDetailScreen extends StatelessWidget {
                       color: AppTheme.primary.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: const Icon(Icons.pets,
-                        color: AppTheme.primary, size: 28),
+                    clipBehavior: Clip.antiAlias,
+                    child: item.photoUrl?.isNotEmpty == true
+                        ? Image.network(item.photoUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => const Icon(Icons.pets,
+                                color: AppTheme.primary, size: 28))
+                        : const Icon(Icons.pets,
+                            color: AppTheme.primary, size: 28),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -1409,8 +1463,12 @@ class _SafetyActionsState extends State<_SafetyActions> {
           'Модератори перевірять оголошення. Не використовуйте скаргу для особистих суперечок.',
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Скасувати')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Надіслати')),
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Скасувати')),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Надіслати')),
         ],
       ),
     );
@@ -1427,8 +1485,12 @@ class _SafetyActionsState extends State<_SafetyActions> {
         title: const Text('Заблокувати користувача?'),
         content: const Text('Ви більше не бачитимете його оголошення.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Скасувати')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Заблокувати')),
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Скасувати')),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Заблокувати')),
         ],
       ),
     );
@@ -1444,11 +1506,13 @@ class _SafetyActionsState extends State<_SafetyActions> {
     try {
       await operation();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(success)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(success)));
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Не вдалося виконати дію. Спробуйте ще раз.')),
+        const SnackBar(
+            content: Text('Не вдалося виконати дію. Спробуйте ще раз.')),
       );
     } finally {
       if (mounted) setState(() => _busy = false);

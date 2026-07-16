@@ -50,7 +50,7 @@ class DataExportService {
         () => _client
             .from('visit_records')
             .select(
-                'id,appointment_id,clinic_id,doctor_id,pet_id,owner_id,visit_date,reason,reason_for_visit,symptoms,diagnosis,procedures_performed,treatment_notes,prescribed_medications,recommendations,follow_up_at,next_visit_recommended,next_visit_date,status,created_at,updated_at')
+                'id,appointment_id,clinic_id,doctor_id,pet_id,owner_id,visit_date,provider_name,reason,reason_for_visit,symptoms,diagnosis,procedures_performed,treatment_notes,prescribed_medications,recommendations,follow_up_at,next_visit_recommended,next_visit_date,status,created_at,updated_at')
             .order('visit_date'),
         warnings);
     final visitDocuments = await _readRows(
@@ -64,6 +64,34 @@ class DataExportService {
     final notifications = await _readRows(
         'Сповіщення',
         () => _client.from('notifications').select('*').order('created_at'),
+        warnings);
+    final medications = await _readRows(
+        'Препарати',
+        () => _client.from('pet_medications').select('*').order('given_date'),
+        warnings);
+    final feedings = await _readRows(
+        'Харчування',
+        () => _client.from('pet_feedings').select('*').order('start_date'),
+        warnings);
+    final achievements = await _readRows(
+        'Події',
+        () => _client.from('pet_achievements').select('*').order('event_date'),
+        warnings);
+    final announcements = await _readRows(
+        'Оголошення',
+        () => _client
+            .from('announcements')
+            .select('*')
+            .eq('owner_id', user.id)
+            .order('created_at'),
+        warnings);
+    final transfers = await _readRows(
+        'Передачі тварин',
+        () => _client
+            .from('pet_transfers')
+            .select('*')
+            .or('from_user_id.eq.${user.id},to_user_id.eq.${user.id}')
+            .order('created_at'),
         warnings);
     final preferences = await _readSingle('Налаштування сповіщень', () async {
       final value = await _client.rpc('get_my_notification_preferences');
@@ -82,6 +110,11 @@ class DataExportService {
           'appointments': appointments,
           'visit_records': visitRecords,
           'visit_documents': visitDocuments,
+          'medications': medications,
+          'feedings': feedings,
+          'events': achievements,
+          'announcements': announcements,
+          'pet_transfers': transfers,
           'notifications': notifications,
           'notification_preferences': preferences,
         }));
@@ -114,6 +147,20 @@ class DataExportService {
             'files/medical/${document['id']}_${_safeName(originalName ?? storagePath ?? 'document')}',
         warnings: warnings,
       );
+    }
+    for (final achievement in achievements) {
+      for (final entry in <MapEntry<String, String>>[
+        const MapEntry('award_image_path', 'award'),
+        const MapEntry('event_photo_path', 'event'),
+      ]) {
+        exportedFileCount += await _addStorageFile(
+          archive: archive,
+          bucket: 'pet-documents',
+          storagePath: achievement[entry.key] as String?,
+          archivePath: 'files/events/${achievement['id']}/${entry.value}',
+          warnings: warnings,
+        );
+      }
     }
 
     final bytes = ZipEncoder().encode(archive);

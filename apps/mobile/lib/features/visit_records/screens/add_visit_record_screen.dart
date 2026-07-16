@@ -1,10 +1,8 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 
 import '../../../core/config/supabase_config.dart';
 import '../../../core/theme/app_theme.dart';
+import '../data/visit_record_repository.dart';
 
 class AddVisitRecordScreen extends StatefulWidget {
   const AddVisitRecordScreen(
@@ -19,6 +17,7 @@ class AddVisitRecordScreen extends StatefulWidget {
 
 class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _repository = VisitRecordRepository();
 
   DateTime _visitDate = DateTime.now();
   final _clinicNameController = TextEditingController();
@@ -31,8 +30,6 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
   bool _nextVisitRecommended = false;
   DateTime? _nextVisitDate;
 
-  final List<File> _photos = [];
-  final _picker = ImagePicker();
   bool _saving = false;
 
   @override
@@ -68,57 +65,34 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
     if (picked != null) setState(() => _nextVisitDate = picked);
   }
 
-  Future<void> _pickPhoto(ImageSource source) async {
-    final picked = await _picker.pickImage(source: source, imageQuality: 85);
-    if (picked != null) setState(() => _photos.add(File(picked.path)));
-  }
-
-  void _showPhotoOptions() {
-    showModalBottomSheet(
-      context: context,
-      builder: (_) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_camera_outlined),
-              title: const Text('Зробити фото'),
-              onTap: () {
-                Navigator.pop(context);
-                _pickPhoto(ImageSource.camera);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Вибрати з галереї'),
-              onTap: () {
-                Navigator.pop(context);
-                _pickPhoto(ImageSource.gallery);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
 
     try {
-      if (mounted) {
-        Navigator.of(context).pop(true);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Демо-запис про прийом збережено.')),
+      if (!SupabaseConfig.useMockData) {
+        await _repository.createSelfReportedVisitRecord(
+          petId: widget.petId,
+          visitDate: _visitDate,
+          reason: _reasonController.text,
+          providerName: _clinicNameController.text,
+          symptoms: _symptomsController.text,
+          diagnosis: _diagnosisController.text,
+          treatmentNotes: _treatmentController.text,
+          prescribedMedications: _medicationsController.text,
+          recommendations: _recommendationsController.text,
+          nextVisitRecommended: _nextVisitRecommended,
+          nextVisitDate: _nextVisitDate,
         );
       }
-    } catch (_) {
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
+    } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Не вдалося зберегти запис. Спробуйте ще раз.'),
-              duration: Duration(seconds: 10)),
+          SnackBar(
+              content: Text('Не вдалося зберегти запис: $error'),
+              duration: const Duration(seconds: 10)),
         );
       }
     } finally {
@@ -291,54 +265,6 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
                   ],
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            const _SectionLabel('Документи та фото'),
-            const SizedBox(height: 8),
-            if (_photos.isNotEmpty) ...[
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  crossAxisSpacing: 8,
-                  mainAxisSpacing: 8,
-                ),
-                itemCount: _photos.length,
-                itemBuilder: (_, i) => Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: Image.file(_photos[i], fit: BoxFit.cover),
-                    ),
-                    Positioned(
-                      top: 2,
-                      right: 2,
-                      child: GestureDetector(
-                        onTap: () => setState(() => _photos.removeAt(i)),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.black54,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          padding: const EdgeInsets.all(3),
-                          child: const Icon(Icons.close,
-                              size: 14, color: Colors.white),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 8),
-            ],
-            OutlinedButton.icon(
-              onPressed: _showPhotoOptions,
-              icon: const Icon(Icons.add_photo_alternate_outlined),
-              label: Text(_photos.isEmpty
-                  ? 'Додати фото документа або аналізів'
-                  : 'Додати ще фото'),
             ),
             if (SupabaseConfig.useMockData)
               const Padding(

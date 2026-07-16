@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/pet_avatar.dart';
 import '../../../shared/widgets/city_autocomplete_field.dart';
 import '../../../features/pets/domain/pet.dart';
 import '../data/announcement_repository.dart';
@@ -80,7 +81,8 @@ class _AddSaleAnnouncementScreenState extends State<AddSaleAnnouncementScreen> {
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('Не вдалося опублікувати оголошення. Спробуйте ще раз.')),
+            content:
+                Text('Не вдалося опублікувати оголошення. Спробуйте ще раз.')),
       );
     }
   }
@@ -104,15 +106,10 @@ class _AddSaleAnnouncementScreenState extends State<AddSaleAnnouncementScreen> {
                 padding: const EdgeInsets.all(14),
                 child: Row(
                   children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: AppTheme.primary.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(Icons.pets,
-                          color: AppTheme.primary, size: 22),
+                    PetAvatar(
+                      name: widget.pet.name,
+                      avatarUrl: widget.pet.avatarUrl,
+                      size: 44,
                     ),
                     const SizedBox(width: 12),
                     Column(

@@ -97,7 +97,7 @@ class _PetListCard extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              PetAvatar(name: pet.name),
+              PetAvatar(name: pet.name, avatarUrl: pet.avatarUrl),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(

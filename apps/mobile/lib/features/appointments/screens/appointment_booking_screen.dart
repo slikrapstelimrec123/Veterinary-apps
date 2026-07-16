@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/error_state.dart';
+import '../../../shared/widgets/pet_avatar.dart';
 import '../../../shared/utils/iterable_extensions.dart';
 import '../../clinics/data/clinic_repository.dart';
 import '../../clinics/models/clinic.dart';
@@ -336,8 +337,17 @@ class _BookingForm extends StatelessWidget {
           initialValue: selectedPetId,
           decoration: const InputDecoration(labelText: 'Тварина'),
           items: data.pets
-              .map((pet) =>
-                  DropdownMenuItem(value: pet.id, child: Text(pet.name)))
+              .map((pet) => DropdownMenuItem(
+                    value: pet.id,
+                    child: Row(
+                      children: [
+                        PetAvatar(
+                            name: pet.name, avatarUrl: pet.avatarUrl, size: 32),
+                        const SizedBox(width: 10),
+                        Text(pet.name),
+                      ],
+                    ),
+                  ))
               .toList(),
           onChanged: onPetChanged,
         ),

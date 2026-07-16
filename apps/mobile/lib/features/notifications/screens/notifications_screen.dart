@@ -9,6 +9,7 @@ import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/error_state.dart';
 import '../../appointments/screens/appointment_details_screen.dart';
 import '../../visit_records/screens/visit_record_details_screen.dart';
+import '../../medications/screens/medications_screen.dart';
 import '../data/notification_repository.dart';
 import '../domain/app_notification.dart';
 
@@ -50,8 +51,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     if (!mounted) return;
 
     if (notification.transferId != null) {
-      await Navigator.of(context).push(MaterialPageRoute(
-          builder: (_) => const IncomingTransfersScreen()));
+      await Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const IncomingTransfersScreen()));
     } else if (notification.appointmentId != null) {
       await Navigator.of(context).push(MaterialPageRoute(
           builder: (_) => AppointmentDetailsScreen(
@@ -60,9 +61,17 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       await Navigator.of(context).push(MaterialPageRoute(
           builder: (_) =>
               VisitRecordDetailsScreen(recordId: notification.visitRecordId!)));
+    } else if (notification.type == 'medication_reminder' &&
+        notification.petId != null) {
+      await Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => MedicationsScreen(
+                petId: notification.petId!,
+                petName: notification.petName ?? 'Тварина',
+              )));
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Пов’язаний екран буде додано пізніше.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Сповіщення позначено як прочитане.')),
+      );
     }
 
     refresh();
@@ -208,6 +217,7 @@ IconData notificationIcon(String type) {
     return Icons.medical_information_outlined;
   }
   if (type.contains('review')) return Icons.star_border;
+  if (type.contains('medication')) return Icons.medication_outlined;
   return Icons.notifications_none_outlined;
 }
 

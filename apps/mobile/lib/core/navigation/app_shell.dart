@@ -528,20 +528,10 @@ class _UpcomingEventsCardState extends State<_UpcomingEventsCard> {
                   padding: const EdgeInsets.symmetric(vertical: 6),
                   child: Row(
                     children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: color.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(
-                          overdue
-                              ? Icons.warning_amber_rounded
-                              : Icons.medication_outlined,
-                          size: 20,
-                          color: color,
-                        ),
+                      PetAvatar(
+                        name: e.pet.name,
+                        avatarUrl: e.pet.avatarUrl,
+                        size: 40,
                       ),
                       const SizedBox(width: 12),
                       Expanded(

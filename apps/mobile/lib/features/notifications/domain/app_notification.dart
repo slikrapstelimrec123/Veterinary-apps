@@ -11,6 +11,9 @@ class AppNotification {
     this.documentId,
     this.reviewId,
     this.transferId,
+    this.petId,
+    this.petName,
+    this.medicationId,
   });
 
   final String id;
@@ -24,6 +27,9 @@ class AppNotification {
   final String? documentId;
   final String? reviewId;
   final String? transferId;
+  final String? petId;
+  final String? petName;
+  final String? medicationId;
 
   bool get isUnread => status == 'unread';
 
@@ -40,6 +46,9 @@ class AppNotification {
       documentId: documentId,
       reviewId: reviewId,
       transferId: transferId,
+      petId: petId,
+      petName: petName,
+      medicationId: medicationId,
     );
   }
 
@@ -60,6 +69,9 @@ class AppNotification {
       documentId: json['document_id'] as String?,
       reviewId: json['review_id'] as String?,
       transferId: data['transfer_id'] as String?,
+      petId: json['pet_id'] as String?,
+      petName: data['pet_name'] as String?,
+      medicationId: data['medication_id'] as String?,
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/empty_state.dart';
@@ -32,84 +33,6 @@ class _VisitRecordDetailsScreenState extends State<VisitRecordDetailsScreen> {
 
   void refresh() {
     setState(() => future = load());
-  }
-
-  void _showUploadSheet(String visitRecordId, String petId) {
-    final titleController = TextEditingController();
-    String selectedType = 'analysis';
-
-    const types = {
-      'analysis': 'Аналіз',
-      'xray': 'Рентген / УЗД',
-      'prescription': 'Рецепт',
-      'vaccination': 'Вакцинація',
-      'other': 'Інше',
-    };
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setSheet) => Padding(
-          padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            top: 24,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Додати документ',
-                  style: Theme.of(ctx).textTheme.titleLarge),
-              const SizedBox(height: 16),
-              TextField(
-                controller: titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Назва документа',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                initialValue: selectedType,
-                decoration: const InputDecoration(
-                  labelText: 'Тип документа',
-                  border: OutlineInputBorder(),
-                ),
-                items: types.entries
-                    .map((e) =>
-                        DropdownMenuItem(value: e.key, child: Text(e.value)))
-                    .toList(),
-                onChanged: (v) =>
-                    setSheet(() => selectedType = v ?? selectedType),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  icon: const Icon(Icons.attach_file),
-                  label: const Text('Обрати файл'),
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text(
-                              'Завантаження файлів буде доступне у наступному оновленні.')),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 8),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 
   @override
@@ -175,11 +98,6 @@ class _VisitRecordDetailsScreenState extends State<VisitRecordDetailsScreen> {
                 children: [
                   Text('Документи',
                       style: Theme.of(context).textTheme.titleLarge),
-                  TextButton.icon(
-                    onPressed: () => _showUploadSheet(record.id, record.petId),
-                    icon: const Icon(Icons.upload_file_outlined, size: 18),
-                    label: const Text('Додати'),
-                  ),
                 ],
               ),
               const SizedBox(height: 8),
@@ -307,12 +225,14 @@ class _DocumentTile extends StatelessWidget {
         onTap: () async {
           final url = await repository.getSignedDocumentUrl(document);
           if (!context.mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text(url == null
-                    ? 'Перегляд файлу поки недоступний.'
-                    : 'Посилання створено.')),
-          );
+          if (url == null ||
+              !await launchUrl(Uri.parse(url),
+                  mode: LaunchMode.externalApplication)) {
+            if (!context.mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Не вдалося відкрити файл.')),
+            );
+          }
         },
       ),
     );

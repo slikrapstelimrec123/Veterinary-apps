@@ -53,12 +53,14 @@ class VisitRecord {
       appointmentId: json['appointment_id'] as String?,
       visitDate: DateTime.tryParse(json['visit_date'] as String? ?? '') ??
           DateTime.now(),
-      clinicName:
-          clinic is Map<String, dynamic> ? clinic['name'] as String? : null,
+      clinicName: clinic is Map<String, dynamic>
+          ? clinic['name'] as String?
+          : json['provider_name'] as String?,
       doctorName: doctor is Map<String, dynamic>
           ? doctor['full_name'] as String?
           : null,
-      reason: (json['reason_for_visit'] as String?) ?? json['reason'] as String?,
+      reason:
+          (json['reason_for_visit'] as String?) ?? json['reason'] as String?,
       symptoms: json['symptoms'] as String?,
       diagnosis: json['diagnosis'] as String?,
       proceduresPerformed: json['procedures_performed'] as String?,

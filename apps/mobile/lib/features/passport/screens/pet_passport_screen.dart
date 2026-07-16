@@ -12,6 +12,7 @@ import '../../../features/pets/domain/pet.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/error_state.dart';
+import '../../../shared/widgets/pet_avatar.dart';
 import '../../../shared/services/private_pet_storage.dart';
 
 class PetPassportScreen extends StatefulWidget {
@@ -311,16 +312,10 @@ class _PassportCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                CircleAvatar(
-                  radius: 30,
-                  backgroundColor: AppTheme.primary.withValues(alpha: 0.12),
-                  child: Text(
-                    pet.name.isNotEmpty ? pet.name[0].toUpperCase() : '?',
-                    style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.primary),
-                  ),
+                PetAvatar(
+                  name: pet.name,
+                  avatarUrl: pet.avatarUrl,
+                  size: 60,
                 ),
                 const SizedBox(width: 16),
                 Expanded(

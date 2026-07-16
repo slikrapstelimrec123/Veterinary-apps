@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/config/supabase_config.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/error_state.dart';
@@ -38,12 +37,18 @@ class _VisitHistoryScreenState extends State<VisitHistoryScreen> {
       builder: (_) =>
           AddVisitRecordScreen(petId: widget.petId, petName: widget.petName),
     ));
-    if (result != null) refresh();
+    if (result != null) {
+      refresh();
+      if (result is String && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result)),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final canAddRecord = SupabaseConfig.useMockData;
     return FutureBuilder<List<VisitRecord>>(
       future: recordsFuture,
       builder: (context, snapshot) {
@@ -53,12 +58,11 @@ class _VisitHistoryScreenState extends State<VisitHistoryScreen> {
           title: 'Історія прийомів',
           subtitle: widget.petName,
           actions: [
-            if (canAddRecord)
-              IconButton(
-                icon: const Icon(Icons.add),
-                tooltip: 'Додати прийом',
-                onPressed: _addRecord,
-              ),
+            IconButton(
+              icon: const Icon(Icons.add),
+              tooltip: 'Додати прийом',
+              onPressed: _addRecord,
+            ),
           ],
           children: [
             if (snapshot.connectionState == ConnectionState.waiting)
@@ -70,30 +74,25 @@ class _VisitHistoryScreenState extends State<VisitHistoryScreen> {
             else if (records.isEmpty)
               EmptyState(
                 title: 'Записів про прийоми ще немає',
-                message: canAddRecord
-                    ? 'Додайте перший запис самостійно або він з\'явиться після підключення клініки.'
-                    : 'Записи з’являться тут після того, як клініка завершить прийом.',
+                message:
+                    'Додайте перший запис про прийом, лікування або огляд самостійно.',
                 icon: Icons.history_outlined,
-                action: canAddRecord
-                    ? FilledButton(
-                        onPressed: _addRecord,
-                        child: const Text('Додати прийом'),
-                      )
-                    : null,
+                action: FilledButton(
+                  onPressed: _addRecord,
+                  child: const Text('Додати прийом'),
+                ),
               )
             else ...[
               ...records.map((record) => Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: _VisitRecordCard(record: record),
                   )),
-              if (canAddRecord) ...[
-                const SizedBox(height: 4),
-                OutlinedButton.icon(
-                  onPressed: _addRecord,
-                  icon: const Icon(Icons.add),
-                  label: const Text('Додати запис про прийом'),
-                ),
-              ],
+              const SizedBox(height: 4),
+              OutlinedButton.icon(
+                onPressed: _addRecord,
+                icon: const Icon(Icons.add),
+                label: const Text('Додати запис про прийом'),
+              ),
             ],
           ],
         );
@@ -115,10 +114,8 @@ class _VisitRecordCard extends StatelessWidget {
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
-        onTap: isSelfReported
-            ? null
-            : () => Navigator.of(context).push(MaterialPageRoute(
-                builder: (_) => VisitRecordDetailsScreen(recordId: record.id))),
+        onTap: () => Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) => VisitRecordDetailsScreen(recordId: record.id))),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(

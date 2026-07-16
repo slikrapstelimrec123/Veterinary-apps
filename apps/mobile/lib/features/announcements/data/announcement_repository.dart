@@ -29,13 +29,12 @@ class AnnouncementRepository {
         .eq('announcement_type', 'breeding')
         .eq('status', 'active')
         .eq('moderation_status', 'published');
-    if (breed != null && breed.isNotEmpty) query = query.ilike('breed', '%$breed%');
+    if (breed != null && breed.isNotEmpty)
+      query = query.ilike('breed', '%$breed%');
     if (city != null && city.isNotEmpty) query = query.ilike('city', '%$city%');
     final rows = await query.order('created_at', ascending: false);
     final hydratedRows = await _hydrateMyPetPhotos(rows as List);
-    return hydratedRows
-        .map(BreedingAnnouncement.fromJson)
-        .toList();
+    return hydratedRows.map(BreedingAnnouncement.fromJson).toList();
   }
 
   Future<List<SaleAnnouncement>> getSaleAnnouncements(
@@ -47,13 +46,12 @@ class AnnouncementRepository {
         .eq('announcement_type', 'sale')
         .eq('status', 'active')
         .eq('moderation_status', 'published');
-    if (breed != null && breed.isNotEmpty) query = query.ilike('breed', '%$breed%');
+    if (breed != null && breed.isNotEmpty)
+      query = query.ilike('breed', '%$breed%');
     if (city != null && city.isNotEmpty) query = query.ilike('city', '%$city%');
     final rows = await query.order('created_at', ascending: false);
     final hydratedRows = await _hydrateMyPetPhotos(rows as List);
-    return hydratedRows
-        .map(SaleAnnouncement.fromJson)
-        .toList();
+    return hydratedRows.map(SaleAnnouncement.fromJson).toList();
   }
 
   Future<List<BreedingAnnouncement>> getBreedingAnnouncementsFiltered(
@@ -64,7 +62,8 @@ class AnnouncementRepository {
       {required bool active}) async {
     if (_useMockData) {
       return _saleMock
-          .where((item) => item.ownerId == currentUserId && item.isActive == active)
+          .where((item) =>
+              item.ownerId == currentUserId && item.isActive == active)
           .toList();
     }
     final rows = await _supabase
@@ -75,16 +74,15 @@ class AnnouncementRepository {
         .eq('status', active ? 'active' : 'inactive')
         .order('created_at', ascending: false);
     final hydratedRows = await _hydrateMyPetPhotos(rows as List);
-    return hydratedRows
-        .map(SaleAnnouncement.fromJson)
-        .toList();
+    return hydratedRows.map(SaleAnnouncement.fromJson).toList();
   }
 
   Future<List<BreedingAnnouncement>> getMyBreedingAnnouncements(
       {required bool active}) async {
     if (_useMockData) {
       return _breedingMock
-          .where((item) => item.ownerId == currentUserId && item.isActive == active)
+          .where((item) =>
+              item.ownerId == currentUserId && item.isActive == active)
           .toList();
     }
     final rows = await _supabase
@@ -95,9 +93,7 @@ class AnnouncementRepository {
         .eq('status', active ? 'active' : 'inactive')
         .order('created_at', ascending: false);
     final hydratedRows = await _hydrateMyPetPhotos(rows as List);
-    return hydratedRows
-        .map(BreedingAnnouncement.fromJson)
-        .toList();
+    return hydratedRows.map(BreedingAnnouncement.fromJson).toList();
   }
 
   Future<void> addSaleAnnouncement(SaleAnnouncement announcement) async {
@@ -111,7 +107,8 @@ class AnnouncementRepository {
         );
   }
 
-  Future<void> addBreedingAnnouncement(BreedingAnnouncement announcement) async {
+  Future<void> addBreedingAnnouncement(
+      BreedingAnnouncement announcement) async {
     if (_useMockData) {
       _breedingMock.insert(0, announcement);
       return;
@@ -123,7 +120,8 @@ class AnnouncementRepository {
   }
 
   Future<void> toggleSaleActive(String id) => _toggleActive(id, _saleMock);
-  Future<void> toggleBreedingActive(String id) => _toggleActive(id, _breedingMock);
+  Future<void> toggleBreedingActive(String id) =>
+      _toggleActive(id, _breedingMock);
 
   Future<void> _toggleActive(String id, List<dynamic> mockItems) async {
     if (_useMockData) {
@@ -132,14 +130,26 @@ class AnnouncementRepository {
         if (index >= 0) {
           final item = _saleMock[index];
           _saleMock[index] = SaleAnnouncement(
-            id: item.id, ownerName: item.ownerName, phone: item.phone,
-            breed: item.breed, puppyName: item.puppyName, gender: item.gender,
-            birthDate: item.birthDate, price: item.price, photoUrl: item.photoUrl,
+            id: item.id,
+            ownerName: item.ownerName,
+            phone: item.phone,
+            breed: item.breed,
+            puppyName: item.puppyName,
+            gender: item.gender,
+            birthDate: item.birthDate,
+            price: item.price,
+            photoUrl: item.photoUrl,
             photoStoragePath: item.photoStoragePath,
-            color: item.color, hasVaccinations: item.hasVaccinations,
-            hasPedigree: item.hasPedigree, hasChip: item.hasChip,
-            notes: item.notes, location: item.location, createdAt: item.createdAt,
-            isActive: !item.isActive, ownerId: item.ownerId, petId: item.petId,
+            color: item.color,
+            hasVaccinations: item.hasVaccinations,
+            hasPedigree: item.hasPedigree,
+            hasChip: item.hasChip,
+            notes: item.notes,
+            location: item.location,
+            createdAt: item.createdAt,
+            isActive: !item.isActive,
+            ownerId: item.ownerId,
+            petId: item.petId,
           );
         }
       } else {
@@ -147,20 +157,33 @@ class AnnouncementRepository {
         if (index >= 0) {
           final item = _breedingMock[index];
           _breedingMock[index] = BreedingAnnouncement(
-            id: item.id, ownerName: item.ownerName, phone: item.phone,
-            breed: item.breed, myDogName: item.myDogName,
-            myDogGender: item.myDogGender, myDogAge: item.myDogAge,
-            myDogPhotoUrl: item.myDogPhotoUrl, desiredBreed: item.desiredBreed,
+            id: item.id,
+            ownerName: item.ownerName,
+            phone: item.phone,
+            breed: item.breed,
+            myDogName: item.myDogName,
+            myDogGender: item.myDogGender,
+            myDogAge: item.myDogAge,
+            myDogPhotoUrl: item.myDogPhotoUrl,
+            desiredBreed: item.desiredBreed,
             photoStoragePath: item.photoStoragePath,
-            conditions: item.conditions, notes: item.notes,
-            location: item.location, createdAt: item.createdAt,
-            isActive: !item.isActive, ownerId: item.ownerId, petId: item.petId,
+            conditions: item.conditions,
+            notes: item.notes,
+            location: item.location,
+            createdAt: item.createdAt,
+            isActive: !item.isActive,
+            ownerId: item.ownerId,
+            petId: item.petId,
           );
         }
       }
       return;
     }
-    final row = await _supabase.from('announcements').select('status').eq('id', id).single();
+    final row = await _supabase
+        .from('announcements')
+        .select('status')
+        .eq('id', id)
+        .single();
     await _supabase.from('announcements').update({
       'status': row['status'] == 'active' ? 'inactive' : 'active',
       'updated_at': DateTime.now().toUtc().toIso8601String(),
@@ -168,7 +191,8 @@ class AnnouncementRepository {
   }
 
   Future<void> deleteSaleAnnouncement(String id) => _delete(id, _saleMock);
-  Future<void> deleteBreedingAnnouncement(String id) => _delete(id, _breedingMock);
+  Future<void> deleteBreedingAnnouncement(String id) =>
+      _delete(id, _breedingMock);
 
   Future<void> _delete(String id, List<dynamic> mockItems) async {
     if (_useMockData) {
@@ -190,6 +214,7 @@ class AnnouncementRepository {
       'price_amount': updated.price,
       'description': updated.notes,
       'city': updated.location,
+      'contact_phone': updated.phone,
       'updated_at': DateTime.now().toUtc().toIso8601String(),
     }).eq('id', updated.id);
   }
@@ -206,6 +231,7 @@ class AnnouncementRepository {
       'conditions': updated.conditions,
       'description': updated.notes,
       'city': updated.location,
+      'contact_phone': updated.phone,
       'updated_at': DateTime.now().toUtc().toIso8601String(),
     }).eq('id', updated.id);
   }
@@ -228,9 +254,8 @@ class AnnouncementRepository {
   }
 
   Future<List<Map<String, dynamic>>> _hydrateMyPetPhotos(List rows) async {
-    final result = rows
-        .map((row) => Map<String, dynamic>.from(row as Map))
-        .toList();
+    final result =
+        rows.map((row) => Map<String, dynamic>.from(row as Map)).toList();
     final userId = currentUserId;
     final repository = PetRepository();
     await Future.wait(result.map((row) async {
@@ -257,10 +282,12 @@ class AnnouncementRepository {
     return result;
   }
 
-  List<String> getBreedingBreeds() => _sorted(_breedingMock.map((e) => e.breed));
+  List<String> getBreedingBreeds() =>
+      _sorted(_breedingMock.map((e) => e.breed));
   List<String> getSaleBreeds() => _sorted(_saleMock.map((e) => e.breed));
   List<String> getSaleCities() => _cities(_saleMock.map((e) => e.location));
-  List<String> getBreedingCities() => _cities(_breedingMock.map((e) => e.location));
+  List<String> getBreedingCities() =>
+      _cities(_breedingMock.map((e) => e.location));
 
   String _requireUserId() {
     final userId = currentUserId;
@@ -270,24 +297,40 @@ class AnnouncementRepository {
 
   static List<SaleAnnouncement> _filterSales(List<SaleAnnouncement> items,
       {String? breed, String? city}) {
-    final result = items.where((item) =>
-        (breed == null || breed.isEmpty || item.breed.toLowerCase().contains(breed.toLowerCase())) &&
-        (city == null || city.isEmpty || (item.location?.toLowerCase().contains(city.toLowerCase()) ?? false))).toList();
+    final result = items
+        .where((item) =>
+            (breed == null ||
+                breed.isEmpty ||
+                item.breed.toLowerCase().contains(breed.toLowerCase())) &&
+            (city == null ||
+                city.isEmpty ||
+                (item.location?.toLowerCase().contains(city.toLowerCase()) ??
+                    false)))
+        .toList();
     result.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return result;
   }
 
-  static List<BreedingAnnouncement> _filterBreeding(List<BreedingAnnouncement> items,
-      {String? breed, String? city}) {
-    final result = items.where((item) =>
-        (breed == null || breed.isEmpty || item.breed.toLowerCase().contains(breed.toLowerCase())) &&
-        (city == null || city.isEmpty || (item.location?.toLowerCase().contains(city.toLowerCase()) ?? false))).toList();
+  static List<BreedingAnnouncement> _filterBreeding(
+      List<BreedingAnnouncement> items,
+      {String? breed,
+      String? city}) {
+    final result = items
+        .where((item) =>
+            (breed == null ||
+                breed.isEmpty ||
+                item.breed.toLowerCase().contains(breed.toLowerCase())) &&
+            (city == null ||
+                city.isEmpty ||
+                (item.location?.toLowerCase().contains(city.toLowerCase()) ??
+                    false)))
+        .toList();
     result.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return result;
   }
 
   static List<String> _sorted(Iterable<String> values) =>
       (values.toSet().toList()..sort());
-  static List<String> _cities(Iterable<String?> values) =>
-      _sorted(values.whereType<String>().map((value) => value.split(',').first.trim()));
+  static List<String> _cities(Iterable<String?> values) => _sorted(
+      values.whereType<String>().map((value) => value.split(',').first.trim()));
 }
