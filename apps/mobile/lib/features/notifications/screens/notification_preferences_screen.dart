@@ -33,7 +33,8 @@ class _NotificationPreferencesScreenState
       await repository.savePreferences(value);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Налаштування сповіщень збережено.')));
+        const SnackBar(content: Text('Налаштування сповіщень збережено.')),
+      );
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -58,61 +59,42 @@ class _NotificationPreferencesScreenState
         }
 
         final value = preferences;
-
         return AppScaffold(
           title: 'Налаштування сповіщень',
-          subtitle: 'Керуйте важливими оновленнями у застосунку.',
+          subtitle: 'Керуйте важливими оновленнями про здоров’я тварин.',
           children: [
             if (snapshot.connectionState == ConnectionState.waiting)
               const Center(child: CircularProgressIndicator())
             else if (snapshot.hasError || value == null)
               ErrorState(
-                  message: 'Не вдалося завантажити налаштування.',
-                  onRetry: refresh)
+                message: 'Не вдалося завантажити налаштування.',
+                onRetry: refresh,
+              )
             else ...[
               _SwitchCard(
                 title: 'Сповіщення у застосунку',
                 subtitle:
-                    'Основні оновлення будуть показані в розділі сповіщень.',
+                    'Нагадування та важливі оновлення будуть доступні у розділі сповіщень.',
                 value: value.inAppEnabled,
                 onChanged: (next) => setState(
-                    () => preferences = value.copyWith(inAppEnabled: next)),
+                  () => preferences = value.copyWith(inAppEnabled: next),
+                ),
               ),
               _SwitchCard(
-                title: 'Нагадування про записи',
-                subtitle: 'Нагадування за 24 години та за 2 години до прийому.',
-                value: value.appointmentRemindersEnabled,
-                onChanged: (next) => setState(() => preferences =
-                    value.copyWith(appointmentRemindersEnabled: next)),
-              ),
-              _SwitchCard(
-                title: 'Оновлення лікування',
+                title: 'Оновлення медичної історії',
                 subtitle:
-                    'Нові записи лікування, документи та рекомендації повторного візиту.',
+                    'Нагадування про препарати, документи та власні записи про прийоми.',
                 value: value.treatmentUpdatesEnabled,
-                onChanged: (next) => setState(() => preferences =
-                    value.copyWith(treatmentUpdatesEnabled: next)),
-              ),
-              _SwitchCard(
-                title: 'Запити на відгук',
-                subtitle:
-                    'Нагадування залишити відгук після завершеного прийому.',
-                value: value.reviewRequestsEnabled,
-                onChanged: (next) => setState(() =>
-                    preferences = value.copyWith(reviewRequestsEnabled: next)),
-              ),
-              const Card(
-                child: ListTile(
-                  leading: Icon(Icons.block_outlined),
-                  title: Text('Маркетингові сповіщення вимкнені'),
-                  subtitle:
-                      Text('Рекламні повідомлення не надсилаються в MVP.'),
+                onChanged: (next) => setState(
+                  () => preferences =
+                      value.copyWith(treatmentUpdatesEnabled: next),
                 ),
               ),
               const SizedBox(height: 12),
               FilledButton(
-                  onPressed: isSaving ? null : save,
-                  child: Text(isSaving ? 'Збереження...' : 'Зберегти')),
+                onPressed: isSaving ? null : save,
+                child: Text(isSaving ? 'Збереження...' : 'Зберегти'),
+              ),
             ],
           ],
         );
@@ -122,11 +104,12 @@ class _NotificationPreferencesScreenState
 }
 
 class _SwitchCard extends StatelessWidget {
-  const _SwitchCard(
-      {required this.title,
-      required this.subtitle,
-      required this.value,
-      required this.onChanged});
+  const _SwitchCard({
+    required this.title,
+    required this.subtitle,
+    required this.value,
+    required this.onChanged,
+  });
 
   final String title;
   final String subtitle;

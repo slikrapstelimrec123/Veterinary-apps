@@ -6,8 +6,7 @@ import '../domain/visit_document.dart';
 import '../domain/visit_record.dart';
 
 class VisitRecordRepository {
-  static const _ownerSafeColumns =
-      'id,appointment_id,clinic_id,doctor_id,pet_id,created_by,visit_date,'
+  static const _ownerSafeColumns = 'id,pet_id,created_by,visit_date,'
       'reason,diagnosis,treatment_notes,recommendations,follow_up_at,status,'
       'created_at,updated_at,owner_id,reason_for_visit,symptoms,'
       'procedures_performed,prescribed_medications,next_visit_recommended,'
@@ -49,24 +48,6 @@ class VisitRecordRepository {
         .from('visit_records')
         .select(_ownerSafeColumns)
         .eq('id', id)
-        .maybeSingle();
-
-    return row == null ? null : VisitRecord.fromJson(row);
-  }
-
-  Future<VisitRecord?> getVisitRecordForAppointment(
-      String appointmentId) async {
-    if (_useMockData) {
-      for (final record in MockData.visitRecords) {
-        if (record.appointmentId == appointmentId) return record;
-      }
-      return null;
-    }
-
-    final row = await _client
-        .from('visit_records')
-        .select(_ownerSafeColumns)
-        .eq('appointment_id', appointmentId)
         .maybeSingle();
 
     return row == null ? null : VisitRecord.fromJson(row);

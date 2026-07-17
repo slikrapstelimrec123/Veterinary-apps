@@ -20,7 +20,7 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
   final _repository = VisitRecordRepository();
 
   DateTime _visitDate = DateTime.now();
-  final _clinicNameController = TextEditingController();
+  final _providerNameController = TextEditingController();
   final _reasonController = TextEditingController();
   final _symptomsController = TextEditingController();
   final _diagnosisController = TextEditingController();
@@ -34,7 +34,7 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
 
   @override
   void dispose() {
-    _clinicNameController.dispose();
+    _providerNameController.dispose();
     _reasonController.dispose();
     _symptomsController.dispose();
     _diagnosisController.dispose();
@@ -75,7 +75,7 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
           petId: widget.petId,
           visitDate: _visitDate,
           reason: _reasonController.text,
-          providerName: _clinicNameController.text,
+          providerName: _providerNameController.text,
           symptoms: _symptomsController.text,
           diagnosis: _diagnosisController.text,
           treatmentNotes: _treatmentController.text,
@@ -139,11 +139,11 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
                     ),
                     const Divider(),
                     TextFormField(
-                      controller: _clinicNameController,
+                      controller: _providerNameController,
                       decoration: const InputDecoration(
-                        labelText: 'Назва клініки (необов\'язково)',
+                        labelText: 'Місце або фахівець (необов\'язково)',
                         border: InputBorder.none,
-                        prefixIcon: Icon(Icons.local_hospital_outlined),
+                        prefixIcon: Icon(Icons.place_outlined),
                       ),
                     ),
                   ],

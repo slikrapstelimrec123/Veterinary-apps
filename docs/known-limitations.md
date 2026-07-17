@@ -1,17 +1,7 @@
 # Known Limitations
 
-- No real payment processing.
-- Subscription upgrades are manual/mock.
-- No real SMS sending.
-- No real email provider integration.
-- Push notifications are not fully enabled.
-- Legal documents are placeholders and need legal review.
-- Data export and account deletion are placeholders.
-- No AI diagnosis.
-- No chat.
-- No advanced analytics.
-- No multi-location Enterprise workflow.
-- No complex marketplace ranking.
-- Scheduled reminders are stored but not processed by a background worker yet.
-- Private document viewing depends on future signed URL/Storage hardening for production.
-- Not ready for full public launch.
+- Medical records are owner-entered and are not verified by Lappo.
+- Lappo does not provide diagnoses or replace veterinary care.
+- Push delivery depends on device permission and operating-system settings.
+- Network-dependent changes may require retry after connectivity loss.
+- Legal copy requires professional review before a public App Store release.

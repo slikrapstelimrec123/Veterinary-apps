@@ -80,7 +80,7 @@ void main() {
       'status': 'self_reported',
     });
 
-    expect(record.clinicName, 'Домашній огляд');
+    expect(record.providerName, 'Домашній огляд');
     expect(record.reason, 'Контроль стану');
     expect(record.status, 'self_reported');
   });

@@ -37,20 +37,12 @@ class DataExportService {
         warnings);
     final pets = await _readRows('Тварини',
         () => _client.from('pets').select('*').order('created_at'), warnings);
-    final appointments = await _readRows(
-        'Записи на прийом',
-        () => _client
-            .from('appointments')
-            .select(
-                'id,clinic_id,doctor_id,service_id,pet_id,owner_id,starts_at,ends_at,status,price_amount,price_currency,owner_comment,cancelled_at,created_at,updated_at')
-            .order('starts_at'),
-        warnings);
     final visitRecords = await _readRows(
         'Медичні записи',
         () => _client
             .from('visit_records')
             .select(
-                'id,appointment_id,clinic_id,doctor_id,pet_id,owner_id,visit_date,provider_name,reason,reason_for_visit,symptoms,diagnosis,procedures_performed,treatment_notes,prescribed_medications,recommendations,follow_up_at,next_visit_recommended,next_visit_date,status,created_at,updated_at')
+                'id,pet_id,owner_id,visit_date,provider_name,reason,reason_for_visit,symptoms,diagnosis,procedures_performed,treatment_notes,prescribed_medications,recommendations,follow_up_at,next_visit_recommended,next_visit_date,status,created_at,updated_at')
             .order('visit_date'),
         warnings);
     final visitDocuments = await _readRows(
@@ -107,7 +99,6 @@ class DataExportService {
           'format_version': 1,
           'profile': profile,
           'pets': pets,
-          'appointments': appointments,
           'visit_records': visitRecords,
           'visit_documents': visitDocuments,
           'medications': medications,

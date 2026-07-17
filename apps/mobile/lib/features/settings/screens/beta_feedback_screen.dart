@@ -66,7 +66,7 @@ class _BetaFeedbackScreenState extends State<BetaFeedbackScreen> {
   Widget build(BuildContext context) {
     return AppScaffold(
       title: 'Beta-відгук',
-      subtitle: 'Допоможіть підготувати продукт до тестування в клініках.',
+      subtitle: 'Допоможіть зробити Lappo зручнішим для власників тварин.',
       children: [
         if (error != null) ...[
           Text(error!, style: const TextStyle(color: Color(0xFF9F1239))),

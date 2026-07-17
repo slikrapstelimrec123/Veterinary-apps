@@ -13,18 +13,16 @@ class RoleMessageScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = AuthScope.of(context);
-    final message = user.isClinicRole
-        ? 'Керування клінікою доступне у веб-панелі адміністратора.'
-        : 'Адміністрування платформи доступне лише через веб-інтерфейс.';
 
     return AppScaffold(
-      title: 'Вхід виконано',
+      title: 'Тип акаунта не підтримується',
       subtitle: '${user.fullName} • ${user.email}',
       children: [
-        PlaceholderCard(
-          title: 'Доступ за роллю',
-          body: message,
-          icon: Icons.admin_panel_settings_outlined,
+        const PlaceholderCard(
+          title: 'Lappo працює для власників тварин',
+          body:
+              'Цей тип акаунта більше не підтримується. Увійдіть або створіть акаунт власника тварини.',
+          icon: Icons.pets_outlined,
         ),
         const SizedBox(height: 16),
         FilledButton(

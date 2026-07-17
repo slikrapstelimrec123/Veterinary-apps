@@ -7,7 +7,6 @@ import '../../pet_transfer/domain/pet_transfer.dart';
 import '../../pet_transfer/screens/incoming_transfers_screen.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/error_state.dart';
-import '../../appointments/screens/appointment_details_screen.dart';
 import '../../visit_records/screens/visit_record_details_screen.dart';
 import '../../medications/screens/medications_screen.dart';
 import '../data/notification_repository.dart';
@@ -53,10 +52,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     if (notification.transferId != null) {
       await Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const IncomingTransfersScreen()));
-    } else if (notification.appointmentId != null) {
-      await Navigator.of(context).push(MaterialPageRoute(
-          builder: (_) => AppointmentDetailsScreen(
-              appointmentId: notification.appointmentId!)));
     } else if (notification.visitRecordId != null) {
       await Navigator.of(context).push(MaterialPageRoute(
           builder: (_) =>
@@ -212,11 +207,9 @@ class _NotificationTile extends StatelessWidget {
 
 IconData notificationIcon(String type) {
   if (type.contains('transfer')) return Icons.pets_outlined;
-  if (type.contains('appointment')) return Icons.event_available_outlined;
   if (type.contains('visit') || type.contains('document')) {
     return Icons.medical_information_outlined;
   }
-  if (type.contains('review')) return Icons.star_border;
   if (type.contains('medication')) return Icons.medication_outlined;
   return Icons.notifications_none_outlined;
 }

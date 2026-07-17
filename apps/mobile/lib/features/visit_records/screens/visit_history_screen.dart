@@ -142,7 +142,7 @@ class _VisitRecordCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 6),
-              Text(record.clinicName ?? 'Клініку не вказано'),
+              Text(record.providerName ?? 'Власний медичний запис'),
               const SizedBox(height: 4),
               Text(record.reason ?? record.diagnosis ?? 'Запис прийому'),
               if (record.treatmentNotes != null) ...[

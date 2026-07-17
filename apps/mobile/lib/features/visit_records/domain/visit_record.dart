@@ -3,11 +3,7 @@ class VisitRecord {
     required this.id,
     required this.petId,
     required this.visitDate,
-    this.clinicId,
-    this.doctorId,
-    this.appointmentId,
-    this.clinicName,
-    this.doctorName,
+    this.providerName,
     this.reason,
     this.symptoms,
     this.diagnosis,
@@ -24,11 +20,7 @@ class VisitRecord {
   final String id;
   final String petId;
   final DateTime visitDate;
-  final String? clinicId;
-  final String? doctorId;
-  final String? appointmentId;
-  final String? clinicName;
-  final String? doctorName;
+  final String? providerName;
   final String? reason;
   final String? symptoms;
   final String? diagnosis;
@@ -42,23 +34,12 @@ class VisitRecord {
   final int documentCount;
 
   factory VisitRecord.fromJson(Map<String, dynamic> json) {
-    final clinic = json['clinics'];
-    final doctor = json['doctors'];
-
     return VisitRecord(
       id: json['id'] as String,
       petId: json['pet_id'] as String,
-      clinicId: json['clinic_id'] as String?,
-      doctorId: json['doctor_id'] as String?,
-      appointmentId: json['appointment_id'] as String?,
       visitDate: DateTime.tryParse(json['visit_date'] as String? ?? '') ??
           DateTime.now(),
-      clinicName: clinic is Map<String, dynamic>
-          ? clinic['name'] as String?
-          : json['provider_name'] as String?,
-      doctorName: doctor is Map<String, dynamic>
-          ? doctor['full_name'] as String?
-          : null,
+      providerName: json['provider_name'] as String?,
       reason:
           (json['reason_for_visit'] as String?) ?? json['reason'] as String?,
       symptoms: json['symptoms'] as String?,

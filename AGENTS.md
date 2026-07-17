@@ -1,41 +1,33 @@
 # AI Agent Instructions
 
-This repository is an MVP for a veterinary clinics and pet owners platform.
+This repository contains Lappo, a mobile application for pet owners.
 
 ## Product Rules
 
-- Follow the MVP scope in `docs/prd.md`.
+- Follow the owner-only MVP scope in `docs/prd.md`.
 - Treat the pet medical card as the center of the product.
-- Keep clinic workflows simple enough for non-technical staff.
-- Do not add features outside the requested stage.
-- Do not implement payments yet.
-- Do not implement chat, push notifications, AI features, ratings marketplace, complex CRM, insurance, or telemedicine in this stage.
+- Medical visit records are created and managed by pet owners.
+- Do not add clinic administration, doctor accounts, online booking, clinic subscriptions, clinic reviews, or clinic marketplace features.
+- Do not implement payments, chat, AI diagnosis, insurance, or telemedicine in this stage.
 
 ## Engineering Rules
 
-- Keep code clean, readable, and maintainable.
+- Keep code clean, readable, and feature-oriented.
 - Prefer simple architecture over clever abstractions.
-- Use TypeScript in the admin panel.
-- Keep folder structure clear and feature-oriented.
 - Do not hardcode secrets or environment-specific values.
-- Add comments only where they clarify non-obvious logic.
-- Use placeholder data only until backend integration is requested.
-- Keep Supabase Row Level Security as the source of truth for sensitive access control.
+- Keep Supabase Row Level Security as the source of truth for sensitive access.
+- Historical migrations may retain legacy clinic tables for reproducibility, but application roles must not access them.
 
 ## Security And Privacy
 
-- Pet records, visit records, and uploaded documents are sensitive medical data.
-- Pet owners must see only their own pets and treatment history.
-- Clinics must see only data connected to their clinic.
-- Doctors must create visit records only for appointments in their clinic.
+- Pet records, medical records, and uploaded documents are sensitive data.
+- Users must see only pets and records they own or were explicitly granted access to.
 - Uploaded documents must remain private.
-- Public users can view only published clinic, doctor, and service profiles.
+- Public users may see only deliberately published announcement content.
 
 ## UI Rules
 
-- Keep UI minimalistic, premium, calm, medical, and trustworthy.
-- Avoid overloaded screens.
-- Use clear hierarchy, readable typography, and restrained colors.
+- Keep UI minimalistic, premium, calm, and trustworthy.
+- Use Ukrainian for visible product text.
 - Make primary actions obvious.
 - Protect destructive or high-impact actions with confirmation.
-

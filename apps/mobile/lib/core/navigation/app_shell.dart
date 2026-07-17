@@ -269,7 +269,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
               const SizedBox(height: 12),
-              const _ClinicComingSoonCard(),
+              const _AnnouncementsCard(),
               const SizedBox(height: 12),
               _UpcomingEventsCard(pets: pets),
             ],
@@ -365,8 +365,8 @@ class _StatTile extends StatelessWidget {
   }
 }
 
-class _ClinicComingSoonCard extends StatelessWidget {
-  const _ClinicComingSoonCard();
+class _AnnouncementsCard extends StatelessWidget {
+  const _AnnouncementsCard();
 
   @override
   Widget build(BuildContext context) {

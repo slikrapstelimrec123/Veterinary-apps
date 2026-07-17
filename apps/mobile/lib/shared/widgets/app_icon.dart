@@ -30,7 +30,6 @@ class AppIcons {
   static const calendarPlus = 'calendar_plus';
   static const bell = 'bell';
   static const settings = 'settings';
-  static const doctor = 'doctor';
   static const document = 'document';
   static const calendar = 'calendar';
   static const medicine = 'medicine';

@@ -4,8 +4,6 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/error_state.dart';
-import '../../reviews/data/review_repository.dart';
-import '../../reviews/screens/leave_review_screen.dart';
 import '../data/visit_record_repository.dart';
 import '../domain/visit_document.dart';
 import '../domain/visit_record.dart';
@@ -22,7 +20,6 @@ class VisitRecordDetailsScreen extends StatefulWidget {
 
 class _VisitRecordDetailsScreenState extends State<VisitRecordDetailsScreen> {
   final repository = VisitRecordRepository();
-  final reviewRepository = ReviewRepository();
   late Future<_VisitDetailsData> future = load();
 
   Future<_VisitDetailsData> load() async {
@@ -44,72 +41,84 @@ class _VisitRecordDetailsScreenState extends State<VisitRecordDetailsScreen> {
         final documents = snapshot.data?.documents ?? [];
 
         return AppScaffold(
-          title: 'Деталі візиту',
-          subtitle: record?.clinicName ?? 'Медичний запис',
+          title: 'Деталі прийому',
+          subtitle: record?.providerName ?? 'Власний медичний запис',
           children: [
             if (snapshot.connectionState == ConnectionState.waiting)
               const Center(child: CircularProgressIndicator())
             else if (snapshot.hasError)
               ErrorState(
-                  message: 'Не вдалося завантажити деталі візиту.',
-                  onRetry: refresh)
+                message: 'Не вдалося завантажити деталі прийому.',
+                onRetry: refresh,
+              )
             else if (record == null)
               const EmptyState(
-                  title: 'Візит не знайдено',
-                  message: 'Цей запис лікування недоступний.',
-                  icon: Icons.search_off_outlined)
+                title: 'Запис не знайдено',
+                message: 'Цей запис медичної історії недоступний.',
+                icon: Icons.search_off_outlined,
+              )
             else ...[
               _RecordSection(
-                  title: 'Дата візиту',
-                  body: record.visitDate.toIso8601String().split('T').first),
+                title: 'Дата прийому',
+                body: record.visitDate.toIso8601String().split('T').first,
+              ),
+              if (record.providerName != null)
+                _RecordSection(
+                  title: 'Місце або фахівець',
+                  body: record.providerName!,
+                ),
               _RecordSection(
-                  title: 'Клініка', body: record.clinicName ?? 'Не вказано'),
+                title: 'Причина',
+                body: record.reason ?? 'Не вказано',
+              ),
               _RecordSection(
-                  title: 'Лікар', body: record.doctorName ?? 'Не вказано'),
+                title: 'Симптоми',
+                body: record.symptoms ?? 'Не вказано',
+              ),
               _RecordSection(
-                  title: 'Причина', body: record.reason ?? 'Не вказано'),
+                title: 'Діагноз',
+                body: record.diagnosis ?? 'Не вказано',
+              ),
               _RecordSection(
-                  title: 'Симптоми', body: record.symptoms ?? 'Не вказано'),
+                title: 'Процедури',
+                body: record.proceduresPerformed ?? 'Процедури не додано.',
+              ),
               _RecordSection(
-                  title: 'Діагноз', body: record.diagnosis ?? 'Не вказано'),
+                title: 'Лікування',
+                body:
+                    record.treatmentNotes ?? 'Нотатки про лікування не додано.',
+              ),
               _RecordSection(
-                  title: 'Процедури',
-                  body: record.proceduresPerformed ?? 'Процедури не додано.'),
+                title: 'Препарати',
+                body: record.prescribedMedications ?? 'Препарати не додано.',
+              ),
               _RecordSection(
-                  title: 'Лікування',
-                  body: record.treatmentNotes ??
-                      'Нотатки про лікування не додано.'),
+                title: 'Рекомендації',
+                body: record.recommendations ?? 'Рекомендації не додано.',
+              ),
               _RecordSection(
-                  title: 'Препарати',
-                  body: record.prescribedMedications ?? 'Препарати не додано.'),
-              _RecordSection(
-                  title: 'Рекомендації',
-                  body: record.recommendations ?? 'Рекомендації не додано.'),
-              _RecordSection(
-                  title: 'Наступний візит', body: _nextVisitLabel(record)),
-              if (record.appointmentId != null && record.clinicId != null)
-                _VisitReviewAction(
-                    record: record,
-                    repository: reviewRepository,
-                    onChanged: refresh),
+                title: 'Наступний прийом',
+                body: _nextVisitLabel(record),
+              ),
               const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Документи',
-                      style: Theme.of(context).textTheme.titleLarge),
-                ],
+              Text(
+                'Документи',
+                style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 8),
               if (documents.isEmpty)
                 const EmptyState(
                   title: 'Документи не прикріплено',
-                  message: 'До цього візиту документи не прикріплено.',
+                  message: 'До цього запису документи не прикріплено.',
                   icon: Icons.attach_file_outlined,
                 )
               else
-                ...documents.map((doc) =>
-                    _DocumentTile(document: doc, repository: repository)),
+                ...documents.map(
+                  (document) => _DocumentTile(
+                    document: document,
+                    repository: repository,
+                  ),
+                ),
             ],
           ],
         );
@@ -119,71 +128,23 @@ class _VisitRecordDetailsScreenState extends State<VisitRecordDetailsScreen> {
 
   String _nextVisitLabel(VisitRecord record) {
     if (!record.nextVisitRecommended) {
-      return 'Дату повторного візиту не вказано.';
+      return 'Дату наступного прийому не вказано.';
     }
     return record.nextVisitDate?.toIso8601String().split('T').first ??
-        'Рекомендовано, але дату не вказано.';
-  }
-}
-
-class _VisitReviewAction extends StatelessWidget {
-  const _VisitReviewAction(
-      {required this.record,
-      required this.repository,
-      required this.onChanged});
-
-  final VisitRecord record;
-  final ReviewRepository repository;
-  final VoidCallback onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: repository.getReviewForAppointment(record.appointmentId!),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SizedBox.shrink();
-        }
-        if (snapshot.data != null) {
-          return const Card(
-              child: Padding(
-                  padding: EdgeInsets.all(14),
-                  child: Text('Цей візит уже оцінено.')));
-        }
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: OutlinedButton.icon(
-            onPressed: () async {
-              await Navigator.of(context).push(MaterialPageRoute(
-                builder: (_) => LeaveReviewScreen(
-                  clinicId: record.clinicId!,
-                  clinicName: record.clinicName ?? 'Клініка',
-                  appointmentId: record.appointmentId!,
-                  visitRecordId: record.id,
-                  petId: record.petId,
-                  doctorId: record.doctorId,
-                  doctorName: record.doctorName,
-                ),
-              ));
-              onChanged();
-            },
-            icon: const Icon(Icons.star_border),
-            label: const Text('Залишити відгук'),
-          ),
-        );
-      },
-    );
+        'Наступний прийом рекомендовано, але дату не вказано.';
   }
 }
 
 class _VisitDetailsData {
   const _VisitDetailsData({required this.record, required this.documents});
+
   final VisitRecord? record;
   final List<VisitDocument> documents;
 }
 
 class _RecordSection extends StatelessWidget {
   const _RecordSection({required this.title, required this.body});
+
   final String title;
   final String body;
 
@@ -210,6 +171,7 @@ class _RecordSection extends StatelessWidget {
 
 class _DocumentTile extends StatelessWidget {
   const _DocumentTile({required this.document, required this.repository});
+
   final VisitDocument document;
   final VisitRecordRepository repository;
 
@@ -220,14 +182,18 @@ class _DocumentTile extends StatelessWidget {
         leading: const Icon(Icons.description_outlined),
         title: Text(document.title),
         subtitle: Text(
-            '${document.type} · ${document.fileSizeLabel} · ${document.createdAt.toIso8601String().split('T').first}'),
+          '${document.type} · ${document.fileSizeLabel} · '
+          '${document.createdAt.toIso8601String().split('T').first}',
+        ),
         trailing: const Icon(Icons.lock_outline),
         onTap: () async {
           final url = await repository.getSignedDocumentUrl(document);
           if (!context.mounted) return;
           if (url == null ||
-              !await launchUrl(Uri.parse(url),
-                  mode: LaunchMode.externalApplication)) {
+              !await launchUrl(
+                Uri.parse(url),
+                mode: LaunchMode.externalApplication,
+              )) {
             if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Не вдалося відкрити файл.')),

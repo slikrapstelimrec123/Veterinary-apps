@@ -88,10 +88,9 @@ class NotificationRepository {
       'save_my_notification_preferences',
       params: {
         'p_in_app_enabled': preferences.inAppEnabled,
-        'p_appointment_reminders_enabled':
-            preferences.appointmentRemindersEnabled,
+        'p_appointment_reminders_enabled': false,
         'p_treatment_updates_enabled': preferences.treatmentUpdatesEnabled,
-        'p_review_requests_enabled': preferences.reviewRequestsEnabled,
+        'p_review_requests_enabled': false,
       },
     );
   }
