@@ -210,15 +210,7 @@ class AnnouncementRepository {
       if (index >= 0) _saleMock[index] = updated;
       return;
     }
-    await _supabase.from('announcements').update({
-      'breed': updated.breed,
-      'pet_name': updated.puppyName,
-      'price_amount': updated.price,
-      'description': updated.notes,
-      'city': updated.location,
-      'contact_phone': updated.phone,
-      'updated_at': DateTime.now().toUtc().toIso8601String(),
-    }).eq('id', updated.id);
+    await _updateOwnedAnnouncement(updated.id, updated.toUpdateJson());
   }
 
   Future<void> updateBreedingAnnouncement(BreedingAnnouncement updated) async {
@@ -227,15 +219,30 @@ class AnnouncementRepository {
       if (index >= 0) _breedingMock[index] = updated;
       return;
     }
-    await _supabase.from('announcements').update({
-      'breed': updated.breed,
-      'pet_name': updated.myDogName,
-      'conditions': updated.conditions,
-      'description': updated.notes,
-      'city': updated.location,
-      'contact_phone': updated.phone,
-      'updated_at': DateTime.now().toUtc().toIso8601String(),
-    }).eq('id', updated.id);
+    await _updateOwnedAnnouncement(updated.id, updated.toUpdateJson());
+  }
+
+  Future<void> _updateOwnedAnnouncement(
+    String id,
+    Map<String, dynamic> values,
+  ) async {
+    final userId = _requireUserId();
+    final updatedRow = await _supabase
+        .from('announcements')
+        .update({
+          ...values,
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        })
+        .eq('id', id)
+        .eq('owner_id', userId)
+        .select('id')
+        .maybeSingle();
+
+    if (updatedRow == null) {
+      throw StateError(
+        'The announcement was not updated for the current owner.',
+      );
+    }
   }
 
   Future<void> reportAnnouncement(String id, {String reason = 'other'}) async {

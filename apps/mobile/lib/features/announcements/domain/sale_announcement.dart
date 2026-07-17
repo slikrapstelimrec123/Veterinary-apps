@@ -90,6 +90,15 @@ class SaleAnnouncement {
         'city': location,
       };
 
+  Map<String, dynamic> toUpdateJson() => {
+        'breed': breed,
+        'pet_name': puppyName,
+        'price_amount': price,
+        'description': notes,
+        'city': location,
+        'contact_phone': phone,
+      };
+
   String get genderLabel => gender == 'male' ? 'Самець' : 'Самка';
   String get priceLabel => '$price грн';
   int get ageInWeeks {

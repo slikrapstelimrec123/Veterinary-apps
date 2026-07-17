@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vet_care_mobile/features/achievements/data/achievement_repository.dart';
 import 'package:vet_care_mobile/features/achievements/domain/pet_achievement.dart';
+import 'package:vet_care_mobile/features/announcements/domain/breeding_announcement.dart';
+import 'package:vet_care_mobile/features/announcements/domain/sale_announcement.dart';
 import 'package:vet_care_mobile/features/feeding/data/feeding_repository.dart';
 import 'package:vet_care_mobile/features/feeding/domain/pet_feeding.dart';
 import 'package:vet_care_mobile/features/medications/data/medication_repository.dart';
@@ -103,5 +105,55 @@ void main() {
     expect(notification.petId, petId);
     expect(notification.petName, 'Арчі');
     expect(notification.medicationId, 'medication-1');
+  });
+
+  test('sale announcement edits send every editable field', () {
+    final announcement = SaleAnnouncement(
+      id: 'sale-1',
+      ownerName: 'Owner',
+      phone: '0635022391',
+      breed: 'Maltese',
+      puppyName: 'Archie',
+      gender: 'male',
+      birthDate: DateTime(2025, 1, 1),
+      price: 15000,
+      notes: 'New owner wanted',
+      location: 'Kyiv',
+      createdAt: DateTime(2026, 7, 17),
+    );
+
+    expect(announcement.toUpdateJson(), {
+      'breed': 'Maltese',
+      'pet_name': 'Archie',
+      'price_amount': 15000,
+      'description': 'New owner wanted',
+      'city': 'Kyiv',
+      'contact_phone': '0635022391',
+    });
+  });
+
+  test('breeding announcement edits send every editable field', () {
+    final announcement = BreedingAnnouncement(
+      id: 'breeding-1',
+      ownerName: 'Owner',
+      phone: '0635022391',
+      breed: 'Maltese',
+      myDogName: 'Archie',
+      myDogGender: 'male',
+      myDogAge: 4,
+      conditions: 'Agreement',
+      notes: 'Healthy dog',
+      location: 'Kyiv',
+      createdAt: DateTime(2026, 7, 17),
+    );
+
+    expect(announcement.toUpdateJson(), {
+      'breed': 'Maltese',
+      'pet_name': 'Archie',
+      'conditions': 'Agreement',
+      'description': 'Healthy dog',
+      'city': 'Kyiv',
+      'contact_phone': '0635022391',
+    });
   });
 }

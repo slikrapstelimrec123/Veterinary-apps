@@ -77,6 +77,15 @@ class BreedingAnnouncement {
         'city': location,
       };
 
+  Map<String, dynamic> toUpdateJson() => {
+        'breed': breed,
+        'pet_name': myDogName,
+        'conditions': conditions,
+        'description': notes,
+        'city': location,
+        'contact_phone': phone,
+      };
+
   String get genderLabel => myDogGender == 'male' ? 'Самець' : 'Самка';
   String get ageLabel {
     if (myDogAge == 1) return '1 рік';

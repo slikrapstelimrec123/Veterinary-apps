@@ -398,20 +398,22 @@ class _MyAnnouncementsList extends StatelessWidget {
                       },
                       onEdit: () => Navigator.of(context)
                           .push(MaterialPageRoute(
-                            builder: (_) => _EditSaleScreen(
-                                item: s,
-                                onDelete: () async {
-                                  await AnnouncementRepository()
-                                      .deleteSaleAnnouncement(s.id);
-                                  onToggle();
-                                },
-                                onToggle: () async {
-                                  await AnnouncementRepository()
-                                      .toggleSaleActive(s.id);
-                                  onToggle();
-                                }),
-                          ))
-                          .then((_) => onToggle()),
+                        builder: (_) => _EditSaleScreen(
+                            item: s,
+                            onDelete: () async {
+                              await AnnouncementRepository()
+                                  .deleteSaleAnnouncement(s.id);
+                              onToggle();
+                            },
+                            onToggle: () async {
+                              await AnnouncementRepository()
+                                  .toggleSaleActive(s.id);
+                              onToggle();
+                            }),
+                      ))
+                          .then((saved) {
+                        if (saved == true) onToggle();
+                      }),
                     ),
                   )),
             ],
@@ -445,20 +447,22 @@ class _MyAnnouncementsList extends StatelessWidget {
                       },
                       onEdit: () => Navigator.of(context)
                           .push(MaterialPageRoute(
-                            builder: (_) => _EditBreedingScreen(
-                                item: b,
-                                onDelete: () async {
-                                  await AnnouncementRepository()
-                                      .deleteBreedingAnnouncement(b.id);
-                                  onToggle();
-                                },
-                                onToggle: () async {
-                                  await AnnouncementRepository()
-                                      .toggleBreedingActive(b.id);
-                                  onToggle();
-                                }),
-                          ))
-                          .then((_) => onToggle()),
+                        builder: (_) => _EditBreedingScreen(
+                            item: b,
+                            onDelete: () async {
+                              await AnnouncementRepository()
+                                  .deleteBreedingAnnouncement(b.id);
+                              onToggle();
+                            },
+                            onToggle: () async {
+                              await AnnouncementRepository()
+                                  .toggleBreedingActive(b.id);
+                              onToggle();
+                            }),
+                      ))
+                          .then((saved) {
+                        if (saved == true) onToggle();
+                      }),
                     ),
                   )),
             ],
@@ -623,6 +627,7 @@ class _EditSaleScreenState extends State<_EditSaleScreen> {
       TextEditingController(text: widget.item.phone);
   late final TextEditingController _notes =
       TextEditingController(text: widget.item.notes ?? '');
+  bool _isSaving = false;
 
   @override
   void dispose() {
@@ -636,37 +641,66 @@ class _EditSaleScreenState extends State<_EditSaleScreen> {
   }
 
   Future<void> _save() async {
-    final price = int.tryParse(_price.text.trim()) ?? widget.item.price;
-    await AnnouncementRepository().updateSaleAnnouncement(
-      SaleAnnouncement(
-        id: widget.item.id,
-        ownerName: widget.item.ownerName,
-        phone:
-            _phone.text.trim().isEmpty ? widget.item.phone : _phone.text.trim(),
-        breed:
-            _breed.text.trim().isEmpty ? widget.item.breed : _breed.text.trim(),
-        puppyName: _name.text.trim().isEmpty
-            ? widget.item.puppyName
-            : _name.text.trim(),
-        gender: widget.item.gender,
-        birthDate: widget.item.birthDate,
-        price: price,
-        photoUrl: widget.item.photoUrl,
-        photoStoragePath: widget.item.photoStoragePath,
-        color: widget.item.color,
-        hasVaccinations: widget.item.hasVaccinations,
-        hasPedigree: widget.item.hasPedigree,
-        hasChip: widget.item.hasChip,
-        notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
-        location: _location.text.trim().isEmpty ? null : _location.text.trim(),
-        createdAt: widget.item.createdAt,
-        isActive: widget.item.isActive,
-        ownerId: widget.item.ownerId,
-        petId: widget.item.petId,
-      ),
-    );
-    if (!mounted) return;
-    Navigator.of(context).pop();
+    if (_isSaving) return;
+    FocusManager.instance.primaryFocus?.unfocus();
+
+    final price = int.tryParse(_price.text.trim());
+    if (price == null || price < 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Вкажіть коректну ціну оголошення.')),
+      );
+      return;
+    }
+
+    setState(() => _isSaving = true);
+    try {
+      await AnnouncementRepository()
+          .updateSaleAnnouncement(
+            SaleAnnouncement(
+              id: widget.item.id,
+              ownerName: widget.item.ownerName,
+              phone: _phone.text.trim().isEmpty
+                  ? widget.item.phone
+                  : _phone.text.trim(),
+              breed: _breed.text.trim().isEmpty
+                  ? widget.item.breed
+                  : _breed.text.trim(),
+              puppyName: _name.text.trim().isEmpty
+                  ? widget.item.puppyName
+                  : _name.text.trim(),
+              gender: widget.item.gender,
+              birthDate: widget.item.birthDate,
+              price: price,
+              photoUrl: widget.item.photoUrl,
+              photoStoragePath: widget.item.photoStoragePath,
+              color: widget.item.color,
+              hasVaccinations: widget.item.hasVaccinations,
+              hasPedigree: widget.item.hasPedigree,
+              hasChip: widget.item.hasChip,
+              notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
+              location:
+                  _location.text.trim().isEmpty ? null : _location.text.trim(),
+              createdAt: widget.item.createdAt,
+              isActive: widget.item.isActive,
+              ownerId: widget.item.ownerId,
+              petId: widget.item.petId,
+            ),
+          )
+          .timeout(const Duration(seconds: 20));
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Не вдалося зберегти зміни. Перевірте інтернет і спробуйте ще раз.',
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
   }
 
   @override
@@ -699,7 +733,15 @@ class _EditSaleScreenState extends State<_EditSaleScreen> {
           const SizedBox(height: 12),
           _EditField(label: 'Примітки', controller: _notes, maxLines: 4),
           const SizedBox(height: 24),
-          FilledButton(onPressed: _save, child: const Text('Зберегти')),
+          FilledButton(
+            onPressed: _isSaving ? null : _save,
+            child: _isSaving
+                ? const SizedBox.square(
+                    dimension: 22,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text('Зберегти'),
+          ),
           const SizedBox(height: 10),
           OutlinedButton.icon(
             onPressed: () {
@@ -744,6 +786,7 @@ class _EditBreedingScreenState extends State<_EditBreedingScreen> {
       TextEditingController(text: widget.item.phone);
   late final TextEditingController _notes =
       TextEditingController(text: widget.item.notes ?? '');
+  bool _isSaving = false;
 
   @override
   void dispose() {
@@ -757,33 +800,54 @@ class _EditBreedingScreenState extends State<_EditBreedingScreen> {
   }
 
   Future<void> _save() async {
-    await AnnouncementRepository()
-        .updateBreedingAnnouncement(BreedingAnnouncement(
-      id: widget.item.id,
-      ownerName: widget.item.ownerName,
-      phone:
-          _phone.text.trim().isEmpty ? widget.item.phone : _phone.text.trim(),
-      breed:
-          _breed.text.trim().isEmpty ? widget.item.breed : _breed.text.trim(),
-      myDogName: _dogName.text.trim().isEmpty
-          ? widget.item.myDogName
-          : _dogName.text.trim(),
-      myDogGender: widget.item.myDogGender,
-      myDogAge: widget.item.myDogAge,
-      myDogPhotoUrl: widget.item.myDogPhotoUrl,
-      photoStoragePath: widget.item.photoStoragePath,
-      desiredBreed: widget.item.desiredBreed,
-      conditions:
-          _conditions.text.trim().isEmpty ? null : _conditions.text.trim(),
-      notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
-      location: _location.text.trim().isEmpty ? null : _location.text.trim(),
-      createdAt: widget.item.createdAt,
-      isActive: widget.item.isActive,
-      ownerId: widget.item.ownerId,
-      petId: widget.item.petId,
-    ));
-    if (!mounted) return;
-    Navigator.of(context).pop();
+    if (_isSaving) return;
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() => _isSaving = true);
+    try {
+      await AnnouncementRepository()
+          .updateBreedingAnnouncement(BreedingAnnouncement(
+            id: widget.item.id,
+            ownerName: widget.item.ownerName,
+            phone: _phone.text.trim().isEmpty
+                ? widget.item.phone
+                : _phone.text.trim(),
+            breed: _breed.text.trim().isEmpty
+                ? widget.item.breed
+                : _breed.text.trim(),
+            myDogName: _dogName.text.trim().isEmpty
+                ? widget.item.myDogName
+                : _dogName.text.trim(),
+            myDogGender: widget.item.myDogGender,
+            myDogAge: widget.item.myDogAge,
+            myDogPhotoUrl: widget.item.myDogPhotoUrl,
+            photoStoragePath: widget.item.photoStoragePath,
+            desiredBreed: widget.item.desiredBreed,
+            conditions: _conditions.text.trim().isEmpty
+                ? null
+                : _conditions.text.trim(),
+            notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
+            location:
+                _location.text.trim().isEmpty ? null : _location.text.trim(),
+            createdAt: widget.item.createdAt,
+            isActive: widget.item.isActive,
+            ownerId: widget.item.ownerId,
+            petId: widget.item.petId,
+          ))
+          .timeout(const Duration(seconds: 20));
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Не вдалося зберегти зміни. Перевірте інтернет і спробуйте ще раз.',
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
   }
 
   @override
@@ -814,7 +878,15 @@ class _EditBreedingScreenState extends State<_EditBreedingScreen> {
           const SizedBox(height: 12),
           _EditField(label: 'Примітки', controller: _notes, maxLines: 4),
           const SizedBox(height: 24),
-          FilledButton(onPressed: _save, child: const Text('Зберегти')),
+          FilledButton(
+            onPressed: _isSaving ? null : _save,
+            child: _isSaving
+                ? const SizedBox.square(
+                    dimension: 22,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text('Зберегти'),
+          ),
           const SizedBox(height: 10),
           OutlinedButton.icon(
             onPressed: () {
