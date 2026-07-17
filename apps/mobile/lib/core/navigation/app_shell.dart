@@ -79,7 +79,12 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
           ),
           callback: (payload) {
             final notification = AppNotification.fromJson(payload.newRecord);
-            LocalNotificationService.instance.show(notification);
+            // Reminder rows appear in the in-app inbox immediately, while the
+            // operating system alert is scheduled for its actual due time.
+            if (notification.type != 'medication_reminder' &&
+                notification.type != 'next_visit_recommended') {
+              LocalNotificationService.instance.show(notification);
+            }
             if (mounted) {
               _tabVersions[3]++;
               refreshUnreadCount();

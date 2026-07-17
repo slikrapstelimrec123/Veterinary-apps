@@ -100,12 +100,62 @@ class LocalNotificationService {
     required String petName,
     required DateTime dueDate,
   }) async {
-    await _scheduleReminder(
-      key: 'visit:$visitRecordId',
+    await initialize();
+
+    final twoDaysId = _stableId('visit:$visitRecordId:two-days');
+    final visitDayId = _stableId('visit:$visitRecordId:day');
+    await _plugin.cancel(twoDaysId);
+    await _plugin.cancel(visitDayId);
+
+    final visitDay = tz.TZDateTime(
+      tz.local,
+      dueDate.year,
+      dueDate.month,
+      dueDate.day,
+      7,
+    );
+    final twoDaysBefore = tz.TZDateTime(
+      tz.local,
+      dueDate.year,
+      dueDate.month,
+      dueDate.day - 2,
+      9,
+    );
+
+    await _scheduleAt(
+      id: twoDaysId,
       title: 'Запланований повторний прийом',
-      body: 'Не забудьте про повторний прийом для $petName.',
-      dueDate: dueDate,
-      payload: 'visit:$visitRecordId',
+      body: 'Через 2 дні заплановано прийом для $petName.',
+      scheduled: twoDaysBefore,
+      payload: 'visit:$visitRecordId:two-days',
+    );
+    await _scheduleAt(
+      id: visitDayId,
+      title: 'Сьогодні запланований прийом',
+      body: 'Сьогодні заплановано прийом для $petName.',
+      scheduled: visitDay,
+      payload: 'visit:$visitRecordId:day',
+    );
+  }
+
+  Future<void> _scheduleAt({
+    required int id,
+    required String title,
+    required String body,
+    required tz.TZDateTime scheduled,
+    required String payload,
+  }) async {
+    if (!scheduled.isAfter(tz.TZDateTime.now(tz.local))) return;
+    await _plugin.zonedSchedule(
+      id,
+      title,
+      body,
+      scheduled,
+      _details,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      payload: payload,
     );
   }
 

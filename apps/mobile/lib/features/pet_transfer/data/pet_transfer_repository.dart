@@ -37,9 +37,23 @@ class PetTransferRepository {
       'status': 'pending',
     };
 
-    await _client.from('pet_transfers').insert(insertData);
-
-    return null;
+    try {
+      await _client
+          .from('pet_transfers')
+          .insert(insertData)
+          .timeout(const Duration(seconds: 15));
+      return null;
+    } on PostgrestException catch (error) {
+      if (error.code == '23505') {
+        return 'Для цієї тварини вже є активний запит на передачу.';
+      }
+      if (error.code == '42501') {
+        return 'Передати тварину може лише її поточний власник.';
+      }
+      return 'Не вдалося надіслати запит. Спробуйте ще раз.';
+    } catch (_) {
+      return 'Сервер не відповідає. Перевірте інтернет і спробуйте ще раз.';
+    }
   }
 
   Future<List<PetTransfer>> getIncomingTransfers() async {

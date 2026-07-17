@@ -65,6 +65,7 @@ class FeedingRepository {
         .from('pet_feedings')
         .update(feeding.toInsertJson())
         .eq('id', feeding.id)
+        .eq('pet_id', feeding.petId)
         .select()
         .single();
 

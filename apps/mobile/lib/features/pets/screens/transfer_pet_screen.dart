@@ -30,19 +30,24 @@ class _TransferPetScreenState extends State<TransferPetScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _sending = true);
 
-    final authState = AuthScope.of(context);
-    final fromName = authState.currentUser?.fullName ??
-        '\u0413\u043e\u0441\u043f\u043e\u0434\u0430\u0440';
-
-    final error = await _repo.sendTransfer(
-      pet: widget.pet,
-      toEmail: _emailController.text.trim(),
-      fromUserName: fromName,
-    );
+    String? error;
+    try {
+      final authState = AuthScope.of(context);
+      final fromName = authState.currentUser?.fullName ??
+          '\u0413\u043e\u0441\u043f\u043e\u0434\u0430\u0440';
+      error = await _repo.sendTransfer(
+        pet: widget.pet,
+        toEmail: _emailController.text.trim(),
+        fromUserName: fromName,
+      );
+    } catch (_) {
+      error =
+          '\u041d\u0435 \u0432\u0434\u0430\u043b\u043e\u0441\u044f \u043d\u0430\u0434\u0456\u0441\u043b\u0430\u0442\u0438 \u0437\u0430\u043f\u0438\u0442. \u0421\u043f\u0440\u043e\u0431\u0443\u0439\u0442\u0435 \u0449\u0435 \u0440\u0430\u0437.';
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
 
     if (!mounted) return;
-    setState(() => _sending = false);
-
     if (error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(error), backgroundColor: AppTheme.danger),
@@ -201,7 +206,7 @@ class _TransferPetScreenState extends State<TransferPetScreen> {
             ),
             const SizedBox(height: 12),
             Card(
-              color: AppTheme.warning.withValues(alpha: 0.08),
+              color: AppTheme.warning.withOpacity(0.08),
               child: const Padding(
                 padding: EdgeInsets.all(14),
                 child: Row(

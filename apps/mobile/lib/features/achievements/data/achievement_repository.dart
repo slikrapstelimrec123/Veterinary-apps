@@ -70,6 +70,7 @@ class AchievementRepository {
         .from('pet_achievements')
         .update(achievement.toInsertJson())
         .eq('id', achievement.id)
+        .eq('pet_id', achievement.petId)
         .select()
         .single();
 

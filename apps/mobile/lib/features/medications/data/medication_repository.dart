@@ -71,6 +71,7 @@ class MedicationRepository {
         .from('pet_medications')
         .update(medication.toInsertJson())
         .eq('id', medication.id)
+        .eq('pet_id', medication.petId)
         .select()
         .single();
 

@@ -210,7 +210,11 @@ class AnnouncementRepository {
       if (index >= 0) _saleMock[index] = updated;
       return;
     }
-    await _updateOwnedAnnouncement(updated.id, updated.toUpdateJson());
+    await _updateOwnedAnnouncement(
+      updated.id,
+      updated.petId,
+      updated.toUpdateJson(),
+    );
   }
 
   Future<void> updateBreedingAnnouncement(BreedingAnnouncement updated) async {
@@ -219,24 +223,31 @@ class AnnouncementRepository {
       if (index >= 0) _breedingMock[index] = updated;
       return;
     }
-    await _updateOwnedAnnouncement(updated.id, updated.toUpdateJson());
+    await _updateOwnedAnnouncement(
+      updated.id,
+      updated.petId,
+      updated.toUpdateJson(),
+    );
   }
 
   Future<void> _updateOwnedAnnouncement(
     String id,
+    String? petId,
     Map<String, dynamic> values,
   ) async {
     final userId = _requireUserId();
-    final updatedRow = await _supabase
+    var query = _supabase
         .from('announcements')
         .update({
           ...values,
           'updated_at': DateTime.now().toUtc().toIso8601String(),
         })
         .eq('id', id)
-        .eq('owner_id', userId)
-        .select('id')
-        .maybeSingle();
+        .eq('owner_id', userId);
+    if (petId != null) {
+      query = query.eq('pet_id', petId);
+    }
+    final updatedRow = await query.select('id').maybeSingle();
 
     if (updatedRow == null) {
       throw StateError(
