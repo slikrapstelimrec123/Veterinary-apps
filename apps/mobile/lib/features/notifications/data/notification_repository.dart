@@ -16,9 +16,12 @@ class NotificationRepository {
       return rows;
     }
 
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) return [];
     final rows = await _client
         .from('notifications')
         .select('*')
+        .eq('user_id', userId)
         .neq('status', 'archived')
         .order('created_at', ascending: false);
 
@@ -35,8 +38,13 @@ class NotificationRepository {
           .length;
     }
 
-    final rows =
-        await _client.from('notifications').select('id').eq('status', 'unread');
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) return 0;
+    final rows = await _client
+        .from('notifications')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('status', 'unread');
     return (rows as List<dynamic>).length;
   }
 

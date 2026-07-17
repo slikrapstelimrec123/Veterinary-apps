@@ -1,7 +1,9 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase_config.dart';
+import '../../../core/notifications/local_notification_service.dart';
 import '../../../shared/data/mock_data.dart';
+import '../../pets/data/pet_repository.dart';
 import '../domain/visit_document.dart';
 import '../domain/visit_record.dart';
 
@@ -95,7 +97,21 @@ class VisitRecordRepository {
         .select(_ownerSafeColumns)
         .single();
 
-    return VisitRecord.fromJson(row);
+    final saved = VisitRecord.fromJson(row);
+    final reminderDate = saved.nextVisitDate;
+    if (saved.nextVisitRecommended && reminderDate != null) {
+      try {
+        final pet = await PetRepository().getPet(petId);
+        await LocalNotificationService.instance.scheduleVisitReminder(
+          visitRecordId: saved.id,
+          petName: pet?.name ?? 'Тварина',
+          dueDate: reminderDate,
+        );
+      } catch (_) {
+        // The medical record remains saved even if scheduling is unavailable.
+      }
+    }
+    return saved;
   }
 
   String? _nullable(String? value) {

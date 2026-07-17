@@ -67,6 +67,7 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    FocusManager.instance.primaryFocus?.unfocus();
     setState(() => _saving = true);
 
     try {
@@ -87,12 +88,14 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
       }
       if (!mounted) return;
       Navigator.of(context).pop(true);
-    } catch (error) {
+    } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Не вдалося зберегти запис: $error'),
-              duration: const Duration(seconds: 10)),
+          const SnackBar(
+            content: Text(
+              'Не вдалося зберегти запис. Спробуйте ще раз.',
+            ),
+          ),
         );
       }
     } finally {

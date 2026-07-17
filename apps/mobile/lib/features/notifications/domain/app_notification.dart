@@ -58,8 +58,10 @@ class AppNotification {
       status: json['status'] as String? ?? 'unread',
       createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
           DateTime.now(),
-      visitRecordId: json['visit_record_id'] as String?,
-      documentId: json['document_id'] as String?,
+      visitRecordId: json['visit_record_id'] as String? ??
+          data['visit_record_id'] as String?,
+      documentId:
+          json['document_id'] as String? ?? data['document_id'] as String?,
       transferId: data['transfer_id'] as String?,
       petId: json['pet_id'] as String?,
       petName: data['pet_name'] as String?,

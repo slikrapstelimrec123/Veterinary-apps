@@ -64,6 +64,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
 
     await LocalNotificationService.instance.initialize();
     await LocalNotificationService.instance.requestPermission();
+    await _restoreScheduledReminders();
 
     _notificationChannel = client
         .channel('mobile-notifications-${user.id}')
@@ -86,6 +87,44 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
           },
         )
         .subscribe();
+  }
+
+  Future<void> _restoreScheduledReminders() async {
+    try {
+      final pets = await PetRepository().getPets();
+      for (final pet in pets) {
+        final medications = await MedicationRepository().getMedications(pet.id);
+        for (final medication in medications) {
+          final dueDate = medication.nextDoseDate;
+          if (medication.reminderEnabled && dueDate != null) {
+            await LocalNotificationService.instance.scheduleMedicationReminder(
+              medicationId: medication.id,
+              medicationName: medication.name,
+              petName: pet.name,
+              dueDate: dueDate,
+            );
+          } else {
+            await LocalNotificationService.instance
+                .cancelMedicationReminder(medication.id);
+          }
+        }
+
+        final visits =
+            await VisitRecordRepository().getVisitRecordsForPet(pet.id);
+        for (final visit in visits) {
+          final dueDate = visit.nextVisitDate;
+          if (visit.nextVisitRecommended && dueDate != null) {
+            await LocalNotificationService.instance.scheduleVisitReminder(
+              visitRecordId: visit.id,
+              petName: pet.name,
+              dueDate: dueDate,
+            );
+          }
+        }
+      }
+    } catch (_) {
+      // Reminder synchronization must never prevent the app from opening.
+    }
   }
 
   @override

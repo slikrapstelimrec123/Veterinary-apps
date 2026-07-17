@@ -107,6 +107,26 @@ void main() {
     expect(notification.medicationId, 'medication-1');
   });
 
+  test('follow-up notification reads legacy visit target from data', () {
+    final notification = AppNotification.fromJson({
+      'id': 'notification-2',
+      'type': 'next_visit_recommended',
+      'title': 'Запланований повторний прийом',
+      'body': 'Арчі: 20.08.2026',
+      'status': 'unread',
+      'pet_id': petId,
+      'created_at': '2026-07-17T08:00:00Z',
+      'data': {
+        'pet_name': 'Арчі',
+        'visit_record_id': 'visit-2',
+      },
+    });
+
+    expect(notification.petId, petId);
+    expect(notification.petName, 'Арчі');
+    expect(notification.visitRecordId, 'visit-2');
+  });
+
   test('sale announcement edits send every editable field', () {
     final announcement = SaleAnnouncement(
       id: 'sale-1',
