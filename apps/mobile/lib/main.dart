@@ -9,6 +9,7 @@ import 'core/auth/auth_state.dart' as app_auth;
 import 'core/config/supabase_config.dart';
 import 'core/theme/app_theme.dart';
 import 'features/splash/splash_screen.dart';
+import 'shared/widgets/app_background.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -61,6 +62,9 @@ class _VetCareAppState extends State<VetCareApp> {
         title: 'Lappo',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
+        builder: (context, child) => AppBackground(
+          child: child ?? const SizedBox.shrink(),
+        ),
         localizationsDelegates: const [
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,

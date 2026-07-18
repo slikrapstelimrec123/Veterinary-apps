@@ -127,9 +127,9 @@ class _AddSaleAnnouncementScreenState extends State<AddSaleAnnouncementScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: AppTheme.background,
+        backgroundColor: Colors.transparent,
         title: const Text('Знайти нового власника',
             style: TextStyle(fontWeight: FontWeight.w800)),
       ),

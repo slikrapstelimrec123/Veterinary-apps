@@ -126,9 +126,9 @@ class _AddBreedingAnnouncementScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: AppTheme.background,
+        backgroundColor: Colors.transparent,
         title: const Text('Подати на вязку',
             style: TextStyle(fontWeight: FontWeight.w800)),
       ),

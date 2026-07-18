@@ -25,9 +25,9 @@ class AppTheme {
         surface: surface,
         error: danger,
       ),
-      scaffoldBackgroundColor: background,
+      scaffoldBackgroundColor: Colors.transparent,
       appBarTheme: const AppBarTheme(
-        backgroundColor: background,
+        backgroundColor: Colors.transparent,
         foregroundColor: textMain,
         centerTitle: false,
         elevation: 0,

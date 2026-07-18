@@ -82,9 +82,9 @@ class _TransferPetScreenState extends State<TransferPetScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: AppTheme.background,
+        backgroundColor: Colors.transparent,
         title: const Text(
             '\u041f\u0435\u0440\u0435\u0434\u0430\u0442\u0438 \u0442\u0432\u0430\u0440\u0438\u043d\u0443',
             style: TextStyle(fontWeight: FontWeight.w800)),

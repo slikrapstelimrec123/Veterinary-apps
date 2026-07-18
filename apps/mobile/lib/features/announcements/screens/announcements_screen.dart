@@ -54,9 +54,9 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: AppTheme.background,
+        backgroundColor: Colors.transparent,
         title: const Text('Оголошення',
             style: TextStyle(fontWeight: FontWeight.w800)),
         bottom: TabBar(
@@ -706,9 +706,9 @@ class _EditSaleScreenState extends State<_EditSaleScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: AppTheme.background,
+        backgroundColor: Colors.transparent,
         title: const Text('Редагувати оголошення',
             style: TextStyle(fontWeight: FontWeight.w800)),
       ),
@@ -853,9 +853,9 @@ class _EditBreedingScreenState extends State<_EditBreedingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: AppTheme.background,
+        backgroundColor: Colors.transparent,
         title: const Text('Редагувати оголошення',
             style: TextStyle(fontWeight: FontWeight.w800)),
       ),
@@ -1214,24 +1214,6 @@ class _SquareAnnouncementPhoto extends StatelessWidget {
       );
 }
 
-class _AnnouncementAvatar extends StatelessWidget {
-  const _AnnouncementAvatar(
-      {required this.color, required this.icon, required this.iconColor});
-  final Color color;
-  final IconData icon;
-  final Color iconColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 44,
-      height: 44,
-      color: color,
-      child: Icon(icon, color: iconColor, size: 22),
-    );
-  }
-}
-
 class _Badge extends StatelessWidget {
   const _Badge({required this.icon, required this.label, required this.active});
   final IconData icon;
@@ -1274,9 +1256,9 @@ class _BreedingDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: AppTheme.background,
+        backgroundColor: Colors.transparent,
         title: Text(item.breed,
             style: const TextStyle(fontWeight: FontWeight.w800)),
       ),
@@ -1403,9 +1385,9 @@ class _SaleDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: AppTheme.background,
+        backgroundColor: Colors.transparent,
         title: Text(item.breed,
             style: const TextStyle(fontWeight: FontWeight.w800)),
       ),
