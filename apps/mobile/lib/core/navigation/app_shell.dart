@@ -320,10 +320,10 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     ];
 
     return Scaffold(
-      body: IndexedStack(
-        index: _index,
-        children: tabs,
-      ),
+      // Render only the selected tab. Keeping every transparent tab inside an
+      // IndexedStack allowed an old frame to remain visible for a moment on
+      // slower devices while the next tab was being rebuilt.
+      body: tabs[_index],
       bottomNavigationBar: FutureBuilder<int>(
         future: unreadFuture,
         builder: (context, snapshot) {
@@ -639,17 +639,15 @@ class _HomeFocusCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final today = _day(DateTime.now());
-    final items = focusItems
-        .where((item) => item.pet.id == selectedPet.id)
+    final monthEnd = today.add(const Duration(days: 30));
+    final monthItems = focusItems
+        .where(
+          (item) =>
+              item.pet.id == selectedPet.id &&
+              !_day(item.date).isBefore(today) &&
+              !_day(item.date).isAfter(monthEnd),
+        )
         .toList(growable: false);
-    final dueNow = items.where((item) => !_day(item.date).isAfter(today));
-    final focus = dueNow.isNotEmpty
-        ? dueNow.first
-        : items.isEmpty
-            ? null
-            : items.first;
-    final hasActionToday =
-        focus != null && !_day(focus.date).isAfter(today);
 
     return Card(
       child: Padding(
@@ -695,22 +693,18 @@ class _HomeFocusCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        !focusDataComplete && focus == null
+                        !focusDataComplete && monthItems.isEmpty
                             ? 'Не вдалося оновити план'
-                            : hasActionToday
-                                ? 'Сьогодні для ${selectedPet.name}'
-                                : 'На сьогодні все виконано',
+                            : 'План на 30 днів для ${selectedPet.name}',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        !focusDataComplete && focus == null
+                        !focusDataComplete && monthItems.isEmpty
                             ? 'Перевірте з’єднання та спробуйте ще раз.'
-                            : hasActionToday
-                                ? 'Є важлива дія у медичній картці.'
-                                : focus == null
-                                    ? 'Запланованих дій поки немає.'
-                                    : 'Наступна дія вже запланована.',
+                            : monthItems.isEmpty
+                                ? 'Запланованих подій на найближчий місяць немає.'
+                                : 'Заплановано подій: ${monthItems.length}.',
                         style: const TextStyle(
                           color: AppTheme.textSecondary,
                           fontSize: 12,
@@ -720,85 +714,89 @@ class _HomeFocusCard extends StatelessWidget {
                   ),
                 ),
                 Icon(
-                  !focusDataComplete && focus == null
+                  !focusDataComplete && monthItems.isEmpty
                       ? Icons.sync_problem_outlined
-                      : hasActionToday
-                          ? Icons.notifications_active_outlined
-                          : Icons.check_circle_outline,
-                  color: !focusDataComplete && focus == null
+                      : Icons.calendar_month_outlined,
+                  color: !focusDataComplete && monthItems.isEmpty
                       ? AppTheme.danger
-                      : hasActionToday
-                          ? AppTheme.warning
-                          : AppTheme.success,
+                      : AppTheme.primary,
                 ),
               ],
             ),
             const SizedBox(height: 16),
-            if (focus != null)
-              Material(
-                color: AppTheme.primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(16),
-                child: InkWell(
-                  onTap: () => onOpenItem(focus),
-                  borderRadius: BorderRadius.circular(16),
-                  child: Padding(
-                    padding: const EdgeInsets.all(14),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 42,
-                          height: 42,
-                          decoration: BoxDecoration(
-                            color: AppTheme.surface,
-                            borderRadius: BorderRadius.circular(13),
-                          ),
-                          child: Icon(
-                            focus.type == _HomeFocusType.medication
-                                ? Icons.medication_outlined
-                                : Icons.medical_information_outlined,
-                            color: AppTheme.primary,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+            if (monthItems.isNotEmpty)
+              ...monthItems.map(
+                (item) {
+                  final isToday = _day(item.date) == today;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Material(
+                      color: AppTheme.primary.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(16),
+                      child: InkWell(
+                        onTap: () => onOpenItem(item),
+                        borderRadius: BorderRadius.circular(16),
+                        child: Padding(
+                          padding: const EdgeInsets.all(14),
+                          child: Row(
                             children: [
-                              Text(
-                                focus.title,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  color: AppTheme.textMain,
+                              Container(
+                                width: 42,
+                                height: 42,
+                                decoration: BoxDecoration(
+                                  color: AppTheme.surface,
+                                  borderRadius: BorderRadius.circular(13),
+                                ),
+                                child: Icon(
+                                  item.type == _HomeFocusType.medication
+                                      ? Icons.medication_outlined
+                                      : Icons.medical_information_outlined,
+                                  color: AppTheme.primary,
                                 ),
                               ),
-                              const SizedBox(height: 3),
-                              Text(
-                                _dateLabel(focus.date),
-                                style: TextStyle(
-                                  color: hasActionToday
-                                      ? AppTheme.danger
-                                      : AppTheme.textSecondary,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      item.title,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                        color: AppTheme.textMain,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      _dateLabel(item.date),
+                                      style: TextStyle(
+                                        color: isToday
+                                            ? AppTheme.danger
+                                            : AppTheme.textSecondary,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
                                 ),
+                              ),
+                              const Icon(
+                                Icons.chevron_right,
+                                color: AppTheme.primary,
                               ),
                             ],
                           ),
                         ),
-                        const Icon(
-                          Icons.chevron_right,
-                          color: AppTheme.primary,
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                ),
+                  );
+                },
               )
             else
               Text(
                 focusDataComplete
-                    ? 'Додавайте препарати, повторні прийоми та документи — '
-                        'найважливіше з’являтиметься тут.'
+                    ? 'Додавайте препарати та повторні прийоми — '
+                        'події на наступні 30 днів з’являтимуться тут.'
                     : 'Медична картка доступна, але план потребує оновлення.',
                 style: const TextStyle(
                   color: AppTheme.textSecondary,

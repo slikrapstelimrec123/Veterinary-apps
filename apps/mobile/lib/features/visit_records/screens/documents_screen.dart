@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/empty_state.dart';
@@ -80,16 +81,17 @@ class _DocumentTile extends StatelessWidget {
         trailing: const Icon(Icons.lock_outline),
         onTap: () async {
           final url = await repository.getSignedDocumentUrl(document);
-          if (!context.mounted) {
-            return;
+          if (!context.mounted) return;
+          if (url == null ||
+              !await launchUrl(
+                Uri.parse(url),
+                mode: LaunchMode.externalApplication,
+              )) {
+            if (!context.mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Не вдалося відкрити документ.')),
+            );
           }
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text(url == null
-                    ? 'Безпечний перегляд файлу поки недоступний у демо-режимі.'
-                    : 'Приватне посилання для цього сеансу створено.')),
-          );
         },
       ),
     );

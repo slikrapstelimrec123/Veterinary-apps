@@ -107,9 +107,9 @@ class AppTheme {
   }
 }
 
-/// Lappo screens use a transparent branded background. Animated route
-/// transitions would therefore keep the previous screen visible underneath
-/// the next one and make the two layouts look as if they overlap.
+/// Every route receives its own opaque branded background. This prevents the
+/// previous transparent screen from appearing underneath the new one even for
+/// a single frame on slower devices.
 class _InstantPageTransitionsBuilder extends PageTransitionsBuilder {
   const _InstantPageTransitionsBuilder();
 
@@ -121,6 +121,16 @@ class _InstantPageTransitionsBuilder extends PageTransitionsBuilder {
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
-    return child;
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        color: AppTheme.background,
+        image: DecorationImage(
+          image: AssetImage('assets/lappo_app_background.png'),
+          fit: BoxFit.cover,
+          alignment: Alignment.center,
+        ),
+      ),
+      child: child,
+    );
   }
 }
