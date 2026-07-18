@@ -341,37 +341,85 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final repository = PetRepository();
   final visitRepository = VisitRecordRepository();
-  late Future<List<Pet>> petsFuture = repository.getPets();
-  int _visitCount = 0;
-  int _documentCount = 0;
+  final medicationRepository = MedicationRepository();
+  late Future<_HomeData> homeFuture = _loadHomeData();
+  String? _selectedPetId;
 
   void refresh() {
-    setState(() => petsFuture = repository.getPets());
-    _loadCounts();
+    setState(() => homeFuture = _loadHomeData());
   }
 
-  Future<void> _loadCounts() async {
+  Future<_HomeData> _loadHomeData() async {
     final pets = await repository.getPets();
-    int visits = 0;
-    int docs = 0;
-    for (final pet in pets) {
-      final records = await visitRepository.getVisitRecordsForPet(pet.id);
-      visits += records.length;
-      final documents = await visitRepository.getDocumentsForPet(pet.id);
-      docs += documents.length;
-    }
-    if (mounted) {
-      setState(() {
-        _visitCount = visits;
-        _documentCount = docs;
-      });
+    final perPetFocus = await Future.wait(pets.map(_loadPetFocus));
+    final focusItems = perPetFocus.expand((result) => result.items).toList();
+
+    focusItems.sort((left, right) => left.date.compareTo(right.date));
+    return _HomeData(
+      pets: pets,
+      focusItems: focusItems,
+      focusDataComplete: perPetFocus.every((result) => result.isComplete),
+    );
+  }
+
+  Future<_PetFocusData> _loadPetFocus(Pet pet) async {
+    final results = await Future.wait([
+      _loadMedicationFocus(pet),
+      _loadVisitFocus(pet),
+    ]);
+    return _PetFocusData(
+      items: results
+          .whereType<List<_HomeFocusItem>>()
+          .expand((items) => items)
+          .toList(growable: false),
+      isComplete: results.every((items) => items != null),
+    );
+  }
+
+  Future<List<_HomeFocusItem>?> _loadMedicationFocus(Pet pet) async {
+    try {
+      final medications = await medicationRepository.getMedications(pet.id);
+      return medications
+          .where((medication) =>
+              medication.reminderEnabled &&
+              medication.nextDoseDate != null)
+          .map(
+            (medication) => _HomeFocusItem(
+              type: _HomeFocusType.medication,
+              pet: pet,
+              title: 'Препарат «${medication.name}»',
+              date: medication.nextDoseDate!,
+            ),
+          )
+          .toList(growable: false);
+    } catch (_) {
+      // One unavailable section must not hide the rest of the home screen.
+      return null;
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _loadCounts();
+  Future<List<_HomeFocusItem>?> _loadVisitFocus(Pet pet) async {
+    try {
+      final visits = await visitRepository.getVisitRecordsForPet(pet.id);
+      return visits
+          .where(
+            (visit) =>
+                visit.nextVisitRecommended && visit.nextVisitDate != null,
+          )
+          .map(
+            (visit) => _HomeFocusItem(
+              type: _HomeFocusType.visit,
+              pet: pet,
+              title: 'Запланований повторний прийом',
+              date: visit.nextVisitDate!,
+              visitRecordId: visit.id,
+            ),
+          )
+          .toList(growable: false);
+    } catch (_) {
+      // Keep other owner-created medical data available.
+      return null;
+    }
   }
 
   Future<void> addPet() async {
@@ -384,10 +432,17 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final user = AuthScope.of(context).currentUser;
 
-    return FutureBuilder<List<Pet>>(
-      future: petsFuture,
+    return FutureBuilder<_HomeData>(
+      future: homeFuture,
       builder: (context, snapshot) {
-        final pets = snapshot.data ?? [];
+        final data = snapshot.data ?? const _HomeData();
+        final pets = data.pets;
+        final Pet? selectedPet = pets.isEmpty
+            ? null
+            : pets.firstWhere(
+                (pet) => pet.id == _selectedPetId,
+                orElse: () => pets.first,
+              );
 
         return AppScaffold(
           title: 'Вітаємо, ${user?.fullName.split(' ').first ?? 'друже'}',
@@ -401,11 +456,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   message: 'Не вдалося завантажити головну сторінку.',
                   onRetry: refresh)
             else ...[
-              _SummaryCard(
-                  petCount: pets.length,
-                  visitCount: _visitCount,
-                  documentCount: _documentCount),
-              const SizedBox(height: 12),
               if (pets.isEmpty)
                 EmptyState(
                   title: 'Додайте першу тварину',
@@ -416,6 +466,42 @@ class _HomeScreenState extends State<HomeScreen> {
                       onPressed: addPet, child: const Text('Додати тварину')),
                 )
               else ...[
+                _HomeFocusCard(
+                  pets: pets,
+                  selectedPet: selectedPet!,
+                  focusItems: data.focusItems,
+                  focusDataComplete: data.focusDataComplete,
+                  onPetSelected: (petId) =>
+                      setState(() => _selectedPetId = petId),
+                  onOpenItem: (item) async {
+                    if (item.type == _HomeFocusType.medication) {
+                      await Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => MedicationsScreen(
+                          petId: item.pet.id,
+                          petName: item.pet.name,
+                        ),
+                      ));
+                    } else if (item.visitRecordId != null) {
+                      await Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => VisitRecordDetailsScreen(
+                          recordId: item.visitRecordId!,
+                        ),
+                      ));
+                    }
+                    if (mounted) refresh();
+                  },
+                  onOpenPet: () async {
+                    final result = await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            PetProfileScreen(petId: selectedPet.id),
+                      ),
+                    );
+                    if (result != null && mounted) refresh();
+                  },
+                  onRefresh: refresh,
+                ),
+                const SizedBox(height: 18),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -439,8 +525,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
               const SizedBox(height: 12),
               const _AnnouncementsCard(),
-              const SizedBox(height: 12),
-              _UpcomingEventsCard(pets: pets),
             ],
           ],
         );
@@ -449,87 +533,274 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class _SummaryCard extends StatelessWidget {
-  const _SummaryCard(
-      {required this.petCount,
-      required this.visitCount,
-      required this.documentCount});
+class _HomeData {
+  const _HomeData({
+    this.pets = const [],
+    this.focusItems = const [],
+    this.focusDataComplete = true,
+  });
 
-  final int petCount;
-  final int visitCount;
-  final int documentCount;
+  final List<Pet> pets;
+  final List<_HomeFocusItem> focusItems;
+  final bool focusDataComplete;
+}
+
+class _PetFocusData {
+  const _PetFocusData({
+    required this.items,
+    required this.isComplete,
+  });
+
+  final List<_HomeFocusItem> items;
+  final bool isComplete;
+}
+
+enum _HomeFocusType { medication, visit }
+
+class _HomeFocusItem {
+  const _HomeFocusItem({
+    required this.type,
+    required this.pet,
+    required this.title,
+    required this.date,
+    this.visitRecordId,
+  });
+
+  final _HomeFocusType type;
+  final Pet pet;
+  final String title;
+  final DateTime date;
+  final String? visitRecordId;
+}
+
+class _HomeFocusCard extends StatelessWidget {
+  const _HomeFocusCard({
+    required this.pets,
+    required this.selectedPet,
+    required this.focusItems,
+    required this.focusDataComplete,
+    required this.onPetSelected,
+    required this.onOpenItem,
+    required this.onOpenPet,
+    required this.onRefresh,
+  });
+
+  final List<Pet> pets;
+  final Pet selectedPet;
+  final List<_HomeFocusItem> focusItems;
+  final bool focusDataComplete;
+  final ValueChanged<String> onPetSelected;
+  final ValueChanged<_HomeFocusItem> onOpenItem;
+  final VoidCallback onOpenPet;
+  final VoidCallback onRefresh;
+
+  DateTime _day(DateTime value) =>
+      DateTime(value.year, value.month, value.day);
+
+  String _dateLabel(DateTime value) {
+    final today = _day(DateTime.now());
+    final date = _day(value);
+    final days = date.difference(today).inDays;
+    if (days < 0) return 'Протерміновано';
+    if (days == 0) return 'Сьогодні';
+    if (days == 1) return 'Завтра';
+    return '${value.day.toString().padLeft(2, '0')}.'
+        '${value.month.toString().padLeft(2, '0')}.${value.year}';
+  }
 
   @override
   Widget build(BuildContext context) {
+    final today = _day(DateTime.now());
+    final items = focusItems
+        .where((item) => item.pet.id == selectedPet.id)
+        .toList(growable: false);
+    final dueNow = items.where((item) => !_day(item.date).isAfter(today));
+    final focus = dueNow.isNotEmpty
+        ? dueNow.first
+        : items.isEmpty
+            ? null
+            : items.first;
+    final hasActionToday =
+        focus != null && !_day(focus.date).isAfter(today);
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(18),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: _StatTile(
-                icon: Icons.pets_outlined,
-                value: '$petCount',
-                label: petCount == 1
-                    ? 'тварина'
-                    : petCount < 5
-                        ? 'тварини'
-                        : 'тварин',
+            if (pets.length > 1) ...[
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: pets
+                      .map(
+                        (pet) => Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: ChoiceChip(
+                            selected: pet.id == selectedPet.id,
+                            onSelected: (_) => onPetSelected(pet.id),
+                            avatar: PetAvatar(
+                              name: pet.name,
+                              avatarUrl: pet.avatarUrl,
+                              size: 24,
+                            ),
+                            label: Text(pet.name),
+                          ),
+                        ),
+                      )
+                      .toList(growable: false),
+                ),
               ),
+              const SizedBox(height: 16),
+            ],
+            Row(
+              children: [
+                PetAvatar(
+                  name: selectedPet.name,
+                  avatarUrl: selectedPet.avatarUrl,
+                  size: 48,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        !focusDataComplete && focus == null
+                            ? 'Не вдалося оновити план'
+                            : hasActionToday
+                                ? 'Сьогодні для ${selectedPet.name}'
+                                : 'На сьогодні все виконано',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        !focusDataComplete && focus == null
+                            ? 'Перевірте з’єднання та спробуйте ще раз.'
+                            : hasActionToday
+                                ? 'Є важлива дія у медичній картці.'
+                                : focus == null
+                                    ? 'Запланованих дій поки немає.'
+                                    : 'Наступна дія вже запланована.',
+                        style: const TextStyle(
+                          color: AppTheme.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  !focusDataComplete && focus == null
+                      ? Icons.sync_problem_outlined
+                      : hasActionToday
+                          ? Icons.notifications_active_outlined
+                          : Icons.check_circle_outline,
+                  color: !focusDataComplete && focus == null
+                      ? AppTheme.danger
+                      : hasActionToday
+                          ? AppTheme.warning
+                          : AppTheme.success,
+                ),
+              ],
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _StatTile(
-                icon: Icons.history_outlined,
-                value: '$visitCount',
-                label: visitCount == 1
-                    ? 'прийом'
-                    : visitCount < 5
-                        ? 'прийоми'
-                        : 'прийомів',
+            const SizedBox(height: 16),
+            if (focus != null)
+              Material(
+                color: AppTheme.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(16),
+                child: InkWell(
+                  onTap: () => onOpenItem(focus),
+                  borderRadius: BorderRadius.circular(16),
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: AppTheme.surface,
+                            borderRadius: BorderRadius.circular(13),
+                          ),
+                          child: Icon(
+                            focus.type == _HomeFocusType.medication
+                                ? Icons.medication_outlined
+                                : Icons.medical_information_outlined,
+                            color: AppTheme.primary,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                focus.title,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  color: AppTheme.textMain,
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                _dateLabel(focus.date),
+                                style: TextStyle(
+                                  color: hasActionToday
+                                      ? AppTheme.danger
+                                      : AppTheme.textSecondary,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(
+                          Icons.chevron_right,
+                          color: AppTheme.primary,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              )
+            else
+              Text(
+                focusDataComplete
+                    ? 'Додавайте препарати, повторні прийоми та документи — '
+                        'найважливіше з’являтиметься тут.'
+                    : 'Медична картка доступна, але план потребує оновлення.',
+                style: const TextStyle(
+                  color: AppTheme.textSecondary,
+                  height: 1.35,
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _StatTile(
-                icon: Icons.folder_outlined,
-                value: '$documentCount',
-                label: documentCount == 1
-                    ? 'документ'
-                    : documentCount < 5
-                        ? 'документи'
-                        : 'документів',
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Wrap(
+                spacing: 4,
+                alignment: WrapAlignment.end,
+                children: [
+                  if (!focusDataComplete)
+                    TextButton.icon(
+                      onPressed: onRefresh,
+                      icon: const Icon(Icons.refresh, size: 18),
+                      label: const Text('Оновити'),
+                    ),
+                  TextButton.icon(
+                    onPressed: onOpenPet,
+                    icon: const Icon(Icons.pets_outlined, size: 18),
+                    label: const Text('Медична картка'),
+                  ),
+                ],
               ),
             ),
           ],
         ),
       ),
-    );
-  }
-}
-
-class _StatTile extends StatelessWidget {
-  const _StatTile(
-      {required this.icon, required this.value, required this.label});
-  final IconData icon;
-  final String value;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Icon(icon, size: 22, color: AppTheme.primary),
-        const SizedBox(height: 4),
-        Text(value,
-            style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: AppTheme.textMain)),
-        Text(label,
-            style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
-            textAlign: TextAlign.center),
-      ],
     );
   }
 }
@@ -559,181 +830,6 @@ class _AnnouncementsCard extends StatelessWidget {
               'Знайдіть партнера для в\'язки або цуценят улюбленої породи у розділі оголошень.',
               style: TextStyle(color: AppTheme.textSecondary),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _UpcomingEvent {
-  const _UpcomingEvent(
-      {required this.title,
-      required this.pet,
-      required this.date,
-      required this.isOverdue});
-  final String title;
-  final Pet pet;
-  final DateTime date;
-  final bool isOverdue;
-
-  String get petName => pet.name;
-}
-
-class _UpcomingEventsCard extends StatefulWidget {
-  const _UpcomingEventsCard({required this.pets});
-  final List<Pet> pets;
-
-  @override
-  State<_UpcomingEventsCard> createState() => _UpcomingEventsCardState();
-}
-
-class _UpcomingEventsCardState extends State<_UpcomingEventsCard> {
-  final _medRepo = MedicationRepository();
-  List<_UpcomingEvent> _events = [];
-  bool _loaded = false;
-
-  @override
-  void didUpdateWidget(_UpcomingEventsCard old) {
-    super.didUpdateWidget(old);
-    if (old.pets != widget.pets) _load();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  Future<void> _load() async {
-    if (widget.pets.isEmpty) {
-      if (mounted) {
-        setState(() {
-          _events = [];
-          _loaded = true;
-        });
-      }
-      return;
-    }
-
-    final now = DateTime.now();
-    final threshold = now.add(const Duration(days: 5));
-    final events = <_UpcomingEvent>[];
-
-    for (final pet in widget.pets) {
-      try {
-        final meds = await _medRepo.getMedications(pet.id);
-        for (final med in meds) {
-          final d = med.nextDoseDate;
-          if (d == null) {
-            continue;
-          }
-          if (d.isBefore(now.subtract(const Duration(days: 1))) &&
-              !med.nextDoseOverdue) {
-            continue;
-          }
-          if (d.isAfter(threshold)) {
-            continue;
-          }
-          events.add(_UpcomingEvent(
-            title: med.name,
-            pet: pet,
-            date: d,
-            isOverdue: med.nextDoseOverdue,
-          ));
-        }
-      } catch (_) {}
-    }
-
-    events.sort((a, b) => a.date.compareTo(b.date));
-
-    if (mounted) {
-      setState(() {
-        _events = events;
-        _loaded = true;
-      });
-    }
-  }
-
-  String _formatDate(DateTime d) {
-    final now = DateTime.now();
-    final diff = d.difference(DateTime(now.year, now.month, now.day)).inDays;
-    if (diff < 0) return 'Протерміновано';
-    if (diff == 0) return 'Сьогодні';
-    if (diff == 1) return 'Завтра';
-    return 'Через $diff дн.';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (!_loaded || _events.isEmpty) return const SizedBox.shrink();
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.event_outlined,
-                    size: 18, color: AppTheme.primary),
-                const SizedBox(width: 6),
-                Text('Найближчі події',
-                    style: Theme.of(context).textTheme.titleMedium),
-              ],
-            ),
-            const SizedBox(height: 12),
-            ..._events.map((e) {
-              final overdue = e.isOverdue;
-              final color = overdue ? AppTheme.danger : AppTheme.warning;
-              return InkWell(
-                borderRadius: BorderRadius.circular(10),
-                onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) =>
-                      MedicationsScreen(petId: e.pet.id, petName: e.pet.name),
-                )),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  child: Row(
-                    children: [
-                      PetAvatar(
-                        name: e.pet.name,
-                        avatarUrl: e.pet.avatarUrl,
-                        size: 40,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(e.title,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.w700, fontSize: 14)),
-                            Text('${e.petName} · ${_formatDate(e.date)}',
-                                style: TextStyle(
-                                    fontSize: 12,
-                                    color: overdue
-                                        ? color
-                                        : AppTheme.textSecondary)),
-                          ],
-                        ),
-                      ),
-                      Text(
-                        _formatDate(e.date),
-                        style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13,
-                            color: color),
-                      ),
-                      const SizedBox(width: 4),
-                      const Icon(Icons.chevron_right,
-                          size: 16, color: AppTheme.textSecondary),
-                    ],
-                  ),
-                ),
-              );
-            }),
           ],
         ),
       ),
