@@ -96,6 +96,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     }
 
     if (payload.startsWith('transfer:')) {
+      if (!mounted) return;
       await Navigator.of(context).push(MaterialPageRoute(
         builder: (_) => const IncomingTransfersScreen(),
       ));
