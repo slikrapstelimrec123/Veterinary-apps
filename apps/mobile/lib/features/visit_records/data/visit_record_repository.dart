@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase_config.dart';
+import '../../../core/data/app_data_events.dart';
 import '../../../core/notifications/local_notification_service.dart';
 import '../../../shared/data/mock_data.dart';
 import '../../pets/data/pet_repository.dart';
@@ -98,6 +101,7 @@ class VisitRecordRepository {
         .single();
 
     final saved = VisitRecord.fromJson(row);
+    AppDataEvents.notifyChanged();
     final reminderDate = saved.nextVisitDate;
     if (saved.nextVisitRecommended && reminderDate != null) {
       try {
@@ -112,6 +116,72 @@ class VisitRecordRepository {
       }
     }
     return saved;
+  }
+
+  Future<VisitDocument> uploadVisitImage({
+    required String visitRecordId,
+    required String petId,
+    required File file,
+    String documentType = 'photo',
+  }) async {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) {
+      throw const AuthException('Authentication required');
+    }
+
+    final sourceName = file.path.split(RegExp(r'[/\\]')).last;
+    final extension = sourceName.contains('.')
+        ? sourceName.split('.').last.toLowerCase()
+        : 'jpg';
+    final normalizedExtension = extension == 'jpeg' ? 'jpg' : extension;
+    final mimeType = switch (normalizedExtension) {
+      'png' => 'image/png',
+      'heic' => 'image/heic',
+      'heif' => 'image/heic',
+      _ => 'image/jpeg',
+    };
+    final storagePath =
+        '$userId/$petId/$visitRecordId/${DateTime.now().microsecondsSinceEpoch}.$normalizedExtension';
+    final fileSize = await file.length();
+
+    await _client.storage.from('visit-documents').upload(
+          storagePath,
+          file,
+          fileOptions: FileOptions(contentType: mimeType),
+        );
+
+    try {
+      final row = await _client
+          .from('visit_documents')
+          .insert({
+            'visit_record_id': visitRecordId,
+            'clinic_id': null,
+            'pet_id': petId,
+            'uploaded_by': userId,
+            'document_type': documentType,
+            'title': sourceName,
+            'storage_bucket': 'visit-documents',
+            'storage_path': storagePath,
+            'mime_type': mimeType,
+            'file_size_bytes': fileSize,
+            'file_name': sourceName,
+            'file_type': mimeType,
+            'file_size': fileSize,
+            'is_visible_to_owner': true,
+          })
+          .select(
+              'id,visit_record_id,pet_id,title,document_type,file_name,file_type,file_size,description,storage_bucket,storage_path,is_visible_to_owner,created_at')
+          .single();
+      AppDataEvents.notifyChanged();
+      return VisitDocument.fromJson(row);
+    } catch (_) {
+      try {
+        await _client.storage.from('visit-documents').remove([storagePath]);
+      } catch (_) {
+        // The orphaned private file is inaccessible and can be cleaned later.
+      }
+      rethrow;
+    }
   }
 
   String? _nullable(String? value) {

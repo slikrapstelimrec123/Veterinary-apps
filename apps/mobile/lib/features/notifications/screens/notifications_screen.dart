@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/app_scaffold.dart';
-import '../../pet_transfer/data/pet_transfer_repository.dart';
-import '../../pet_transfer/domain/pet_transfer.dart';
 import '../../pet_transfer/screens/incoming_transfers_screen.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/error_state.dart';
+import '../../achievements/screens/achievements_screen.dart';
+import '../../announcements/screens/announcements_screen.dart';
+import '../../feeding/screens/feeding_screen.dart';
+import '../../pets/screens/pet_profile_screen.dart';
+import '../../visit_records/screens/documents_screen.dart';
 import '../../visit_records/screens/visit_record_details_screen.dart';
 import '../../medications/screens/medications_screen.dart';
 import '../data/notification_repository.dart';
@@ -21,8 +23,6 @@ class NotificationsScreen extends StatefulWidget {
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
   final repository = NotificationRepository();
-  final _transferRepo = PetTransferRepository();
-  late Future<List<PetTransfer>> _transfersFuture;
   late Future<List<AppNotification>> future;
 
   @override
@@ -32,7 +32,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   void _reloadFutures() {
-    _transfersFuture = _transferRepo.getIncomingTransfers();
     future = repository.getNotifications();
   }
 
@@ -41,35 +40,90 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Future<void> markAllAsRead() async {
-    await repository.markAllAsRead();
-    refresh();
+    try {
+      await repository.markAllAsRead();
+      if (mounted) refresh();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Не вдалося позначити сповіщення як прочитані.'),
+      ));
+    }
   }
 
   Future<void> openNotification(AppNotification notification) async {
-    await repository.markAsRead(notification.id);
-    if (!mounted) return;
+    try {
+      if (notification.isUnread) {
+        await repository.markAsRead(notification.id);
+      }
+      if (!mounted) return;
+      refresh();
+      await _openDestination(notification);
+      if (mounted) refresh();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Не вдалося відкрити сповіщення. Спробуйте ще раз.'),
+      ));
+    }
+  }
 
-    if (notification.transferId != null) {
-      await Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const IncomingTransfersScreen()));
+  Future<void> _openDestination(AppNotification notification) async {
+    final type = notification.type.toLowerCase();
+    Widget? destination;
+
+    if (type.contains('transfer')) {
+      destination = const IncomingTransfersScreen();
     } else if (notification.visitRecordId != null) {
-      await Navigator.of(context).push(MaterialPageRoute(
-          builder: (_) =>
-              VisitRecordDetailsScreen(recordId: notification.visitRecordId!)));
-    } else if (notification.type == 'medication_reminder' &&
-        notification.petId != null) {
-      await Navigator.of(context).push(MaterialPageRoute(
-          builder: (_) => MedicationsScreen(
-                petId: notification.petId!,
-                petName: notification.petName ?? 'Тварина',
-              )));
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Сповіщення позначено як прочитане.')),
+      destination =
+          VisitRecordDetailsScreen(recordId: notification.visitRecordId!);
+    } else if (type.contains('medication') && notification.petId != null) {
+      destination = MedicationsScreen(
+        petId: notification.petId!,
+        petName: notification.petName ?? 'Тварина',
       );
+    } else if (type.contains('document') && notification.petId != null) {
+      destination = DocumentsScreen(
+        petId: notification.petId!,
+        petName: notification.petName ?? 'Тварина',
+      );
+    } else if ((type.contains('feeding') || type.contains('food')) &&
+        notification.petId != null) {
+      destination = FeedingScreen(
+        petId: notification.petId!,
+        petName: notification.petName ?? 'Тварина',
+      );
+    } else if ((type.contains('achievement') || type.contains('event')) &&
+        notification.petId != null) {
+      destination = AchievementsScreen(
+        petId: notification.petId!,
+        petName: notification.petName ?? 'Тварина',
+      );
+    } else if (type.contains('announcement')) {
+      destination = const AnnouncementsScreen();
+    } else if (notification.petId != null) {
+      destination = PetProfileScreen(petId: notification.petId!);
     }
 
-    refresh();
+    if (destination != null) {
+      await Navigator.of(context)
+          .push(MaterialPageRoute<void>(builder: (_) => destination!));
+      return;
+    }
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(notification.title),
+        content: Text(notification.body),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Готово'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -92,53 +146,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   tooltip: 'Позначити всі як прочитані'),
           ],
           children: [
-            FutureBuilder<List<PetTransfer>>(
-              future: _transfersFuture,
-              builder: (context, ts) {
-                final transfers = ts.data ?? [];
-                if (transfers.isEmpty) {
-                  if (notifications.isEmpty &&
-                      snapshot.connectionState != ConnectionState.waiting &&
-                      !snapshot.hasError) {
-                    return const EmptyState(
-                      title: 'Сповіщень поки немає',
-                      message: 'Важливі оновлення з’являться тут.',
-                      icon: Icons.notifications_none_outlined,
-                    );
-                  }
-                  return const SizedBox.shrink();
-                }
-                return GestureDetector(
-                  onTap: () async {
-                    await Navigator.of(context).push(MaterialPageRoute(
-                        builder: (_) => const IncomingTransfersScreen()));
-                    if (mounted) refresh();
-                  },
-                  child: Card(
-                    color: AppTheme.primary.withValues(alpha: 0.08),
-                    margin: const EdgeInsets.only(bottom: 16),
-                    child: const Padding(
-                      padding: EdgeInsets.all(14),
-                      child: Row(
-                        children: [
-                          Icon(Icons.pets, color: AppTheme.primary, size: 24),
-                          SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              '\u0423 \u0432\u0430\u0441 \u0454 \u0437\u0430\u043f\u0438\u0442(\u0438) \u043d\u0430 \u043f\u0435\u0440\u0435\u0434\u0430\u0447\u0443 \u0442\u0432\u0430\u0440\u0438\u043d\u0438',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  color: AppTheme.primary),
-                            ),
-                          ),
-                          Icon(Icons.chevron_right, color: AppTheme.primary),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
             if (snapshot.connectionState == ConnectionState.waiting)
               const Center(child: CircularProgressIndicator())
             else if (snapshot.hasError)
@@ -146,6 +153,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   message: 'Не вдалося завантажити сповіщення.',
                   onRetry: refresh)
             else ...[
+              if (notifications.isEmpty)
+                const EmptyState(
+                  title: 'Сповіщень поки немає',
+                  message: 'Важливі оновлення з’являться тут.',
+                  icon: Icons.notifications_none_outlined,
+                ),
               if (unread.isNotEmpty) ...[
                 Text('Непрочитані',
                     style: Theme.of(context).textTheme.titleLarge),

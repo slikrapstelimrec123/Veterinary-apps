@@ -1,8 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/pet_avatar.dart';
 import '../../../shared/widgets/city_autocomplete_field.dart';
+import '../../../shared/services/private_pet_storage.dart';
 import '../../../features/pets/domain/pet.dart';
 import '../data/announcement_repository.dart';
 import '../domain/breeding_announcement.dart';
@@ -28,6 +32,8 @@ class _AddBreedingAnnouncementScreenState
   final _notesController = TextEditingController();
 
   bool _saving = false;
+  final _imagePicker = ImagePicker();
+  XFile? _selectedPhoto;
 
   @override
   void dispose() {
@@ -48,6 +54,26 @@ class _AddBreedingAnnouncementScreenState
             .floor()
         : 1;
 
+    String? photoStoragePath = widget.pet.avatarStoragePath;
+    String? photoUrl = widget.pet.avatarUrl;
+    try {
+      if (_selectedPhoto != null) {
+        photoStoragePath = await PrivatePetStorage.uploadImage(
+          petId: widget.pet.id,
+          category: 'announcements',
+          file: File(_selectedPhoto!.path),
+        );
+        photoUrl = await PrivatePetStorage.signedUrl(photoStoragePath);
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Не вдалося завантажити фото. Спробуйте ще раз.'),
+      ));
+      return;
+    }
+
     final announcement = BreedingAnnouncement(
       id: 'user_br_${DateTime.now().millisecondsSinceEpoch}',
       ownerName: _ownerNameController.text.trim(),
@@ -56,8 +82,8 @@ class _AddBreedingAnnouncementScreenState
       myDogName: widget.pet.name,
       myDogGender: widget.pet.sex ?? 'unknown',
       myDogAge: age.clamp(0, 30),
-      myDogPhotoUrl: widget.pet.avatarUrl,
-      photoStoragePath: widget.pet.avatarStoragePath,
+      myDogPhotoUrl: photoUrl,
+      photoStoragePath: photoStoragePath,
       conditions: _conditionsController.text.trim().isEmpty
           ? null
           : _conditionsController.text.trim(),
@@ -87,6 +113,16 @@ class _AddBreedingAnnouncementScreenState
     }
   }
 
+  Future<void> _pickPhoto() async {
+    final image = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 88,
+    );
+    if (image != null && mounted) {
+      setState(() => _selectedPhoto = image);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -104,26 +140,44 @@ class _AddBreedingAnnouncementScreenState
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(14),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    PetAvatar(
-                      name: widget.pet.name,
-                      avatarUrl: widget.pet.avatarUrl,
-                      size: 44,
+                    AspectRatio(
+                      aspectRatio: 1,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: _selectedPhoto != null
+                            ? Image.file(File(_selectedPhoto!.path),
+                                fit: BoxFit.cover)
+                            : widget.pet.avatarUrl?.isNotEmpty == true
+                                ? Image.network(widget.pet.avatarUrl!,
+                                    fit: BoxFit.cover)
+                                : Center(
+                                    child: PetAvatar(
+                                      name: widget.pet.name,
+                                      avatarUrl: widget.pet.avatarUrl,
+                                      size: 96,
+                                    ),
+                                  ),
+                      ),
                     ),
-                    const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(widget.pet.name,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w800, fontSize: 15)),
-                        Text(
-                          '${widget.pet.speciesLabel}${widget.pet.breed != null ? ' · ${widget.pet.breed}' : ''}',
-                          style: const TextStyle(
-                              fontSize: 12, color: AppTheme.textSecondary),
-                        ),
-                      ],
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      onPressed: _pickPhoto,
+                      icon: const Icon(Icons.add_photo_alternate_outlined),
+                      label: Text(_selectedPhoto == null
+                          ? 'Обрати квадратне фото'
+                          : 'Змінити фото'),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(widget.pet.name,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w800, fontSize: 15)),
+                    Text(
+                      '${widget.pet.speciesLabel}${widget.pet.breed != null ? ' · ${widget.pet.breed}' : ''}',
+                      style: const TextStyle(
+                          fontSize: 12, color: AppTheme.textSecondary),
                     ),
                   ],
                 ),

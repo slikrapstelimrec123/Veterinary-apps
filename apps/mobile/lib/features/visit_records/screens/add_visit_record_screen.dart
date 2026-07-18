@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/config/supabase_config.dart';
 import '../../../core/theme/app_theme.dart';
@@ -18,6 +21,7 @@ class AddVisitRecordScreen extends StatefulWidget {
 class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _repository = VisitRecordRepository();
+  final _imagePicker = ImagePicker();
 
   DateTime _visitDate = DateTime.now();
   final _providerNameController = TextEditingController();
@@ -31,6 +35,7 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
   DateTime? _nextVisitDate;
 
   bool _saving = false;
+  final List<XFile> _attachments = [];
 
   @override
   void dispose() {
@@ -72,7 +77,7 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
 
     try {
       if (!SupabaseConfig.useMockData) {
-        await _repository.createSelfReportedVisitRecord(
+        final saved = await _repository.createSelfReportedVisitRecord(
           petId: widget.petId,
           visitDate: _visitDate,
           reason: _reasonController.text,
@@ -85,6 +90,26 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
           nextVisitRecommended: _nextVisitRecommended,
           nextVisitDate: _nextVisitDate,
         );
+        var failedUploads = 0;
+        for (final attachment in _attachments) {
+          try {
+            await _repository.uploadVisitImage(
+              visitRecordId: saved.id,
+              petId: widget.petId,
+              file: File(attachment.path),
+              documentType: 'lab_result',
+            );
+          } catch (_) {
+            failedUploads++;
+          }
+        }
+        if (failedUploads > 0 && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(
+              'Прийом збережено, але не вдалося додати файлів: $failedUploads.',
+            ),
+          ));
+        }
       }
       if (!mounted) return;
       Navigator.of(context).pop(true);
@@ -101,6 +126,19 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  Future<void> _pickAttachments() async {
+    final images = await _imagePicker.pickMultiImage(imageQuality: 88);
+    if (images.isEmpty || !mounted) return;
+    setState(() {
+      for (final image in images) {
+        if (_attachments.length >= 10) break;
+        if (!_attachments.any((item) => item.path == image.path)) {
+          _attachments.add(image);
+        }
+      }
+    });
   }
 
   @override
@@ -265,6 +303,70 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
                         trailing: const Icon(Icons.chevron_right),
                       ),
                     ],
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const _SectionLabel('Документи та аналізи'),
+            const SizedBox(height: 8),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (_attachments.isNotEmpty)
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _attachments.length,
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 8,
+                          mainAxisSpacing: 8,
+                        ),
+                        itemBuilder: (context, index) => Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.file(
+                                File(_attachments[index].path),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            Positioned(
+                              right: 2,
+                              top: 2,
+                              child: IconButton.filled(
+                                visualDensity: VisualDensity.compact,
+                                iconSize: 16,
+                                onPressed: () => setState(
+                                    () => _attachments.removeAt(index)),
+                                icon: const Icon(Icons.close),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    if (_attachments.isNotEmpty) const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      onPressed:
+                          _attachments.length >= 10 ? null : _pickAttachments,
+                      icon: const Icon(Icons.add_photo_alternate_outlined),
+                      label: Text(_attachments.isEmpty
+                          ? 'Додати фото документів або аналізів'
+                          : 'Додати ще фото'),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'До 10 приватних зображень. Вони будуть доступні лише власнику тварини.',
+                      style: TextStyle(
+                          color: AppTheme.textSecondary, fontSize: 12),
+                      textAlign: TextAlign.center,
+                    ),
                   ],
                 ),
               ),

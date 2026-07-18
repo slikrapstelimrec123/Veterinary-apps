@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase_config.dart';
+import '../../../core/data/app_data_events.dart';
 import '../domain/pet_feeding.dart';
 
 class FeedingRepository {
@@ -42,6 +43,7 @@ class FeedingRepository {
         createdAt: DateTime.now(),
       );
       _mockData.add(withId);
+      AppDataEvents.notifyChanged();
       return withId;
     }
 
@@ -51,13 +53,16 @@ class FeedingRepository {
         .select()
         .single();
 
-    return PetFeeding.fromJson(row);
+    final saved = PetFeeding.fromJson(row);
+    AppDataEvents.notifyChanged();
+    return saved;
   }
 
   Future<PetFeeding> updateFeeding(PetFeeding feeding) async {
     if (_useMock) {
       final idx = _mockData.indexWhere((f) => f.id == feeding.id);
       if (idx != -1) _mockData[idx] = feeding;
+      AppDataEvents.notifyChanged();
       return feeding;
     }
 
@@ -69,15 +74,19 @@ class FeedingRepository {
         .select()
         .single();
 
-    return PetFeeding.fromJson(row);
+    final saved = PetFeeding.fromJson(row);
+    AppDataEvents.notifyChanged();
+    return saved;
   }
 
   Future<void> deleteFeeding(String id) async {
     if (_useMock) {
       _mockData.removeWhere((f) => f.id == id);
+      AppDataEvents.notifyChanged();
       return;
     }
 
     await _client.from('pet_feedings').delete().eq('id', id);
+    AppDataEvents.notifyChanged();
   }
 }

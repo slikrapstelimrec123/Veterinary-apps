@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase_config.dart';
+import '../../../core/data/app_data_events.dart';
 import '../../../shared/services/private_pet_storage.dart';
 import '../domain/pet_achievement.dart';
 
@@ -47,6 +48,7 @@ class AchievementRepository {
         createdAt: DateTime.now(),
       );
       _mockData.add(withId);
+      AppDataEvents.notifyChanged();
       return withId;
     }
 
@@ -56,13 +58,16 @@ class AchievementRepository {
         .select()
         .single();
 
-    return _fromPrivateRow(row);
+    final saved = await _fromPrivateRow(row);
+    AppDataEvents.notifyChanged();
+    return saved;
   }
 
   Future<PetAchievement> updateAchievement(PetAchievement achievement) async {
     if (_useMock) {
       final idx = _mockData.indexWhere((a) => a.id == achievement.id);
       if (idx != -1) _mockData[idx] = achievement;
+      AppDataEvents.notifyChanged();
       return achievement;
     }
 
@@ -74,16 +79,20 @@ class AchievementRepository {
         .select()
         .single();
 
-    return _fromPrivateRow(row);
+    final saved = await _fromPrivateRow(row);
+    AppDataEvents.notifyChanged();
+    return saved;
   }
 
   Future<void> deleteAchievement(String id) async {
     if (_useMock) {
       _mockData.removeWhere((a) => a.id == id);
+      AppDataEvents.notifyChanged();
       return;
     }
 
     await _client.from('pet_achievements').delete().eq('id', id);
+    AppDataEvents.notifyChanged();
   }
 
   Future<PetAchievement> _fromPrivateRow(Map<String, dynamic> row) async {

@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase_config.dart';
+import '../../../core/data/app_data_events.dart';
 import '../../../shared/data/mock_data.dart';
 import '../../../shared/services/private_pet_storage.dart';
 import '../domain/pet.dart';
@@ -43,6 +44,7 @@ class PetRepository {
       final created =
           pet.copyWith(id: 'mock_pet_${DateTime.now().millisecondsSinceEpoch}');
       MockData.pets.add(created);
+      AppDataEvents.notifyChanged();
       return created;
     }
 
@@ -50,7 +52,10 @@ class PetRepository {
       'create_pet_for_current_user',
       params: {'payload': pet.toInsertJson()},
     );
-    return _fromPrivateRow(Map<String, dynamic>.from(created as Map));
+    final saved =
+        await _fromPrivateRow(Map<String, dynamic>.from(created as Map));
+    AppDataEvents.notifyChanged();
+    return saved;
   }
 
   Future<Pet> updatePet(Pet pet) async {
@@ -59,6 +64,7 @@ class PetRepository {
       if (index >= 0) {
         MockData.pets[index] = pet;
       }
+      AppDataEvents.notifyChanged();
       return pet;
     }
 
@@ -68,15 +74,19 @@ class PetRepository {
         .eq('id', pet.id)
         .select('*')
         .single();
-    return _fromPrivateRow(updated);
+    final saved = await _fromPrivateRow(updated);
+    AppDataEvents.notifyChanged();
+    return saved;
   }
 
   Future<void> deletePet(String id) async {
     if (_useMockData) {
       MockData.pets.removeWhere((p) => p.id == id);
+      AppDataEvents.notifyChanged();
       return;
     }
     await _client.from('pets').delete().eq('id', id);
+    AppDataEvents.notifyChanged();
   }
 
   Future<Pet> _fromPrivateRow(Map<String, dynamic> row) async {

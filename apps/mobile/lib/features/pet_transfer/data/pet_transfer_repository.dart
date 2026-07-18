@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase_config.dart';
+import '../../../core/data/app_data_events.dart';
 import '../../pets/domain/pet.dart';
 import '../domain/pet_transfer.dart';
 
@@ -107,11 +108,13 @@ class PetTransferRepository {
   Future<void> acceptTransfer(String transferId) async {
     await _client
         .rpc('accept_pet_transfer', params: {'transfer_id': transferId});
+    AppDataEvents.notifyChanged();
   }
 
   Future<void> declineTransfer(String transferId) async {
     await _client
         .rpc('decline_pet_transfer', params: {'transfer_id': transferId});
+    AppDataEvents.notifyChanged();
   }
 
   Future<void> cancelTransfer(String transferId) async {
@@ -120,5 +123,6 @@ class PetTransferRepository {
         .update({'status': 'cancelled'})
         .eq('id', transferId)
         .eq('from_user_id', _client.auth.currentUser!.id);
+    AppDataEvents.notifyChanged();
   }
 }

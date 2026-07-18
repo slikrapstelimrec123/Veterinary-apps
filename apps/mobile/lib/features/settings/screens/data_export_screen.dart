@@ -22,9 +22,15 @@ class _DataExportScreenState extends State<DataExportScreen> {
       final exportResult = await _service.createExport();
       result = exportResult;
       if (!mounted) return;
+      final renderObject = context.findRenderObject();
+      final shareOrigin = renderObject is RenderBox
+          ? renderObject.localToGlobal(Offset.zero) & renderObject.size
+          : null;
       await Share.shareXFiles(
-          [XFile(exportResult.file.path, mimeType: 'application/zip')],
-          subject: 'Експорт даних Lappo');
+        [XFile(exportResult.file.path, mimeType: 'application/zip')],
+        subject: 'Експорт даних Lappo',
+        sharePositionOrigin: shareOrigin,
+      );
       if (!mounted) return;
       final details = exportResult.warnings.isEmpty
           ? 'Архів створено. Додано файлів: ${exportResult.exportedFileCount}.'

@@ -14,12 +14,14 @@ import '../../features/pets/screens/pet_list_screen.dart';
 import '../../features/pets/screens/pet_profile_screen.dart';
 import '../../features/settings/screens/settings_screen.dart';
 import '../../features/visit_records/data/visit_record_repository.dart';
+import '../../features/visit_records/screens/visit_record_details_screen.dart';
 import '../../shared/widgets/app_scaffold.dart';
 import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/error_state.dart';
 import '../../shared/widgets/pet_avatar.dart';
 import '../auth/auth_state.dart';
 import '../config/supabase_config.dart';
+import '../data/app_data_events.dart';
 import '../notifications/local_notification_service.dart';
 import '../theme/app_theme.dart';
 
@@ -34,6 +36,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   int _index = 0;
   final _tabVersions = List<int>.filled(5, 0);
   RealtimeChannel? _notificationChannel;
+  RealtimeChannel? _transferChannel;
   final notificationRepository = NotificationRepository();
   late Future<int> unreadFuture = notificationRepository.getUnreadCount();
 
@@ -41,7 +44,72 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    AppDataEvents.revision.addListener(_refreshAllData);
+    LocalNotificationService.instance.tappedPayload
+        .addListener(_handleSystemNotificationTap);
     _configureSystemNotifications();
+  }
+
+  Future<void> _handleSystemNotificationTap() async {
+    final payload = LocalNotificationService.instance.tappedPayload.value;
+    if (payload == null || payload.isEmpty || !mounted) return;
+    LocalNotificationService.instance.tappedPayload.value = null;
+
+    if (payload.startsWith('visit:')) {
+      final parts = payload.split(':');
+      final recordId = parts.length > 1 ? parts[1] : null;
+      if (recordId != null) {
+        await Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => VisitRecordDetailsScreen(recordId: recordId),
+        ));
+        return;
+      }
+    }
+
+    if (payload.startsWith('medication:') && SupabaseConfig.isConfigured) {
+      final parts = payload.split(':');
+      final medicationId = parts.length > 1 ? parts[1] : null;
+      if (medicationId != null) {
+        try {
+          final row = await Supabase.instance.client
+              .from('pet_medications')
+              .select('pet_id,pets(name)')
+              .eq('id', medicationId)
+              .maybeSingle();
+          final petId = row?['pet_id'] as String?;
+          final pet = row?['pets'] as Map<String, dynamic>?;
+          if (petId != null && mounted) {
+            await Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => MedicationsScreen(
+                petId: petId,
+                petName: pet?['name'] as String? ?? 'Тварина',
+              ),
+            ));
+            return;
+          }
+        } catch (_) {
+          // Fall back to the inbox when the referenced record is unavailable.
+        }
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        _index = 3;
+        _tabVersions[3]++;
+        unreadFuture = notificationRepository.getUnreadCount();
+      });
+    }
+  }
+
+  void _refreshAllData() {
+    if (!mounted) return;
+    setState(() {
+      for (var index = 0; index < _tabVersions.length; index++) {
+        _tabVersions[index]++;
+      }
+      unreadFuture = notificationRepository.getUnreadCount();
+    });
   }
 
   @override
@@ -91,7 +159,41 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
             }
           },
         )
+        .onPostgresChanges(
+          event: PostgresChangeEvent.update,
+          schema: 'public',
+          table: 'notifications',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'user_id',
+            value: user.id,
+          ),
+          callback: (_) => _refreshAllData(),
+        )
         .subscribe();
+
+    _transferChannel = client
+        .channel('mobile-pet-transfers-${user.id}')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.update,
+          schema: 'public',
+          table: 'pet_transfers',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'from_user_id',
+            value: user.id,
+          ),
+          callback: (_) {
+            _refreshAllData();
+            _resyncAllReminders();
+          },
+        )
+        .subscribe();
+  }
+
+  Future<void> _resyncAllReminders() async {
+    await LocalNotificationService.instance.cancelAll();
+    await _restoreScheduledReminders();
   }
 
   Future<void> _restoreScheduledReminders() async {
@@ -135,9 +237,16 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    AppDataEvents.revision.removeListener(_refreshAllData);
+    LocalNotificationService.instance.tappedPayload
+        .removeListener(_handleSystemNotificationTap);
     final channel = _notificationChannel;
     if (channel != null && SupabaseConfig.isConfigured) {
       Supabase.instance.client.removeChannel(channel);
+    }
+    final transferChannel = _transferChannel;
+    if (transferChannel != null && SupabaseConfig.isConfigured) {
+      Supabase.instance.client.removeChannel(transferChannel);
     }
     super.dispose();
   }

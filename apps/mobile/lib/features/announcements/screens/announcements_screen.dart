@@ -1026,25 +1026,14 @@ class _BreedingCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              _SquareAnnouncementPhoto(
+                photoUrl: item.myDogPhotoUrl,
+                fallbackIcon: Icons.favorite_outlined,
+                fallbackColor: AppTheme.accent,
+              ),
+              const SizedBox(height: 12),
               Row(
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: item.myDogPhotoUrl != null
-                        ? Image.network(item.myDogPhotoUrl!,
-                            width: 44,
-                            height: 44,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => _AnnouncementAvatar(
-                                color: AppTheme.accent.withValues(alpha: 0.15),
-                                icon: Icons.favorite_outlined,
-                                iconColor: AppTheme.accent))
-                        : _AnnouncementAvatar(
-                            color: AppTheme.accent.withValues(alpha: 0.15),
-                            icon: Icons.favorite_outlined,
-                            iconColor: AppTheme.accent),
-                  ),
-                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1112,25 +1101,14 @@ class _SaleCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              _SquareAnnouncementPhoto(
+                photoUrl: item.photoUrl,
+                fallbackIcon: Icons.pets,
+                fallbackColor: AppTheme.primary,
+              ),
+              const SizedBox(height: 12),
               Row(
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: item.photoUrl != null
-                        ? Image.network(item.photoUrl!,
-                            width: 44,
-                            height: 44,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => _AnnouncementAvatar(
-                                color: AppTheme.primary.withValues(alpha: 0.12),
-                                icon: Icons.pets,
-                                iconColor: AppTheme.primary))
-                        : _AnnouncementAvatar(
-                            color: AppTheme.primary.withValues(alpha: 0.12),
-                            icon: Icons.pets,
-                            iconColor: AppTheme.primary),
-                  ),
-                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1202,6 +1180,40 @@ class _SaleCard extends StatelessWidget {
   }
 }
 
+class _SquareAnnouncementPhoto extends StatelessWidget {
+  const _SquareAnnouncementPhoto({
+    required this.photoUrl,
+    required this.fallbackIcon,
+    required this.fallbackColor,
+  });
+
+  final String? photoUrl;
+  final IconData fallbackIcon;
+  final Color fallbackColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: 1,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: photoUrl?.isNotEmpty == true
+            ? Image.network(
+                photoUrl!,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => _fallback(),
+              )
+            : _fallback(),
+      ),
+    );
+  }
+
+  Widget _fallback() => ColoredBox(
+        color: fallbackColor.withValues(alpha: 0.12),
+        child: Icon(fallbackIcon, color: fallbackColor, size: 52),
+      );
+}
+
 class _AnnouncementAvatar extends StatelessWidget {
   const _AnnouncementAvatar(
       {required this.color, required this.icon, required this.iconColor});
@@ -1271,6 +1283,12 @@ class _BreedingDetailScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          _SquareAnnouncementPhoto(
+            photoUrl: item.myDogPhotoUrl,
+            fallbackIcon: Icons.favorite_outlined,
+            fallbackColor: AppTheme.accent,
+          ),
+          const SizedBox(height: 12),
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -1394,6 +1412,12 @@ class _SaleDetailScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          _SquareAnnouncementPhoto(
+            photoUrl: item.photoUrl,
+            fallbackIcon: Icons.pets,
+            fallbackColor: AppTheme.primary,
+          ),
+          const SizedBox(height: 12),
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),

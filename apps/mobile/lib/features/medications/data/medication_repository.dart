@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase_config.dart';
+import '../../../core/data/app_data_events.dart';
 import '../../../core/notifications/local_notification_service.dart';
 import '../../pets/data/pet_repository.dart';
 import '../domain/pet_medication.dart';
@@ -45,6 +46,7 @@ class MedicationRepository {
       );
       _mockData.add(withId);
       await _syncReminder(withId);
+      AppDataEvents.notifyChanged();
       return withId;
     }
 
@@ -56,6 +58,7 @@ class MedicationRepository {
 
     final saved = PetMedication.fromJson(row);
     await _syncReminder(saved);
+    AppDataEvents.notifyChanged();
     return saved;
   }
 
@@ -64,6 +67,7 @@ class MedicationRepository {
       final idx = _mockData.indexWhere((m) => m.id == medication.id);
       if (idx != -1) _mockData[idx] = medication;
       await _syncReminder(medication);
+      AppDataEvents.notifyChanged();
       return medication;
     }
 
@@ -77,6 +81,7 @@ class MedicationRepository {
 
     final saved = PetMedication.fromJson(row);
     await _syncReminder(saved);
+    AppDataEvents.notifyChanged();
     return saved;
   }
 
@@ -84,11 +89,13 @@ class MedicationRepository {
     if (_useMock) {
       _mockData.removeWhere((m) => m.id == id);
       await _cancelReminder(id);
+      AppDataEvents.notifyChanged();
       return;
     }
 
     await _client.from('pet_medications').delete().eq('id', id);
     await _cancelReminder(id);
+    AppDataEvents.notifyChanged();
   }
 
   Future<void> _syncReminder(PetMedication medication) async {

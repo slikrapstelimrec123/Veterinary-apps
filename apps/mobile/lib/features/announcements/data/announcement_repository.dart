@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase_config.dart';
+import '../../../core/data/app_data_events.dart';
 import '../../../shared/services/private_pet_storage.dart';
 import '../../pets/data/pet_repository.dart';
 import '../domain/breeding_announcement.dart';
@@ -107,6 +108,7 @@ class AnnouncementRepository {
     await _supabase.from('announcements').insert(
           announcement.toInsertJson(currentOwnerId: userId),
         );
+    AppDataEvents.notifyChanged();
   }
 
   Future<void> addBreedingAnnouncement(
@@ -119,6 +121,7 @@ class AnnouncementRepository {
     await _supabase.from('announcements').insert(
           announcement.toInsertJson(currentOwnerId: userId),
         );
+    AppDataEvents.notifyChanged();
   }
 
   Future<void> toggleSaleActive(String id) => _toggleActive(id, _saleMock);
@@ -190,6 +193,7 @@ class AnnouncementRepository {
       'status': row['status'] == 'active' ? 'inactive' : 'active',
       'updated_at': DateTime.now().toUtc().toIso8601String(),
     }).eq('id', id);
+    AppDataEvents.notifyChanged();
   }
 
   Future<void> deleteSaleAnnouncement(String id) => _delete(id, _saleMock);
@@ -202,6 +206,7 @@ class AnnouncementRepository {
       return;
     }
     await _supabase.from('announcements').delete().eq('id', id);
+    AppDataEvents.notifyChanged();
   }
 
   Future<void> updateSaleAnnouncement(SaleAnnouncement updated) async {
@@ -254,6 +259,7 @@ class AnnouncementRepository {
         'The announcement was not updated for the current owner.',
       );
     }
+    AppDataEvents.notifyChanged();
   }
 
   Future<void> reportAnnouncement(String id, {String reason = 'other'}) async {

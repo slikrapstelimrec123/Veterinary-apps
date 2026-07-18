@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -12,6 +13,7 @@ class LocalNotificationService {
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
   bool _initialized = false;
+  final ValueNotifier<String?> tappedPayload = ValueNotifier<String?>(null);
 
   static const _details = NotificationDetails(
     android: AndroidNotificationDetails(
@@ -42,7 +44,20 @@ class LocalNotificationService {
         requestSoundPermission: false,
       ),
     );
-    await _plugin.initialize(settings);
+    await _plugin.initialize(
+      settings,
+      onDidReceiveNotificationResponse: (response) {
+        if (response.payload?.isNotEmpty == true) {
+          tappedPayload.value = response.payload;
+        }
+      },
+    );
+    final launchDetails = await _plugin.getNotificationAppLaunchDetails();
+    final launchPayload = launchDetails?.notificationResponse?.payload;
+    if (launchDetails?.didNotificationLaunchApp == true &&
+        launchPayload?.isNotEmpty == true) {
+      tappedPayload.value = launchPayload;
+    }
     tz.initializeTimeZones();
     tz.setLocalLocation(tz.getLocation('Europe/Kyiv'));
     _initialized = true;
@@ -71,7 +86,7 @@ class LocalNotificationService {
       notification.title,
       notification.body,
       _details,
-      payload: notification.id,
+      payload: 'notification:${notification.id}',
     );
   }
 
@@ -93,6 +108,11 @@ class LocalNotificationService {
   Future<void> cancelMedicationReminder(String medicationId) async {
     await initialize();
     await _plugin.cancel(_stableId('medication:$medicationId'));
+  }
+
+  Future<void> cancelAll() async {
+    await initialize();
+    await _plugin.cancelAll();
   }
 
   Future<void> scheduleVisitReminder({

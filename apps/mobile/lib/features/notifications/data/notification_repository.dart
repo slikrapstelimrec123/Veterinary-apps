@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase_config.dart';
+import '../../../core/data/app_data_events.dart';
 import '../../../shared/data/mock_data.dart';
 import '../domain/app_notification.dart';
 import '../domain/notification_preferences.dart';
@@ -56,11 +57,13 @@ class NotificationRepository {
         MockData.notifications[index] =
             MockData.notifications[index].copyWith(status: 'read');
       }
+      AppDataEvents.notifyChanged();
       return;
     }
 
     await _client
         .rpc('mark_notification_read', params: {'target_notification_id': id});
+    AppDataEvents.notifyChanged();
   }
 
   Future<void> markAllAsRead() async {
@@ -69,10 +72,12 @@ class NotificationRepository {
         MockData.notifications[index] =
             MockData.notifications[index].copyWith(status: 'read');
       }
+      AppDataEvents.notifyChanged();
       return;
     }
 
     await _client.rpc('mark_all_notifications_read');
+    AppDataEvents.notifyChanged();
   }
 
   Future<NotificationPreferences> getPreferences() async {

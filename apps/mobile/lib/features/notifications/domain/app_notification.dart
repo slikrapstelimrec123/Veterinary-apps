@@ -63,7 +63,7 @@ class AppNotification {
       documentId:
           json['document_id'] as String? ?? data['document_id'] as String?,
       transferId: data['transfer_id'] as String?,
-      petId: json['pet_id'] as String?,
+      petId: json['pet_id'] as String? ?? data['pet_id'] as String?,
       petName: data['pet_name'] as String?,
       medicationId: data['medication_id'] as String?,
     );
