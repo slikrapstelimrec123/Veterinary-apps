@@ -390,7 +390,7 @@ class _MyAnnouncementsList extends StatelessWidget {
                       createdAt: s.createdAt,
                       active: s.isActive,
                       icon: Icons.pets,
-                      photoUrl: s.photoUrl,
+                      photoUrl: s.petAvatarUrl,
                       onToggle: () async {
                         await AnnouncementRepository().toggleSaleActive(s.id);
                         onToggle();
@@ -438,7 +438,7 @@ class _MyAnnouncementsList extends StatelessWidget {
                       createdAt: b.createdAt,
                       active: b.isActive,
                       icon: Icons.favorite_outlined,
-                      photoUrl: b.myDogPhotoUrl,
+                      photoUrl: b.petAvatarUrl,
                       onToggle: () async {
                         await AnnouncementRepository()
                             .toggleBreedingActive(b.id);
@@ -704,6 +704,8 @@ class _EditSaleScreenState extends State<_EditSaleScreen> {
               price: price,
               photoUrl: _photoUrl,
               photoStoragePath: _photoStoragePath,
+              petAvatarUrl: widget.item.petAvatarUrl,
+              petAvatarStoragePath: widget.item.petAvatarStoragePath,
               color: widget.item.color,
               hasVaccinations: widget.item.hasVaccinations,
               hasPedigree: widget.item.hasPedigree,
@@ -885,6 +887,8 @@ class _EditBreedingScreenState extends State<_EditBreedingScreen> {
             myDogAge: widget.item.myDogAge,
             myDogPhotoUrl: _photoUrl,
             photoStoragePath: _photoStoragePath,
+            petAvatarUrl: widget.item.petAvatarUrl,
+            petAvatarStoragePath: widget.item.petAvatarStoragePath,
             desiredBreed: widget.item.desiredBreed,
             conditions: _conditions.text.trim().isEmpty
                 ? null
@@ -1168,7 +1172,7 @@ class _BreedingCard extends StatelessWidget {
               Row(
                 children: [
                   _CompactAnnouncementPhoto(
-                    photoUrl: item.myDogPhotoUrl,
+                    photoUrl: item.petAvatarUrl,
                     fallbackIcon: Icons.favorite_outlined,
                     fallbackColor: AppTheme.accent,
                   ),
@@ -1243,7 +1247,7 @@ class _SaleCard extends StatelessWidget {
               Row(
                 children: [
                   _CompactAnnouncementPhoto(
-                    photoUrl: item.photoUrl,
+                    photoUrl: item.petAvatarUrl,
                     fallbackIcon: Icons.pets,
                     fallbackColor: AppTheme.primary,
                   ),
@@ -1461,8 +1465,8 @@ class _BreedingDetailScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(16),
                         ),
                         clipBehavior: Clip.antiAlias,
-                        child: item.myDogPhotoUrl?.isNotEmpty == true
-                            ? Image.network(item.myDogPhotoUrl!,
+                        child: item.petAvatarUrl?.isNotEmpty == true
+                            ? Image.network(item.petAvatarUrl!,
                                 fit: BoxFit.cover,
                                 errorBuilder: (_, __, ___) => const Icon(
                                     Icons.favorite_outlined,
@@ -1587,8 +1591,8 @@ class _SaleDetailScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(16),
                     ),
                     clipBehavior: Clip.antiAlias,
-                    child: item.photoUrl?.isNotEmpty == true
-                        ? Image.network(item.photoUrl!,
+                    child: item.petAvatarUrl?.isNotEmpty == true
+                        ? Image.network(item.petAvatarUrl!,
                             fit: BoxFit.cover,
                             errorBuilder: (_, __, ___) => const Icon(Icons.pets,
                                 color: AppTheme.primary, size: 28))

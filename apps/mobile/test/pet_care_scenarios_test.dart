@@ -166,8 +166,8 @@ void main() {
       'breed': 'Maltese',
       'pet_name': 'Archie',
       'price_amount': 15000,
-      'photo_url': null,
-      'photo_storage_path': null,
+      'cover_photo_url': null,
+      'cover_photo_storage_path': null,
       'description': 'New owner wanted',
       'city': 'Kyiv',
       'contact_phone': '0635022391',
@@ -192,12 +192,42 @@ void main() {
     expect(announcement.toUpdateJson(), {
       'breed': 'Maltese',
       'pet_name': 'Archie',
-      'photo_url': null,
-      'photo_storage_path': null,
+      'cover_photo_url': null,
+      'cover_photo_storage_path': null,
       'conditions': 'Agreement',
       'description': 'Healthy dog',
       'city': 'Kyiv',
       'contact_phone': '0635022391',
     });
+  });
+
+  test('announcement gender labels do not treat unknown as female', () {
+    final male = SaleAnnouncement.fromJson({
+      'id': 'sale-male',
+      'contact_name': 'Owner',
+      'contact_phone': '1',
+      'breed': 'Maltese',
+      'pet_name': 'Archie',
+      'gender': 'male',
+      'birth_date': '2025-01-01',
+      'price_amount': 1,
+      'created_at': '2026-07-18T08:00:00Z',
+      'status': 'active',
+    });
+    final unknown = SaleAnnouncement.fromJson({
+      'id': 'sale-unknown',
+      'contact_name': 'Owner',
+      'contact_phone': '1',
+      'breed': 'Maltese',
+      'pet_name': 'Pet',
+      'gender': null,
+      'birth_date': '2025-01-01',
+      'price_amount': 1,
+      'created_at': '2026-07-18T08:00:00Z',
+      'status': 'active',
+    });
+
+    expect(male.genderLabel, 'Самець');
+    expect(unknown.genderLabel, 'Стать не вказана');
   });
 }

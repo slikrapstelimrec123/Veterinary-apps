@@ -84,6 +84,8 @@ class _AddBreedingAnnouncementScreenState
       myDogAge: age.clamp(0, 30),
       myDogPhotoUrl: photoUrl,
       photoStoragePath: photoStoragePath,
+      petAvatarUrl: widget.pet.avatarUrl,
+      petAvatarStoragePath: widget.pet.avatarStoragePath,
       conditions: _conditionsController.text.trim().isEmpty
           ? null
           : _conditionsController.text.trim(),

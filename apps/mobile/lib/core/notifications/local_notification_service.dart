@@ -90,6 +90,17 @@ class LocalNotificationService {
     );
   }
 
+  Future<void> showTransferRequest(String transferId) async {
+    await initialize();
+    await _plugin.show(
+      _stableId('transfer:$transferId'),
+      'Запит на передачу тварини',
+      'Вам надійшов новий запит на передачу тварини.',
+      _details,
+      payload: 'transfer:$transferId',
+    );
+  }
+
   Future<void> scheduleMedicationReminder({
     required String medicationId,
     required String medicationName,

@@ -9,6 +9,8 @@ class BreedingAnnouncement {
     required this.myDogAge,
     this.myDogPhotoUrl,
     this.photoStoragePath,
+    this.petAvatarUrl,
+    this.petAvatarStoragePath,
     this.desiredBreed,
     this.conditions,
     this.notes,
@@ -28,6 +30,8 @@ class BreedingAnnouncement {
   final int myDogAge;
   final String? myDogPhotoUrl;
   final String? photoStoragePath;
+  final String? petAvatarUrl;
+  final String? petAvatarStoragePath;
   final String? desiredBreed;
   final String? conditions;
   final String? notes;
@@ -44,10 +48,16 @@ class BreedingAnnouncement {
       phone: json['contact_phone'] as String,
       breed: json['breed'] as String,
       myDogName: json['pet_name'] as String,
-      myDogGender: (json['gender'] as String?) ?? 'unknown',
+      myDogGender: _normalizedGender(json['gender']),
       myDogAge: (json['age_years'] as num?)?.toInt() ?? 0,
-      myDogPhotoUrl: json['photo_url'] as String?,
-      photoStoragePath: json['photo_storage_path'] as String?,
+      myDogPhotoUrl:
+          json['cover_photo_url'] as String? ?? json['photo_url'] as String?,
+      photoStoragePath: json['cover_photo_storage_path'] as String? ??
+          json['photo_storage_path'] as String?,
+      petAvatarUrl:
+          json['pet_avatar_url'] as String? ?? json['photo_url'] as String?,
+      petAvatarStoragePath: json['pet_avatar_storage_path'] as String? ??
+          json['photo_storage_path'] as String?,
       desiredBreed: json['desired_breed'] as String?,
       conditions: json['conditions'] as String?,
       notes: json['description'] as String?,
@@ -69,8 +79,8 @@ class BreedingAnnouncement {
         'pet_name': myDogName,
         'gender': myDogGender,
         'age_years': myDogAge,
-        'photo_url': myDogPhotoUrl,
-        'photo_storage_path': photoStoragePath,
+        'cover_photo_url': myDogPhotoUrl,
+        'cover_photo_storage_path': photoStoragePath,
         'desired_breed': desiredBreed,
         'conditions': conditions,
         'description': notes,
@@ -80,18 +90,31 @@ class BreedingAnnouncement {
   Map<String, dynamic> toUpdateJson() => {
         'breed': breed,
         'pet_name': myDogName,
-        'photo_url': myDogPhotoUrl,
-        'photo_storage_path': photoStoragePath,
+        'cover_photo_url': myDogPhotoUrl,
+        'cover_photo_storage_path': photoStoragePath,
         'conditions': conditions,
         'description': notes,
         'city': location,
         'contact_phone': phone,
       };
 
-  String get genderLabel => myDogGender == 'male' ? 'Самець' : 'Самка';
+  String get genderLabel => switch (myDogGender) {
+        'male' => 'Самець',
+        'female' => 'Самка',
+        _ => 'Стать не вказана',
+      };
   String get ageLabel {
     if (myDogAge == 1) return '1 рік';
     if (myDogAge < 5) return '$myDogAge роки';
     return '$myDogAge років';
+  }
+
+  static String _normalizedGender(Object? value) {
+    final normalized = value?.toString().trim().toLowerCase();
+    return switch (normalized) {
+      'male' || 'm' || 'самець' || 'самец' => 'male',
+      'female' || 'f' || 'самка' => 'female',
+      _ => 'unknown',
+    };
   }
 }

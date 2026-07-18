@@ -84,6 +84,8 @@ class _AddSaleAnnouncementScreenState extends State<AddSaleAnnouncementScreen> {
       price: _isFree ? 0 : (int.tryParse(_priceController.text.trim()) ?? 0),
       photoUrl: photoUrl,
       photoStoragePath: photoStoragePath,
+      petAvatarUrl: widget.pet.avatarUrl,
+      petAvatarStoragePath: widget.pet.avatarStoragePath,
       color: widget.pet.color,
       hasVaccinations: _hasVaccinations,
       hasPedigree: _hasPedigree,

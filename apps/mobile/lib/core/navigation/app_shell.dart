@@ -12,6 +12,7 @@ import '../../features/pets/domain/pet.dart';
 import '../../features/pets/screens/add_pet_screen.dart';
 import '../../features/pets/screens/pet_list_screen.dart';
 import '../../features/pets/screens/pet_profile_screen.dart';
+import '../../features/pet_transfer/screens/incoming_transfers_screen.dart';
 import '../../features/settings/screens/settings_screen.dart';
 import '../../features/visit_records/data/visit_record_repository.dart';
 import '../../features/visit_records/screens/visit_record_details_screen.dart';
@@ -94,6 +95,13 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
       }
     }
 
+    if (payload.startsWith('transfer:')) {
+      await Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => const IncomingTransfersScreen(),
+      ));
+      return;
+    }
+
     if (mounted) {
       setState(() {
         _index = 3;
@@ -172,7 +180,8 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
             // Reminder rows appear in the in-app inbox immediately, while the
             // operating system alert is scheduled for its actual due time.
             if (notification.type != 'medication_reminder' &&
-                notification.type != 'next_visit_recommended') {
+                notification.type != 'next_visit_recommended' &&
+                notification.type != 'pet_transfer_request') {
               LocalNotificationService.instance.show(notification);
             }
             if (mounted) {
@@ -196,6 +205,24 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
 
     _transferChannel = client
         .channel('mobile-pet-transfers-${user.id}')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.insert,
+          schema: 'public',
+          table: 'pet_transfers',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'to_user_id',
+            value: user.id,
+          ),
+          callback: (payload) {
+            final transferId = payload.newRecord['id'] as String?;
+            if (transferId != null) {
+              LocalNotificationService.instance
+                  .showTransferRequest(transferId);
+            }
+            _refreshAllData();
+          },
+        )
         .onPostgresChanges(
           event: PostgresChangeEvent.update,
           schema: 'public',

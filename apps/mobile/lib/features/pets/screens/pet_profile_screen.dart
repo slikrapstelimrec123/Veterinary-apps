@@ -4,6 +4,7 @@ import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/error_state.dart';
 import '../../../shared/widgets/pet_avatar.dart';
+import '../../../shared/navigation/instant_page_route.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../achievements/screens/achievements_screen.dart';
 import '../../feeding/screens/feeding_screen.dart';
@@ -89,7 +90,7 @@ class _PetProfileContent extends StatelessWidget {
         OutlinedButton(
           onPressed: () async {
             final result = await Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => EditPetScreen(pet: pet)));
+                InstantPageRoute(builder: (_) => EditPetScreen(pet: pet)));
             if (result == 'deleted') {
               if (context.mounted) Navigator.of(context).pop('deleted');
             } else if (result != null) {
@@ -101,7 +102,7 @@ class _PetProfileContent extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         OutlinedButton.icon(
-          onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+          onPressed: () => Navigator.of(context).push(InstantPageRoute(
             builder: (_) => AddSaleAnnouncementScreen(pet: pet),
           )),
           icon: const Icon(Icons.favorite_border),
@@ -109,7 +110,7 @@ class _PetProfileContent extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         OutlinedButton.icon(
-          onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+          onPressed: () => Navigator.of(context).push(InstantPageRoute(
             builder: (_) => AddBreedingAnnouncementScreen(pet: pet),
           )),
           icon: const Icon(Icons.diversity_1_outlined),
@@ -117,7 +118,7 @@ class _PetProfileContent extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         OutlinedButton.icon(
-          onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+          onPressed: () => Navigator.of(context).push(InstantPageRoute(
             builder: (_) => TransferPetScreen(pet: pet),
           )),
           icon: const Icon(Icons.qr_code),
@@ -181,7 +182,7 @@ class _ActionGrid extends StatelessWidget {
               child: _ActionCard(
                 icon: Icons.history_outlined,
                 title: 'Прийоми',
-                onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                onTap: () => Navigator.of(context).push(InstantPageRoute(
                   builder: (_) =>
                       VisitHistoryScreen(petId: pet.id, petName: pet.name),
                 )),
@@ -192,7 +193,7 @@ class _ActionGrid extends StatelessWidget {
               child: _ActionCard(
                 icon: Icons.folder_outlined,
                 title: 'Документи',
-                onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                onTap: () => Navigator.of(context).push(InstantPageRoute(
                   builder: (_) =>
                       DocumentsScreen(petId: pet.id, petName: pet.name),
                 )),
@@ -207,7 +208,7 @@ class _ActionGrid extends StatelessWidget {
               child: _ActionCard(
                 icon: Icons.medication_outlined,
                 title: 'Препарати',
-                onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                onTap: () => Navigator.of(context).push(InstantPageRoute(
                   builder: (_) =>
                       MedicationsScreen(petId: pet.id, petName: pet.name),
                 )),
@@ -218,7 +219,7 @@ class _ActionGrid extends StatelessWidget {
               child: _ActionCard(
                 icon: Icons.qr_code_outlined,
                 title: 'Іст. лікування',
-                onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                onTap: () => Navigator.of(context).push(InstantPageRoute(
                   builder: (_) =>
                       PetPassportScreen(petId: pet.id, petName: pet.name),
                 )),
@@ -233,7 +234,7 @@ class _ActionGrid extends StatelessWidget {
               child: _ActionCard(
                 icon: Icons.restaurant_outlined,
                 title: 'Харчування',
-                onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                onTap: () => Navigator.of(context).push(InstantPageRoute(
                   builder: (_) =>
                       FeedingScreen(petId: pet.id, petName: pet.name),
                 )),
@@ -244,7 +245,7 @@ class _ActionGrid extends StatelessWidget {
               child: _ActionCard(
                 icon: Icons.emoji_events_outlined,
                 title: 'Досягнення',
-                onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                onTap: () => Navigator.of(context).push(InstantPageRoute(
                   builder: (_) =>
                       AchievementsScreen(petId: pet.id, petName: pet.name),
                 )),

@@ -145,6 +145,8 @@ class AnnouncementRepository {
             price: item.price,
             photoUrl: item.photoUrl,
             photoStoragePath: item.photoStoragePath,
+            petAvatarUrl: item.petAvatarUrl,
+            petAvatarStoragePath: item.petAvatarStoragePath,
             color: item.color,
             hasVaccinations: item.hasVaccinations,
             hasPedigree: item.hasPedigree,
@@ -172,6 +174,8 @@ class AnnouncementRepository {
             myDogPhotoUrl: item.myDogPhotoUrl,
             desiredBreed: item.desiredBreed,
             photoStoragePath: item.photoStoragePath,
+            petAvatarUrl: item.petAvatarUrl,
+            petAvatarStoragePath: item.petAvatarStoragePath,
             conditions: item.conditions,
             notes: item.notes,
             location: item.location,
@@ -285,24 +289,43 @@ class AnnouncementRepository {
     final userId = currentUserId;
     final repository = PetRepository();
     await Future.wait(result.map((row) async {
-      final storagePath = row['photo_storage_path'] as String?;
-      if (storagePath?.isNotEmpty == true) {
+      final coverStoragePath =
+          row['cover_photo_storage_path'] as String? ??
+              row['photo_storage_path'] as String?;
+      if (coverStoragePath?.isNotEmpty == true) {
         try {
-          row['photo_url'] = await PrivatePetStorage.signedUrl(storagePath);
-          return;
+          row['cover_photo_url'] =
+              await PrivatePetStorage.signedUrl(coverStoragePath);
         } catch (_) {
-          // Fall through to the owner's pet record for legacy announcements.
+          // Keep the persisted fallback URL when signing is unavailable.
         }
       }
+
+      final avatarStoragePath = row['photo_storage_path'] as String?;
+      if (avatarStoragePath?.isNotEmpty == true) {
+        try {
+          row['pet_avatar_url'] =
+              await PrivatePetStorage.signedUrl(avatarStoragePath);
+          row['pet_avatar_storage_path'] = avatarStoragePath;
+        } catch (_) {
+          row['pet_avatar_url'] = row['photo_url'];
+        }
+      } else {
+        row['pet_avatar_url'] = row['photo_url'];
+      }
+
       final petId = row['pet_id'] as String?;
       if (userId == null || petId == null || row['owner_id'] != userId) return;
       try {
         final pet = await repository.getPet(petId);
         if (pet?.avatarUrl?.isNotEmpty == true) {
-          row['photo_url'] = pet!.avatarUrl;
+          final resolvedPet = pet!;
+          row['pet_avatar_url'] = resolvedPet.avatarUrl;
+          row['pet_avatar_storage_path'] = resolvedPet.avatarStoragePath;
         }
+        row['gender'] = pet?.sex ?? row['gender'];
       } catch (_) {
-        // Keep the announcement usable when its optional pet photo is unavailable.
+        // Keep the public pet snapshot when the private card is unavailable.
       }
     }));
     return result;

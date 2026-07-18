@@ -235,15 +235,16 @@ class DataExportService {
                 decoration: const pw.BoxDecoration(
                   border: pw.Border(
                     bottom: pw.BorderSide(
-                      color: PdfColor.fromInt(0xFFE5E1F3),
+                      width: 1,
+                      color: PdfColor.fromInt(0xFF9E94D8),
                     ),
                   ),
                 ),
                 child: pw.Text(
                   'Lappo - експорт даних',
                   style: const pw.TextStyle(
-                    color: PdfColor.fromInt(0xFF6F5AE8),
-                    fontSize: 10,
+                    color: PdfColor.fromInt(0xFF4E3FD1),
+                    fontSize: 11,
                   ),
                 ),
               ),
@@ -252,8 +253,8 @@ class DataExportService {
           child: pw.Text(
             'Сторінка ${context.pageNumber} з ${context.pagesCount}',
             style: const pw.TextStyle(
-              color: PdfColor.fromInt(0xFF777386),
-              fontSize: 9,
+              color: PdfColor.fromInt(0xFF464254),
+              fontSize: 10,
             ),
           ),
         ),
@@ -279,8 +280,8 @@ class DataExportService {
           pw.Text(
             'Створено ${_formatDateTime(generatedAt)}',
             style: const pw.TextStyle(
-              fontSize: 10,
-              color: PdfColor.fromInt(0xFF777386),
+              fontSize: 11,
+              color: PdfColor.fromInt(0xFF464254),
             ),
           ),
           pw.SizedBox(height: 18),
@@ -296,15 +297,15 @@ class DataExportService {
       level: 1,
       text: section.title,
       textStyle: pw.TextStyle(
-        fontSize: 17,
+        fontSize: 18,
         fontWeight: pw.FontWeight.bold,
-        color: const PdfColor.fromInt(0xFF18213D),
+        color: const PdfColor.fromInt(0xFF11182D),
       ),
       decoration: const pw.BoxDecoration(
         border: pw.Border(
           bottom: pw.BorderSide(
-            width: 1.2,
-            color: PdfColor.fromInt(0xFFBEB4F4),
+            width: 1.4,
+            color: PdfColor.fromInt(0xFF8A78ED),
           ),
         ),
       ),
@@ -313,8 +314,8 @@ class DataExportService {
       yield pw.Text(
         'Немає записів.',
         style: const pw.TextStyle(
-          fontSize: 10,
-          color: PdfColor.fromInt(0xFF777386),
+          fontSize: 11,
+          color: PdfColor.fromInt(0xFF464254),
         ),
       );
       yield pw.SizedBox(height: 10);
@@ -331,19 +332,19 @@ class DataExportService {
             ? _recordTitle(section.rows[index], section.title)
             : '${index + 1}. ${_recordTitle(section.rows[index], section.title)}',
         style: pw.TextStyle(
-          fontSize: 11,
+          fontSize: 12.5,
           fontWeight: pw.FontWeight.bold,
-          color: const PdfColor.fromInt(0xFF6F5AE8),
+          color: const PdfColor.fromInt(0xFF4E3FD1),
         ),
       );
-      yield pw.SizedBox(height: 4);
+      yield pw.SizedBox(height: 6);
       if (visibleEntries.isEmpty) {
         yield pw.Text('Додаткових даних немає.');
       } else {
         yield pw.Table(
           border: pw.TableBorder.all(
-            color: const PdfColor.fromInt(0xFFE5E1F3),
-            width: 0.6,
+            color: const PdfColor.fromInt(0xFFB8B3C9),
+            width: 0.8,
           ),
           columnWidths: const {
             0: pw.FlexColumnWidth(1.1),
@@ -354,23 +355,23 @@ class DataExportService {
               pw.TableRow(
                 children: [
                   pw.Padding(
-                    padding: const pw.EdgeInsets.all(6),
+                    padding: const pw.EdgeInsets.all(7),
                     child: pw.Text(
                       _labelFor(entry.key),
                       style: pw.TextStyle(
-                        fontSize: 9,
+                        fontSize: 10.5,
                         fontWeight: pw.FontWeight.bold,
-                        color: const PdfColor.fromInt(0xFF555166),
+                        color: const PdfColor.fromInt(0xFF343044),
                       ),
                     ),
                   ),
                   pw.Padding(
-                    padding: const pw.EdgeInsets.all(6),
+                    padding: const pw.EdgeInsets.all(7),
                     child: pw.Text(
                       _displayValue(entry.value),
                       style: const pw.TextStyle(
-                        fontSize: 9,
-                        color: PdfColor.fromInt(0xFF18213D),
+                        fontSize: 10.5,
+                        color: PdfColor.fromInt(0xFF11182D),
                       ),
                     ),
                   ),
