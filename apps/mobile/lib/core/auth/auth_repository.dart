@@ -13,12 +13,13 @@ class AuthRepository {
 
   Future<CurrentUser?> getCurrentUser() async {
     if (useMockData) {
-      return const CurrentUser(
+      return CurrentUser(
         id: 'mock_pet_owner',
         email: 'owner@example.com',
         fullName: 'Olena Petrenko',
         role: UserRole.petOwner,
         city: 'Київ',
+        onboardingCompletedAt: _mockOnboardingCompletedAt,
       );
     }
 
@@ -27,24 +28,13 @@ class AuthRepository {
       return null;
     }
 
-    final profile = await _client
-        .from('profiles')
-        .select('id,email,full_name,role,phone,city')
-        .eq('id', user.id)
-        .maybeSingle();
+    final profile = await _getProfile(user.id);
 
     if (profile == null) {
       return null;
     }
 
-    return CurrentUser(
-      id: profile['id'] as String,
-      email: profile['email'] as String? ?? user.email ?? '',
-      fullName: profile['full_name'] as String? ?? 'Pet owner',
-      role: CurrentUser.roleFromString(profile['role'] as String?),
-      phone: profile['phone'] as String?,
-      city: profile['city'] as String?,
-    );
+    return _toCurrentUser(profile, fallbackEmail: user.email);
   }
 
   Future<CurrentUser> updateProfile({
@@ -60,6 +50,7 @@ class AuthRepository {
         role: UserRole.petOwner,
         phone: phone,
         city: city,
+        onboardingCompletedAt: _mockOnboardingCompletedAt,
       );
     }
 
@@ -77,17 +68,42 @@ class AuthRepository {
           'updated_at': DateTime.now().toUtc().toIso8601String(),
         })
         .eq('id', user.id)
-        .select('id,email,full_name,role,phone,city')
+        .select(_profileColumns)
         .single();
 
-    return CurrentUser(
-      id: profile['id'] as String,
-      email: profile['email'] as String? ?? user.email ?? '',
-      fullName: profile['full_name'] as String? ?? fullName,
-      role: CurrentUser.roleFromString(profile['role'] as String?),
-      phone: profile['phone'] as String?,
-      city: profile['city'] as String?,
-    );
+    return _toCurrentUser(profile, fallbackEmail: user.email);
+  }
+
+  Future<CurrentUser> completeOnboarding() async {
+    if (useMockData) {
+      final current = await getCurrentUser();
+      return CurrentUser(
+        id: current!.id,
+        email: current.email,
+        fullName: current.fullName,
+        role: current.role,
+        phone: current.phone,
+        city: current.city,
+        onboardingCompletedAt: DateTime.now().toUtc(),
+      );
+    }
+
+    final user = _client.auth.currentUser;
+    if (user == null) {
+      throw const AuthException('Authentication required');
+    }
+
+    final profile = await _client
+        .from('profiles')
+        .update({
+          'onboarding_completed_at': DateTime.now().toUtc().toIso8601String(),
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        })
+        .eq('id', user.id)
+        .select(_profileColumns)
+        .single();
+
+    return _toCurrentUser(profile, fallbackEmail: user.email);
   }
 
   Future<CurrentUser?> login(
@@ -170,5 +186,50 @@ class AuthRepository {
   Future<void> updatePassword(String password) async {
     if (!isConfigured) return;
     await _client.auth.updateUser(UserAttributes(password: password));
+  }
+
+  static const _profileColumns =
+      'id,email,full_name,role,phone,city,onboarding_completed_at';
+  static final _mockOnboardingCompletedAt = DateTime.utc(2026, 1, 1);
+
+  Future<Map<String, dynamic>?> _getProfile(String userId) async {
+    try {
+      return await _client
+          .from('profiles')
+          .select(_profileColumns)
+          .eq('id', userId)
+          .maybeSingle();
+    } on PostgrestException catch (error) {
+      // Keep older installations usable while the release migration is being
+      // applied. Those profiles are treated as already onboarded.
+      if (error.code != '42703' && error.code != 'PGRST204') rethrow;
+      final legacy = await _client
+          .from('profiles')
+          .select('id,email,full_name,role,phone,city')
+          .eq('id', userId)
+          .maybeSingle();
+      if (legacy != null) {
+        legacy['onboarding_completed_at'] =
+            DateTime.now().toUtc().toIso8601String();
+      }
+      return legacy;
+    }
+  }
+
+  CurrentUser _toCurrentUser(
+    Map<String, dynamic> profile, {
+    String? fallbackEmail,
+  }) {
+    return CurrentUser(
+      id: profile['id'] as String,
+      email: profile['email'] as String? ?? fallbackEmail ?? '',
+      fullName: profile['full_name'] as String? ?? 'Pet owner',
+      role: CurrentUser.roleFromString(profile['role'] as String?),
+      phone: profile['phone'] as String?,
+      city: profile['city'] as String?,
+      onboardingCompletedAt: DateTime.tryParse(
+        profile['onboarding_completed_at'] as String? ?? '',
+      ),
+    );
   }
 }

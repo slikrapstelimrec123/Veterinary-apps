@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/reset_password_screen.dart';
 import '../../features/auth/screens/role_message_screen.dart';
+import '../../features/onboarding/screens/owner_onboarding_screen.dart';
 import '../navigation/app_shell.dart';
 import 'auth_state.dart';
 
@@ -30,6 +31,9 @@ class AuthGate extends StatelessWidget {
     }
 
     if (user.isPetOwner) {
+      if (!user.hasCompletedOnboarding) {
+        return const OwnerOnboardingScreen();
+      }
       return const AppShell();
     }
 

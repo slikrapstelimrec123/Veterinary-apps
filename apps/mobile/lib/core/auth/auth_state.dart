@@ -253,6 +253,11 @@ class AuthState extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> completeOnboarding() async {
+    currentUser = await _repository.completeOnboarding();
+    notifyListeners();
+  }
+
   @override
   void dispose() {
     _authSubscription?.cancel();

@@ -11,6 +11,7 @@ class CurrentUser {
     required this.role,
     this.phone,
     this.city,
+    this.onboardingCompletedAt,
   });
 
   final String id;
@@ -19,8 +20,10 @@ class CurrentUser {
   final UserRole role;
   final String? phone;
   final String? city;
+  final DateTime? onboardingCompletedAt;
 
   bool get isPetOwner => role == UserRole.petOwner;
+  bool get hasCompletedOnboarding => onboardingCompletedAt != null;
 
   static UserRole roleFromString(String? value) {
     return switch (value) {
