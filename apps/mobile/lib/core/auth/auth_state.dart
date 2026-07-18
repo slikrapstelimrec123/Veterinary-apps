@@ -244,11 +244,13 @@ class AuthState extends ChangeNotifier {
     required String fullName,
     required String city,
     String? phone,
+    String? email,
   }) async {
     currentUser = await _repository.updateProfile(
       fullName: fullName,
       city: city,
       phone: phone,
+      email: email,
     );
     notifyListeners();
   }

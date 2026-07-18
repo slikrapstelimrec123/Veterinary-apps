@@ -29,6 +29,7 @@ class OwnerOnboardingScreen extends StatefulWidget {
 class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
   final _petRepository = PetRepository();
   final _fullNameController = TextEditingController();
+  final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _cityController = TextEditingController();
   final _petNameController = TextEditingController();
@@ -45,6 +46,7 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
   bool _wantsToAddPet = false;
   bool _profileStepCompleted = false;
   bool _missingName = false;
+  bool _missingEmail = false;
   bool _missingPhone = false;
   bool _missingCity = false;
   bool _saving = false;
@@ -73,10 +75,12 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
     _initialized = true;
     final user = AuthScope.of(context).currentUser!;
     _missingName = !_hasMeaningfulName(user);
+    _missingEmail = _isPrivateRelayEmail(user.email);
     _missingPhone = user.phone?.trim().isEmpty ?? true;
     _missingCity = user.city?.trim().isEmpty ?? true;
     _fullNameController.text =
         _hasMeaningfulName(user) ? user.fullName.trim() : '';
+    _emailController.text = _missingEmail ? '' : user.email.trim();
     _phoneController.text = user.phone?.trim() ?? '';
     _cityController.text = user.city?.trim() ?? '';
     _loadPets();
@@ -85,6 +89,7 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
   @override
   void dispose() {
     _fullNameController.dispose();
+    _emailController.dispose();
     _phoneController.dispose();
     _cityController.dispose();
     _petNameController.dispose();
@@ -119,7 +124,11 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
 
   bool get _needsProfileStep {
     return !_profileStepCompleted &&
-        (_missingName || _missingPhone || _missingCity);
+        (_missingName || _missingEmail || _missingPhone || _missingCity);
+  }
+
+  bool _isPrivateRelayEmail(String email) {
+    return email.trim().toLowerCase().endsWith('@privaterelay.appleid.com');
   }
 
   void _answerPetQuestion(bool hasPet) {
@@ -139,8 +148,14 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
 
   Future<void> _saveProfile() async {
     final name = _fullNameController.text.trim();
+    final email = _emailController.text.trim();
     if (name.length < 2) {
       setState(() => _error = "Вкажіть ваше ім'я.");
+      return;
+    }
+    if (email.isNotEmpty &&
+        !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
+      setState(() => _error = 'Вкажіть коректну контактну електронну пошту.');
       return;
     }
 
@@ -155,6 +170,7 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
             ? null
             : _phoneController.text.trim(),
         city: _cityController.text.trim(),
+        email: email.isEmpty ? null : email,
       );
       if (!mounted) return;
       _profileStepCompleted = true;
@@ -412,9 +428,11 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
         ),
       _OnboardingStep.profile => _ProfileStep(
           fullNameController: _fullNameController,
+          emailController: _emailController,
           phoneController: _phoneController,
           cityController: _cityController,
           showName: _missingName,
+          showEmail: _missingEmail,
           showPhone: _missingPhone,
           showCity: _missingCity,
           saving: _saving,
@@ -561,9 +579,11 @@ class _PetQuestionStep extends StatelessWidget {
 class _ProfileStep extends StatelessWidget {
   const _ProfileStep({
     required this.fullNameController,
+    required this.emailController,
     required this.phoneController,
     required this.cityController,
     required this.showName,
+    required this.showEmail,
     required this.showPhone,
     required this.showCity,
     required this.saving,
@@ -572,9 +592,11 @@ class _ProfileStep extends StatelessWidget {
   });
 
   final TextEditingController fullNameController;
+  final TextEditingController emailController;
   final TextEditingController phoneController;
   final TextEditingController cityController;
   final bool showName;
+  final bool showEmail;
   final bool showPhone;
   final bool showCity;
   final bool saving;
@@ -604,6 +626,21 @@ class _ProfileStep extends StatelessWidget {
                   controller: fullNameController,
                   textCapitalization: TextCapitalization.words,
                   decoration: const InputDecoration(labelText: "Ваше ім'я *"),
+                ),
+                if (showEmail || showPhone || showCity)
+                  const SizedBox(height: 14),
+              ],
+              if (showEmail) ...[
+                TextField(
+                  controller: emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  autocorrect: false,
+                  decoration: const InputDecoration(
+                    labelText: 'Контактна електронна пошта',
+                    hintText: 'За бажанням',
+                    helperText:
+                        'Показуватиметься у профілі замість прихованої адреси Apple.',
+                  ),
                 ),
                 if (showPhone || showCity) const SizedBox(height: 14),
               ],

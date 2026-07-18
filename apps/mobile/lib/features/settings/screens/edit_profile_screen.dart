@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/auth/auth_state.dart';
-import '../../../core/config/supabase_config.dart';
 import '../../../shared/widgets/city_autocomplete_field.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -31,11 +29,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _nameController.text = user?.fullName ?? '';
       _phoneController.text = user?.phone ?? '';
       _cityController.text = user?.city ?? '';
-      if (!SupabaseConfig.useMockData) {
-        _currentEmail = Supabase.instance.client.auth.currentUser?.email ?? '';
-      } else {
-        _currentEmail = user?.email ?? '';
-      }
+      _currentEmail = user?.email ?? '';
       _emailController.text = _currentEmail;
     }
   }
@@ -83,22 +77,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ? null
             : _phoneController.text.trim(),
         city: _cityController.text.trim(),
+        email: newEmail,
       );
-
-      if (!SupabaseConfig.useMockData) {
-        if (emailChanged) {
-          await Supabase.instance.client.auth.updateUser(
-            UserAttributes(email: newEmail),
-          );
-        }
-      }
 
       if (mounted) {
         if (emailChanged) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text(
-                  'Профіль оновлено. На нову адресу надіслано лист для підтвердження.'),
+              content: Text('Профіль і контактну електронну пошту оновлено.'),
               duration: Duration(seconds: 6),
             ),
           );

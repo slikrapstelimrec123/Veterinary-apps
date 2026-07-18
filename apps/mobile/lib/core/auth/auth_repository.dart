@@ -41,11 +41,15 @@ class AuthRepository {
     required String fullName,
     required String city,
     String? phone,
+    String? email,
   }) async {
+    final normalizedEmail = email?.trim();
     if (useMockData) {
       return CurrentUser(
         id: 'mock_pet_owner',
-        email: 'owner@example.com',
+        email: normalizedEmail?.isNotEmpty == true
+            ? normalizedEmail!
+            : 'owner@example.com',
         fullName: fullName,
         role: UserRole.petOwner,
         phone: phone,
@@ -59,14 +63,17 @@ class AuthRepository {
       throw const AuthException('Authentication required');
     }
 
+    final updates = <String, dynamic>{
+      'full_name': fullName,
+      'phone': phone,
+      'city': city,
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+      if (normalizedEmail?.isNotEmpty == true) 'email': normalizedEmail,
+    };
+
     final profile = await _client
         .from('profiles')
-        .update({
-          'full_name': fullName,
-          'phone': phone,
-          'city': city,
-          'updated_at': DateTime.now().toUtc().toIso8601String(),
-        })
+        .update(updates)
         .eq('id', user.id)
         .select(_profileColumns)
         .single();
