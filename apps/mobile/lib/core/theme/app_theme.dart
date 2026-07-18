@@ -18,6 +18,16 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       fontFamily: 'Montserrat',
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: _InstantPageTransitionsBuilder(),
+          TargetPlatform.iOS: _InstantPageTransitionsBuilder(),
+          TargetPlatform.macOS: _InstantPageTransitionsBuilder(),
+          TargetPlatform.windows: _InstantPageTransitionsBuilder(),
+          TargetPlatform.linux: _InstantPageTransitionsBuilder(),
+          TargetPlatform.fuchsia: _InstantPageTransitionsBuilder(),
+        },
+      ),
       colorScheme: ColorScheme.fromSeed(
         seedColor: primary,
         primary: primary,
@@ -94,5 +104,23 @@ class AppTheme {
         bodySmall: TextStyle(color: textSecondary),
       ),
     );
+  }
+}
+
+/// Lappo screens use a transparent branded background. Animated route
+/// transitions would therefore keep the previous screen visible underneath
+/// the next one and make the two layouts look as if they overlap.
+class _InstantPageTransitionsBuilder extends PageTransitionsBuilder {
+  const _InstantPageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    return child;
   }
 }
