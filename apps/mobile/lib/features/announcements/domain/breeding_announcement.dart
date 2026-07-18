@@ -80,6 +80,8 @@ class BreedingAnnouncement {
   Map<String, dynamic> toUpdateJson() => {
         'breed': breed,
         'pet_name': myDogName,
+        'photo_url': myDogPhotoUrl,
+        'photo_storage_path': photoStoragePath,
         'conditions': conditions,
         'description': notes,
         'city': location,

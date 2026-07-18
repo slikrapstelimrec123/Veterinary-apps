@@ -148,29 +148,27 @@ class VisitRecordRepository {
           storagePath,
           file,
           fileOptions: FileOptions(contentType: mimeType),
-        );
+    );
 
     try {
+      final documentId = await _client.rpc(
+        'create_owner_visit_document',
+        params: {
+          'p_visit_record_id': visitRecordId,
+          'p_pet_id': petId,
+          'p_title': sourceName,
+          'p_document_type': documentType,
+          'p_storage_path': storagePath,
+          'p_mime_type': mimeType,
+          'p_file_size': fileSize,
+          'p_file_name': sourceName,
+        },
+      ) as String;
       final row = await _client
           .from('visit_documents')
-          .insert({
-            'visit_record_id': visitRecordId,
-            'clinic_id': null,
-            'pet_id': petId,
-            'uploaded_by': userId,
-            'document_type': documentType,
-            'title': sourceName,
-            'storage_bucket': 'visit-documents',
-            'storage_path': storagePath,
-            'mime_type': mimeType,
-            'file_size_bytes': fileSize,
-            'file_name': sourceName,
-            'file_type': mimeType,
-            'file_size': fileSize,
-            'is_visible_to_owner': true,
-          })
           .select(
               'id,visit_record_id,pet_id,title,document_type,file_name,file_type,file_size,description,storage_bucket,storage_path,is_visible_to_owner,created_at')
+          .eq('id', documentId)
           .single();
       AppDataEvents.notifyChanged();
       return VisitDocument.fromJson(row);

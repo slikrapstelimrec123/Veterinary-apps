@@ -52,18 +52,33 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Future<void> openNotification(AppNotification notification) async {
-    try {
-      if (notification.isUnread) {
+    var readStateFailed = false;
+    if (notification.isUnread) {
+      try {
         await repository.markAsRead(notification.id);
+      } catch (_) {
+        readStateFailed = true;
       }
-      if (!mounted) return;
-      refresh();
+    }
+    if (!mounted) return;
+    refresh();
+
+    try {
       await _openDestination(notification);
       if (mounted) refresh();
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Не вдалося відкрити сповіщення. Спробуйте ще раз.'),
+        content:
+            Text('Повʼязаний запис уже недоступний або був видалений.'),
+      ));
+      return;
+    }
+
+    if (readStateFailed && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text(
+            'Розділ відкрито, але не вдалося оновити стан сповіщення.'),
       ));
     }
   }

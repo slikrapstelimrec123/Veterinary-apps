@@ -35,6 +35,7 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   int _index = 0;
   final _tabVersions = List<int>.filled(5, 0);
+  final Set<int> _staleTabs = <int>{};
   RealtimeChannel? _notificationChannel;
   RealtimeChannel? _transferChannel;
   final notificationRepository = NotificationRepository();
@@ -105,10 +106,31 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   void _refreshAllData() {
     if (!mounted) return;
     setState(() {
-      for (var index = 0; index < _tabVersions.length; index++) {
-        _tabVersions[index]++;
+      // The inbox refreshes its own list after read actions. Replacing that
+      // tab here would dispose it before it can open the tapped destination.
+      if (_index != 3) {
+        _tabVersions[_index]++;
       }
+      _staleTabs
+        ..clear()
+        ..addAll(
+          List<int>.generate(_tabVersions.length, (index) => index)
+              .where((index) => index != _index),
+        );
       unreadFuture = notificationRepository.getUnreadCount();
+    });
+  }
+
+  void _selectTab(int value) {
+    if (value == _index && !_staleTabs.contains(value)) return;
+    setState(() {
+      _index = value;
+      if (_staleTabs.remove(value)) {
+        _tabVersions[value]++;
+      }
+      if (value == 3) {
+        unreadFuture = notificationRepository.getUnreadCount();
+      }
     });
   }
 
@@ -262,10 +284,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     final tabs = [
       HomeScreen(
           key: ValueKey('home-${_tabVersions[0]}'),
-          onOpenPets: () => setState(() {
-                _index = 1;
-                _tabVersions[1]++;
-              })),
+          onOpenPets: () => _selectTab(1)),
       PetListScreen(key: ValueKey('pets-${_tabVersions[1]}')),
       AnnouncementsScreen(key: ValueKey('announcements-${_tabVersions[2]}')),
       NotificationsScreen(key: ValueKey('notifications-${_tabVersions[3]}')),
@@ -273,7 +292,10 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     ];
 
     return Scaffold(
-      body: tabs[_index],
+      body: IndexedStack(
+        index: _index,
+        children: tabs,
+      ),
       bottomNavigationBar: FutureBuilder<int>(
         future: unreadFuture,
         builder: (context, snapshot) {
@@ -281,13 +303,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
           return NavigationBar(
             selectedIndex: _index,
             labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
-            onDestinationSelected: (value) {
-              setState(() {
-                _index = value;
-                _tabVersions[value]++;
-              });
-              if (value == 3) refreshUnreadCount();
-            },
+            onDestinationSelected: _selectTab,
             destinations: [
               const NavigationDestination(
                   icon: Icon(Icons.home_outlined), label: 'Home'),

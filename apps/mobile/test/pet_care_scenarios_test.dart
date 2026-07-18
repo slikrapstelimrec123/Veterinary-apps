@@ -127,6 +127,26 @@ void main() {
     expect(notification.visitRecordId, 'visit-2');
   });
 
+  test('transfer notification keeps the request navigation target', () {
+    final notification = AppNotification.fromJson({
+      'id': 'notification-3',
+      'type': 'pet_transfer_request',
+      'title': 'Запит на передачу тварини',
+      'body': 'Арчі пропонують передати до вашого акаунта.',
+      'status': 'unread',
+      'pet_id': petId,
+      'created_at': '2026-07-18T08:00:00Z',
+      'data': {
+        'pet_name': 'Арчі',
+        'transfer_id': 'transfer-1',
+      },
+    });
+
+    expect(notification.petId, petId);
+    expect(notification.petName, 'Арчі');
+    expect(notification.transferId, 'transfer-1');
+  });
+
   test('sale announcement edits send every editable field', () {
     final announcement = SaleAnnouncement(
       id: 'sale-1',
@@ -146,6 +166,8 @@ void main() {
       'breed': 'Maltese',
       'pet_name': 'Archie',
       'price_amount': 15000,
+      'photo_url': null,
+      'photo_storage_path': null,
       'description': 'New owner wanted',
       'city': 'Kyiv',
       'contact_phone': '0635022391',
@@ -170,6 +192,8 @@ void main() {
     expect(announcement.toUpdateJson(), {
       'breed': 'Maltese',
       'pet_name': 'Archie',
+      'photo_url': null,
+      'photo_storage_path': null,
       'conditions': 'Agreement',
       'description': 'Healthy dog',
       'city': 'Kyiv',

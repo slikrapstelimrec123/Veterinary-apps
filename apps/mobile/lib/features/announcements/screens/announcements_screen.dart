@@ -1,9 +1,13 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/config/supabase_config.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/services/private_pet_storage.dart';
 import '../../../shared/widgets/city_autocomplete_field.dart';
 import '../data/announcement_repository.dart';
 import '../domain/breeding_announcement.dart';
@@ -627,6 +631,10 @@ class _EditSaleScreenState extends State<_EditSaleScreen> {
       TextEditingController(text: widget.item.phone);
   late final TextEditingController _notes =
       TextEditingController(text: widget.item.notes ?? '');
+  final _imagePicker = ImagePicker();
+  XFile? _selectedPhoto;
+  late String? _photoUrl = widget.item.photoUrl;
+  late String? _photoStoragePath = widget.item.photoStoragePath;
   bool _isSaving = false;
 
   @override
@@ -638,6 +646,16 @@ class _EditSaleScreenState extends State<_EditSaleScreen> {
     _phone.dispose();
     _notes.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickPhoto() async {
+    final image = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 88,
+    );
+    if (image != null && mounted) {
+      setState(() => _selectedPhoto = image);
+    }
   }
 
   Future<void> _save() async {
@@ -654,6 +672,19 @@ class _EditSaleScreenState extends State<_EditSaleScreen> {
 
     setState(() => _isSaving = true);
     try {
+      if (_selectedPhoto != null) {
+        final petId = widget.item.petId;
+        if (petId == null) {
+          throw StateError('Announcement pet is unavailable.');
+        }
+        _photoStoragePath = await PrivatePetStorage.uploadImage(
+          petId: petId,
+          category: 'announcements',
+          file: File(_selectedPhoto!.path),
+        );
+        _photoUrl =
+            await PrivatePetStorage.signedUrl(_photoStoragePath!);
+      }
       await AnnouncementRepository()
           .updateSaleAnnouncement(
             SaleAnnouncement(
@@ -671,8 +702,8 @@ class _EditSaleScreenState extends State<_EditSaleScreen> {
               gender: widget.item.gender,
               birthDate: widget.item.birthDate,
               price: price,
-              photoUrl: widget.item.photoUrl,
-              photoStoragePath: widget.item.photoStoragePath,
+              photoUrl: _photoUrl,
+              photoStoragePath: _photoStoragePath,
               color: widget.item.color,
               hasVaccinations: widget.item.hasVaccinations,
               hasPedigree: widget.item.hasPedigree,
@@ -715,6 +746,12 @@ class _EditSaleScreenState extends State<_EditSaleScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          _AnnouncementPhotoEditor(
+            photoUrl: _photoUrl,
+            selectedPhoto: _selectedPhoto,
+            onPick: _isSaving ? null : _pickPhoto,
+          ),
+          const SizedBox(height: 16),
           _EditField(label: 'Порода', controller: _breed),
           const SizedBox(height: 12),
           _EditField(label: 'Ім\'я цуценяти', controller: _name),
@@ -786,6 +823,10 @@ class _EditBreedingScreenState extends State<_EditBreedingScreen> {
       TextEditingController(text: widget.item.phone);
   late final TextEditingController _notes =
       TextEditingController(text: widget.item.notes ?? '');
+  final _imagePicker = ImagePicker();
+  XFile? _selectedPhoto;
+  late String? _photoUrl = widget.item.myDogPhotoUrl;
+  late String? _photoStoragePath = widget.item.photoStoragePath;
   bool _isSaving = false;
 
   @override
@@ -799,11 +840,34 @@ class _EditBreedingScreenState extends State<_EditBreedingScreen> {
     super.dispose();
   }
 
+  Future<void> _pickPhoto() async {
+    final image = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 88,
+    );
+    if (image != null && mounted) {
+      setState(() => _selectedPhoto = image);
+    }
+  }
+
   Future<void> _save() async {
     if (_isSaving) return;
     FocusManager.instance.primaryFocus?.unfocus();
     setState(() => _isSaving = true);
     try {
+      if (_selectedPhoto != null) {
+        final petId = widget.item.petId;
+        if (petId == null) {
+          throw StateError('Announcement pet is unavailable.');
+        }
+        _photoStoragePath = await PrivatePetStorage.uploadImage(
+          petId: petId,
+          category: 'announcements',
+          file: File(_selectedPhoto!.path),
+        );
+        _photoUrl =
+            await PrivatePetStorage.signedUrl(_photoStoragePath!);
+      }
       await AnnouncementRepository()
           .updateBreedingAnnouncement(BreedingAnnouncement(
             id: widget.item.id,
@@ -819,8 +883,8 @@ class _EditBreedingScreenState extends State<_EditBreedingScreen> {
                 : _dogName.text.trim(),
             myDogGender: widget.item.myDogGender,
             myDogAge: widget.item.myDogAge,
-            myDogPhotoUrl: widget.item.myDogPhotoUrl,
-            photoStoragePath: widget.item.photoStoragePath,
+            myDogPhotoUrl: _photoUrl,
+            photoStoragePath: _photoStoragePath,
             desiredBreed: widget.item.desiredBreed,
             conditions: _conditions.text.trim().isEmpty
                 ? null
@@ -862,6 +926,12 @@ class _EditBreedingScreenState extends State<_EditBreedingScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          _AnnouncementPhotoEditor(
+            photoUrl: _photoUrl,
+            selectedPhoto: _selectedPhoto,
+            onPick: _isSaving ? null : _pickPhoto,
+          ),
+          const SizedBox(height: 16),
           _EditField(label: 'Порода', controller: _breed),
           const SizedBox(height: 12),
           _EditField(label: 'Ім\'я собаки', controller: _dogName),
@@ -900,6 +970,75 @@ class _EditBreedingScreenState extends State<_EditBreedingScreen> {
           ),
           const SizedBox(height: 16),
         ],
+      ),
+    );
+  }
+}
+
+class _AnnouncementPhotoEditor extends StatelessWidget {
+  const _AnnouncementPhotoEditor({
+    required this.photoUrl,
+    required this.selectedPhoto,
+    required this.onPick,
+  });
+
+  final String? photoUrl;
+  final XFile? selectedPhoto;
+  final VoidCallback? onPick;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AspectRatio(
+              aspectRatio: 1,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: selectedPhoto != null
+                    ? Image.file(
+                        File(selectedPhoto!.path),
+                        fit: BoxFit.cover,
+                      )
+                    : photoUrl?.isNotEmpty == true
+                        ? Image.network(
+                            photoUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) =>
+                                const _PhotoPlaceholder(),
+                          )
+                        : const _PhotoPlaceholder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: onPick,
+              icon: const Icon(Icons.photo_library_outlined),
+              label: const Text('Замінити велике фото'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PhotoPlaceholder extends StatelessWidget {
+  const _PhotoPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: AppTheme.primary.withValues(alpha: 0.1),
+      child: const Center(
+        child: Icon(
+          Icons.pets,
+          color: AppTheme.primary,
+          size: 56,
+        ),
       ),
     );
   }
@@ -1026,14 +1165,14 @@ class _BreedingCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _SquareAnnouncementPhoto(
-                photoUrl: item.myDogPhotoUrl,
-                fallbackIcon: Icons.favorite_outlined,
-                fallbackColor: AppTheme.accent,
-              ),
-              const SizedBox(height: 12),
               Row(
                 children: [
+                  _CompactAnnouncementPhoto(
+                    photoUrl: item.myDogPhotoUrl,
+                    fallbackIcon: Icons.favorite_outlined,
+                    fallbackColor: AppTheme.accent,
+                  ),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1101,14 +1240,14 @@ class _SaleCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _SquareAnnouncementPhoto(
-                photoUrl: item.photoUrl,
-                fallbackIcon: Icons.pets,
-                fallbackColor: AppTheme.primary,
-              ),
-              const SizedBox(height: 12),
               Row(
                 children: [
+                  _CompactAnnouncementPhoto(
+                    photoUrl: item.photoUrl,
+                    fallbackIcon: Icons.pets,
+                    fallbackColor: AppTheme.primary,
+                  ),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1178,6 +1317,41 @@ class _SaleCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _CompactAnnouncementPhoto extends StatelessWidget {
+  const _CompactAnnouncementPhoto({
+    required this.photoUrl,
+    required this.fallbackIcon,
+    required this.fallbackColor,
+  });
+
+  final String? photoUrl;
+  final IconData fallbackIcon;
+  final Color fallbackColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: SizedBox(
+        width: 44,
+        height: 44,
+        child: photoUrl?.isNotEmpty == true
+            ? Image.network(
+                photoUrl!,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => _fallback(),
+              )
+            : _fallback(),
+      ),
+    );
+  }
+
+  Widget _fallback() => ColoredBox(
+        color: fallbackColor.withValues(alpha: 0.12),
+        child: Icon(fallbackIcon, color: fallbackColor, size: 24),
+      );
 }
 
 class _SquareAnnouncementPhoto extends StatelessWidget {

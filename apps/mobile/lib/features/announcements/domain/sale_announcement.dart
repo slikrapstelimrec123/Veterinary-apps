@@ -94,6 +94,8 @@ class SaleAnnouncement {
         'breed': breed,
         'pet_name': puppyName,
         'price_amount': price,
+        'photo_url': photoUrl,
+        'photo_storage_path': photoStoragePath,
         'description': notes,
         'city': location,
         'contact_phone': phone,

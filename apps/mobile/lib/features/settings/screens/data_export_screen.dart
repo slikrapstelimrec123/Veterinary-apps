@@ -34,21 +34,29 @@ class _DataExportScreenState extends State<DataExportScreen> {
       if (!mounted) return;
       final details = exportResult.warnings.isEmpty
           ? 'Архів створено. Додано файлів: ${exportResult.exportedFileCount}.'
-          : 'Архів створено, але деякі дані недоступні. Додано файлів: ${exportResult.exportedFileCount}.';
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(details), duration: const Duration(seconds: 6)));
+          : 'Архів створено, але деякі файли недоступні. '
+              'Додано файлів: ${exportResult.exportedFileCount}.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(details),
+          duration: const Duration(seconds: 6),
+        ),
+      );
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Не вдалося створити експорт. Спробуйте ще раз.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content:
+              Text('Не вдалося створити експорт. Спробуйте ще раз.'),
+        ),
+      );
     } finally {
       final temporaryFile = result?.file;
       if (temporaryFile != null) {
         try {
           if (await temporaryFile.exists()) await temporaryFile.delete();
         } catch (_) {
-          // The OS may still hold the shared file briefly; the temporary
-          // directory remains isolated and will be cleaned by the platform.
+          // The platform owns the temporary shared file until sharing ends.
         }
       }
       if (mounted) setState(() => _isExporting = false);
@@ -59,36 +67,48 @@ class _DataExportScreenState extends State<DataExportScreen> {
   Widget build(BuildContext context) {
     return AppScaffold(
       title: 'Експорт даних',
-      subtitle: 'Завантажте копію інформації та доступних медичних файлів.',
+      subtitle:
+          'Завантажте зрозумілий PDF та копії доступних медичних файлів.',
       children: [
         const Card(
           child: Padding(
             padding: EdgeInsets.all(20),
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Row(children: [
-                Icon(Icons.folder_zip_outlined),
-                SizedBox(width: 12),
-                Expanded(
-                    child: Text('Що буде в архіві',
-                        style: TextStyle(fontWeight: FontWeight.w700)))
-              ]),
-              SizedBox(height: 14),
-              Text('• профіль і налаштування сповіщень'),
-              Text('• інформація про ваших тварин'),
-              Text('• записи на прийом і медична історія'),
-              Text('• доступні вам документи та фото'),
-            ]),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.folder_zip_outlined),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Що буде в архіві',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 14),
+                Text('• окремий PDF з усіма записами'),
+                Text('• профіль та інформація про тварин'),
+                Text('• прийоми, препарати, харчування та події'),
+                Text(
+                    '• одна папка з усіма доступними фото й документами'),
+              ],
+            ),
           ),
         ),
         const SizedBox(height: 12),
         const Card(
-            child: ListTile(
-          leading: Icon(Icons.shield_outlined),
-          title: Text('Приватні медичні дані'),
-          subtitle: Text(
-              'Архів створюється лише з даних, доступних вашому акаунту. Зберігайте його у безпечному місці.'),
-        )),
+          child: ListTile(
+            leading: Icon(Icons.shield_outlined),
+            title: Text('Приватні медичні дані'),
+            subtitle: Text(
+              'Архів створюється лише з даних, доступних вашому '
+              'акаунту. Зберігайте його у безпечному місці.',
+            ),
+          ),
+        ),
         const SizedBox(height: 20),
         FilledButton.icon(
           onPressed: _isExporting ? null : _export,
@@ -96,11 +116,14 @@ class _DataExportScreenState extends State<DataExportScreen> {
               ? const SizedBox(
                   width: 18,
                   height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2))
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
               : const Icon(Icons.download_outlined),
-          label: Text(_isExporting
-              ? 'Створення архіву...'
-              : 'Створити та зберегти ZIP'),
+          label: Text(
+            _isExporting
+                ? 'Створення архіву...'
+                : 'Створити та зберегти ZIP',
+          ),
         ),
       ],
     );
