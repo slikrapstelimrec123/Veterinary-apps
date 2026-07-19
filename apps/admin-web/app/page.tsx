@@ -81,12 +81,10 @@ export default function Home() {
           auth: {
             persistSession: true,
             autoRefreshToken: true,
-            detectSessionInUrl: true,
-            // The private Sites access gate also uses an access-token URL
-            // fragment. PKCE keeps Supabase OAuth on the query-string `code`
-            // flow so the two authentication layers cannot consume each
-            // other's tokens.
-            flowType: "pkce",
+            // The private Sites access gate owns the URL token. This panel
+            // deliberately uses password authentication only, so Supabase
+            // must never try to consume that token as its own session.
+            detectSessionInUrl: false,
           },
         });
         if (!active) return;
@@ -170,25 +168,6 @@ export default function Home() {
 
   async function signOut() {
     await client?.auth.signOut();
-  }
-
-  async function signInWithGoogle() {
-    if (!client) return;
-    setBusy(true);
-    setError("");
-    const { error: oauthError } = await client.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/`,
-        queryParams: {
-          prompt: "select_account",
-        },
-      },
-    });
-    if (oauthError) {
-      setError("Не вдалося відкрити вхід через Google.");
-      setBusy(false);
-    }
   }
 
   const metrics = useMemo(
@@ -282,18 +261,9 @@ export default function Home() {
             <button className="primary-button" disabled={busy || !client}>
               {busy ? "Перевіряємо…" : "Увійти до панелі"}
             </button>
-            <div className="login-divider">
-              <span>або</span>
-            </div>
-            <button
-              className="google-button"
-              type="button"
-              onClick={() => void signInWithGoogle()}
-              disabled={busy || !client}
-            >
-              <span>G</span>
-              Увійти через Google
-            </button>
+            <p className="login-help">
+              Використовуйте пароль адміністратора Supabase.
+            </p>
             {error && <p className="error-message">{error}</p>}
           </form>
         </section>

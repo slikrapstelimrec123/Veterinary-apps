@@ -250,41 +250,12 @@ button:disabled {
   box-shadow: 0 17px 32px rgba(118, 94, 242, 0.3);
 }
 
-.login-divider {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 20px 0;
-  color: #a0a6b7;
-  font-size: 11px;
-}
-
-.login-divider::before,
-.login-divider::after {
-  content: "";
-  height: 1px;
-  flex: 1;
-  background: #e6e7ef;
-}
-
-.google-button {
-  width: 100%;
-  height: 52px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  color: #465069;
-  border: 1px solid #dfe1ed;
-  border-radius: 15px;
-  background: white;
-  font-weight: 750;
-}
-
-.google-button span {
-  color: #4285f4;
-  font-size: 17px;
-  font-weight: 900;
+.login-help {
+  margin: 14px 0 0;
+  color: #7d87a2;
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: center;
 }
 
 .error-message,
