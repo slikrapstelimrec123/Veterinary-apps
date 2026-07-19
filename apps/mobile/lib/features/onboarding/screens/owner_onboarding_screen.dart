@@ -11,6 +11,7 @@ import '../../../shared/services/private_pet_storage.dart';
 import '../../../shared/widgets/city_autocomplete_field.dart';
 import '../../pets/data/pet_repository.dart';
 import '../../pets/domain/pet.dart';
+import '../../pets/widgets/breed_autocomplete_field.dart';
 
 enum _OnboardingStep {
   petQuestion,
@@ -705,13 +706,9 @@ class _PetBasicsStep extends StatelessWidget {
                 },
               ),
               const SizedBox(height: 14),
-              TextField(
+              BreedAutocompleteField(
                 controller: breedController,
-                textCapitalization: TextCapitalization.words,
-                decoration: const InputDecoration(
-                  labelText: 'Порода',
-                  hintText: 'Необов’язково',
-                ),
+                species: species,
               ),
               const SizedBox(height: 14),
               DropdownButtonFormField<String>(

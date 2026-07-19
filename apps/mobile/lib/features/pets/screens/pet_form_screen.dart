@@ -8,88 +8,7 @@ import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/services/private_pet_storage.dart';
 import '../data/pet_repository.dart';
 import '../domain/pet.dart';
-
-const _dogBreeds = [
-  'Лабрадор ретрівер',
-  'Німецька вівчарка',
-  'Золотистий ретрівер',
-  'Французький бульдог',
-  'Бульдог',
-  'Пудель',
-  'Бігль',
-  'Ротвейлер',
-  'Йоркширський тер\'єр',
-  'Боксер',
-  'Доберман',
-  'Сибірський хаскі',
-  'Австралійська вівчарка',
-  'Бордер-коллі',
-  'Кавалер кінг-чарлз спанієль',
-  'Шіба-іну',
-  'Джек рассел тер\'єр',
-  'Мальтезе',
-  'Чіхуахуа',
-  'Такса',
-  'Шотландський коллі',
-  'Самоєд',
-  'Акіта',
-  'Боксер',
-  'Далматинець',
-  'Вельш-коргі',
-  'Шпіц',
-  'Мопс',
-  'Бельгійська малінуа',
-  'Ірландський сеттер',
-  'Американський стаффордширський тер\'єр',
-  'Бернський зенненгунд',
-  'Великий шнауцер',
-  'Мінімальний шнауцер',
-  'Кане-корсо',
-  'Мастиф',
-  'Ньюфаундленд',
-  'Сенбернар',
-  'Веймаранер',
-  'Бассет-хаунд',
-  'Спанієль',
-  'Грейхаунд',
-  'Борзая',
-  'Афганська хортиця',
-  'Чау-чау',
-  'Шарпей',
-  'Бультер\'єр',
-  'Бедлінгтон-тер\'єр',
-  'Вірменська гавча',
-  'Левретка',
-  'Помераніан',
-  'Шпіц',
-  'Метис',
-  'Інша порода',
-];
-
-const _catBreeds = [
-  'Британська короткошерста',
-  'Шотландська висловуха',
-  'Мейн-кун',
-  'Перська',
-  'Регдол',
-  'Бенгальська',
-  'Сіамська',
-  'Абіссінська',
-  'Сфінкс',
-  'Бірманська',
-  'Норвезька лісова',
-  'Сибірська',
-  'Орієнтальна',
-  'Корніш рекс',
-  'Девон рекс',
-  'Балінезійська',
-  'Турецька ангора',
-  'Руська блакитна',
-  'Буrmанська',
-  'Американська короткошерста',
-  'Метиска',
-  'Інша порода',
-];
+import '../widgets/breed_autocomplete_field.dart';
 
 class PetFormScreen extends StatefulWidget {
   const PetFormScreen({super.key, this.pet});
@@ -131,9 +50,7 @@ class _PetFormScreenState extends State<PetFormScreen> {
   static const sexOptions = ['male', 'female', 'unknown'];
 
   List<String> get _breedsForSpecies {
-    if (species == 'dog') return _dogBreeds;
-    if (species == 'cat') return _catBreeds;
-    return [];
+    return breedsForSpecies(species);
   }
 
   String speciesLabel(String value) => switch (value) {
@@ -359,9 +276,9 @@ class _PetFormScreenState extends State<PetFormScreen> {
 
         // Breed — searchable dropdown for dogs/cats, plain text otherwise
         if (breeds.isNotEmpty)
-          _BreedAutocomplete(
+          BreedAutocompleteField(
             controller: breedController,
-            breeds: breeds,
+            species: species,
           )
         else
           TextField(
@@ -564,40 +481,5 @@ class _PetFormScreenState extends State<PetFormScreen> {
         error = 'Не вдалося видалити тварину.';
       });
     }
-  }
-}
-
-class _BreedAutocomplete extends StatelessWidget {
-  const _BreedAutocomplete({required this.controller, required this.breeds});
-
-  final TextEditingController controller;
-  final List<String> breeds;
-
-  @override
-  Widget build(BuildContext context) {
-    return Autocomplete<String>(
-      initialValue: TextEditingValue(text: controller.text),
-      optionsBuilder: (value) {
-        if (value.text.isEmpty) return breeds;
-        final query = value.text.toLowerCase();
-        return breeds.where((b) => b.toLowerCase().contains(query));
-      },
-      onSelected: (value) => controller.text = value,
-      optionsMaxHeight: 220,
-      fieldViewBuilder: (context, fieldController, focusNode, onSubmitted) {
-        // sync external controller
-        fieldController
-            .addListener(() => controller.text = fieldController.text);
-        return TextField(
-          controller: fieldController,
-          focusNode: focusNode,
-          decoration: const InputDecoration(
-            labelText: 'Порода',
-            hintText: 'Почніть вводити породу...',
-            suffixIcon: Icon(Icons.arrow_drop_down),
-          ),
-        );
-      },
-    );
   }
 }
