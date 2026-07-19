@@ -202,6 +202,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
               ),
             ),
+            if (_currentEmail.toLowerCase().endsWith(
+                  '@privaterelay.appleid.com',
+                ))
+              const Padding(
+                padding: EdgeInsets.only(top: 8, left: 4, right: 4),
+                child: Text(
+                  'Apple передала приховану адресу. Lappo не має доступу до '
+                  'вашої особистої пошти, але ви можете вказати її тут як '
+                  'контактну адресу.',
+                  style: TextStyle(fontSize: 12),
+                ),
+              ),
             if (_emailController.text.trim() != _currentEmail &&
                 _emailController.text.isNotEmpty)
               Padding(

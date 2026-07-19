@@ -177,6 +177,7 @@ class AuthRepository {
     if (!isConfigured) return false;
     return _client.auth.signInWithOAuth(
       OAuthProvider.apple,
+      scopes: 'name email',
       redirectTo: 'lappo://auth/callback',
       authScreenLaunchMode: LaunchMode.externalApplication,
     );
