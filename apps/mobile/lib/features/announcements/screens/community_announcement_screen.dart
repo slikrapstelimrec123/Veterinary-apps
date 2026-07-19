@@ -653,7 +653,7 @@ class _CommunityAnnouncementFormScreenState
             ],
             if (widget.type == CommunityAnnouncementType.service) ...[
               DropdownButtonFormField<ServiceCategory>(
-                value: _serviceCategory,
+                initialValue: _serviceCategory,
                 decoration: const InputDecoration(labelText: 'Тип послуги *'),
                 items: ServiceCategory.values
                     .map(
@@ -849,7 +849,7 @@ class _TypeIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ColoredBox(
-      color: AppTheme.primary.withOpacity(0.1),
+      color: AppTheme.primary.withValues(alpha: 0.1),
       child: Icon(_iconForType(type), color: AppTheme.primary, size: 28),
     );
   }
