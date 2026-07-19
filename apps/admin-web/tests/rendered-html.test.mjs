@@ -29,6 +29,17 @@ test("ignores the private Sites token and uses password authentication only", as
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
   );
   assert.match(source, /detectSessionInUrl:\s*false/);
+  assert.match(source, /flowType:\s*"pkce"/);
   assert.doesNotMatch(source, /signInWithOAuth/);
   assert.doesNotMatch(source, /Увійти через Google/);
+});
+
+test("supports password recovery without exposing the Sites token", async () => {
+  const source = await import("node:fs/promises").then(({ readFile }) =>
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+  );
+  assert.match(source, /resetPasswordForEmail/);
+  assert.match(source, /exchangeCodeForSession/);
+  assert.match(source, /updateUser/);
+  assert.match(source, /Забули пароль\?/);
 });

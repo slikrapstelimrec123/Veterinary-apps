@@ -250,12 +250,31 @@ button:disabled {
   box-shadow: 0 17px 32px rgba(118, 94, 242, 0.3);
 }
 
-.login-help {
+.auth-link {
   margin: 14px 0 0;
+  padding: 0;
   color: #7d87a2;
+  border: 0;
+  background: transparent;
   font-size: 12px;
   line-height: 1.45;
   text-align: center;
+  cursor: pointer;
+}
+
+.auth-link:hover {
+  color: var(--violet-dark);
+}
+
+.success-message {
+  margin: 18px 0 0;
+  padding: 12px 14px;
+  color: #286d5a;
+  border: 1px solid #bfe5d9;
+  border-radius: 12px;
+  background: #effbf7;
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .error-message,

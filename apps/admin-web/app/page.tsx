@@ -35,6 +35,8 @@ type DashboardData = {
   plans: PlanRow[];
 };
 
+type AuthMode = "login" | "request-reset" | "set-password";
+
 const emptyOverview: Overview = {
   users_total: 0,
   users_30d: 0,
@@ -59,8 +61,11 @@ export default function Home() {
   const [signedIn, setSignedIn] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const [data, setData] = useState<DashboardData>({
     overview: emptyOverview,
@@ -82,13 +87,38 @@ export default function Home() {
             persistSession: true,
             autoRefreshToken: true,
             // The private Sites access gate owns the URL token. This panel
-            // deliberately uses password authentication only, so Supabase
-            // must never try to consume that token as its own session.
+            // handles only its own explicit PKCE recovery code, so Supabase
+            // must never consume that token as a session automatically.
             detectSessionInUrl: false,
+            flowType: "pkce",
           },
         });
         if (!active) return;
         setClient(supabase);
+        const params = new URLSearchParams(window.location.search);
+        const recoveryCode = params.get("code");
+        const isRecovery = params.get("recovery") === "1";
+        if (isRecovery && recoveryCode) {
+          return supabase.auth
+            .exchangeCodeForSession(recoveryCode)
+            .then(({ error: recoveryError }) => {
+              if (!active) return;
+              if (recoveryError) {
+                setError(
+                  "Посилання для відновлення недійсне або вже використане. Запросіть нове.",
+                );
+                setAuthMode("request-reset");
+              } else {
+                setAuthMode("set-password");
+              }
+              window.history.replaceState(
+                {},
+                document.title,
+                `${window.location.pathname}${window.location.hash}`,
+              );
+              setBusy(false);
+            });
+        }
         return supabase.auth.getSession().then(({ data: sessionData }) => {
           if (!active) return;
           setSignedIn(Boolean(sessionData.session));
@@ -156,6 +186,7 @@ export default function Home() {
     if (!client) return;
     setBusy(true);
     setError("");
+    setNotice("");
     const { error: signInError } = await client.auth.signInWithPassword({
       email: email.trim(),
       password,
@@ -168,6 +199,54 @@ export default function Home() {
 
   async function signOut() {
     await client?.auth.signOut();
+  }
+
+  async function requestPasswordReset(event: FormEvent) {
+    event.preventDefault();
+    if (!client) return;
+    setBusy(true);
+    setError("");
+    setNotice("");
+    const { error: resetError } = await client.auth.resetPasswordForEmail(
+      email.trim(),
+      {
+        redirectTo: `${window.location.origin}/?recovery=1`,
+      },
+    );
+    if (resetError) {
+      setError("Не вдалося надіслати лист. Перевірте адресу та спробуйте ще раз.");
+    } else {
+      setNotice(
+        "Лист надіслано. Відкрийте його в цьому браузері та перейдіть за посиланням.",
+      );
+    }
+    setBusy(false);
+  }
+
+  async function saveNewPassword(event: FormEvent) {
+    event.preventDefault();
+    if (!client) return;
+    if (newPassword.length < 10) {
+      setError("Новий пароль має містити щонайменше 10 символів.");
+      return;
+    }
+    setBusy(true);
+    setError("");
+    setNotice("");
+    const { error: updateError } = await client.auth.updateUser({
+      password: newPassword,
+    });
+    if (updateError) {
+      setError("Не вдалося встановити пароль. Запросіть нове посилання.");
+      setBusy(false);
+      return;
+    }
+    await client.auth.signOut();
+    setSignedIn(false);
+    setNewPassword("");
+    setAuthMode("login");
+    setNotice("Пароль встановлено. Тепер увійдіть із новим паролем.");
+    setBusy(false);
   }
 
   const metrics = useMemo(
@@ -213,7 +292,47 @@ export default function Home() {
     [data],
   );
 
+  if (authMode === "set-password") {
+    return (
+      <main className="auth-page">
+        <div className="ambient ambient-one" />
+        <div className="ambient ambient-two" />
+        <section className="auth-shell">
+          <div className="auth-story">
+            <Logo />
+            <span className="private-badge">Внутрішній простір</span>
+            <h1>Створіть новий пароль адміністратора.</h1>
+            <p>
+              Пароль захистить окремий вхід до аналітики Lappo.
+            </p>
+          </div>
+          <form className="login-card" onSubmit={saveNewPassword}>
+            <p className="eyebrow">Відновлення доступу</p>
+            <h2>Новий пароль</h2>
+            <p className="muted">Використайте щонайменше 10 символів.</p>
+            <label>
+              Новий пароль
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(event) => setNewPassword(event.target.value)}
+                autoComplete="new-password"
+                minLength={10}
+                required
+              />
+            </label>
+            <button className="primary-button" disabled={busy || !client}>
+              {busy ? "Зберігаємо…" : "Встановити пароль"}
+            </button>
+            {error && <p className="error-message">{error}</p>}
+          </form>
+        </section>
+      </main>
+    );
+  }
+
   if (!signedIn) {
+    const requestingReset = authMode === "request-reset";
     return (
       <main className="auth-page">
         <div className="ambient ambient-one" />
@@ -232,10 +351,19 @@ export default function Home() {
               Доступ мають лише адміністратори платформи
             </div>
           </div>
-          <form className="login-card" onSubmit={signIn}>
-            <p className="eyebrow">Захищений вхід</p>
-            <h2>Панель керування</h2>
-            <p className="muted">Увійдіть під обліковим записом адміністратора.</p>
+          <form
+            className="login-card"
+            onSubmit={requestingReset ? requestPasswordReset : signIn}
+          >
+            <p className="eyebrow">
+              {requestingReset ? "Відновлення доступу" : "Захищений вхід"}
+            </p>
+            <h2>{requestingReset ? "Створити пароль" : "Панель керування"}</h2>
+            <p className="muted">
+              {requestingReset
+                ? "Ми надішлемо захищене посилання на вашу пошту."
+                : "Увійдіть під обліковим записом адміністратора."}
+            </p>
             <label>
               Електронна адреса
               <input
@@ -247,23 +375,39 @@ export default function Home() {
                 required
               />
             </label>
-            <label>
-              Пароль
-              <input
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                autoComplete="current-password"
-                placeholder="••••••••"
-                required
-              />
-            </label>
+            {!requestingReset && (
+              <label>
+                Пароль
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  autoComplete="current-password"
+                  placeholder="••••••••"
+                  required
+                />
+              </label>
+            )}
             <button className="primary-button" disabled={busy || !client}>
-              {busy ? "Перевіряємо…" : "Увійти до панелі"}
+              {busy
+                ? "Зачекайте…"
+                : requestingReset
+                  ? "Надіслати лист"
+                  : "Увійти до панелі"}
             </button>
-            <p className="login-help">
-              Використовуйте пароль адміністратора Supabase.
-            </p>
+            <button
+              className="auth-link"
+              type="button"
+              onClick={() => {
+                setAuthMode(requestingReset ? "login" : "request-reset");
+                setError("");
+                setNotice("");
+              }}
+              disabled={busy}
+            >
+              {requestingReset ? "Повернутися до входу" : "Забули пароль?"}
+            </button>
+            {notice && <p className="success-message">{notice}</p>}
             {error && <p className="error-message">{error}</p>}
           </form>
         </section>
