@@ -23,3 +23,11 @@ test("renders the protected Lappo admin shell", async () => {
   assert.match(html, /noindex/);
   assert.doesNotMatch(html, /Your site is taking shape/);
 });
+
+test("uses PKCE so Sites and Supabase tokens cannot collide", async () => {
+  const source = await import("node:fs/promises").then(({ readFile }) =>
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+  );
+  assert.match(source, /flowType:\s*"pkce"/);
+  assert.match(source, /prompt:\s*"select_account"/);
+});

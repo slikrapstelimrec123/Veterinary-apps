@@ -82,6 +82,11 @@ export default function Home() {
             persistSession: true,
             autoRefreshToken: true,
             detectSessionInUrl: true,
+            // The private Sites access gate also uses an access-token URL
+            // fragment. PKCE keeps Supabase OAuth on the query-string `code`
+            // flow so the two authentication layers cannot consume each
+            // other's tokens.
+            flowType: "pkce",
           },
         });
         if (!active) return;
@@ -173,7 +178,12 @@ export default function Home() {
     setError("");
     const { error: oauthError } = await client.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: window.location.origin },
+      options: {
+        redirectTo: `${window.location.origin}/`,
+        queryParams: {
+          prompt: "select_account",
+        },
+      },
     });
     if (oauthError) {
       setError("Не вдалося відкрити вхід через Google.");
