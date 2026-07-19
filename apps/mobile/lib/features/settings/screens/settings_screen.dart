@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../../core/auth/auth_state.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../notifications/screens/notification_preferences_screen.dart';
+import '../../billing/screens/plans_screen.dart';
 import 'account_deletion_screen.dart';
 import 'data_export_screen.dart';
 import 'edit_profile_screen.dart';
@@ -55,6 +56,18 @@ class SettingsScreen extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        Card(
+          child: ListTile(
+            leading: const Icon(Icons.workspace_premium_outlined),
+            title: const Text('Тарифи та підписка'),
+            subtitle: const Text('Free, Pro та Pro+ для ваших потреб.'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const PlansScreen()),
+            ),
           ),
         ),
         const SizedBox(height: 12),

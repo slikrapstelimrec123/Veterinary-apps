@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
@@ -7,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/services/announcement_media_storage.dart';
+import '../../../shared/widgets/city_autocomplete_field.dart';
 import '../data/announcement_repository.dart';
 import '../domain/community_announcement.dart';
 
@@ -32,6 +34,9 @@ class _CommunityAnnouncementTabState extends State<CommunityAnnouncementTab> {
   bool _hasMore = true;
   String? _error;
   int _page = 0;
+  String? _selectedCity;
+  ServiceCategory? _selectedServiceCategory;
+  OfferCategory? _selectedOfferCategory;
 
   @override
   void initState() {
@@ -43,7 +48,12 @@ class _CommunityAnnouncementTabState extends State<CommunityAnnouncementTab> {
   @override
   void didUpdateWidget(covariant CommunityAnnouncementTab oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.type != widget.type) _load(reset: true);
+    if (oldWidget.type != widget.type) {
+      _selectedCity = null;
+      _selectedServiceCategory = null;
+      _selectedOfferCategory = null;
+      _load(reset: true);
+    }
   }
 
   @override
@@ -79,6 +89,9 @@ class _CommunityAnnouncementTabState extends State<CommunityAnnouncementTab> {
       final items = await _repository.getCommunityAnnouncements(
         widget.type,
         page: page,
+        city: _selectedCity,
+        serviceCategory: _selectedServiceCategory,
+        offerCategory: _selectedOfferCategory,
       );
       if (!mounted) return;
       setState(() {
@@ -103,51 +116,146 @@ class _CommunityAnnouncementTabState extends State<CommunityAnnouncementTab> {
     }
   }
 
+  Future<void> _pickCity() async {
+    final selection = await _showFilterPicker<String>(
+      context,
+      title: 'Оберіть місто',
+      allLabel: 'Всі міста',
+      values: supportedUkrainianCities,
+      labelFor: (city) => city,
+      selected: _selectedCity,
+    );
+    if (selection == null) return;
+    final value = selection.value;
+    if (!mounted || value == _selectedCity) return;
+    setState(() => _selectedCity = value);
+    await _load(reset: true);
+  }
+
+  Future<void> _pickServiceCategory() async {
+    final selection = await _showFilterPicker<ServiceCategory>(
+      context,
+      title: 'Оберіть тип послуги',
+      allLabel: 'Всі послуги',
+      values: ServiceCategory.values,
+      labelFor: (category) => category.label,
+      selected: _selectedServiceCategory,
+    );
+    if (selection == null) return;
+    final value = selection.value;
+    if (!mounted || value == _selectedServiceCategory) return;
+    setState(() => _selectedServiceCategory = value);
+    await _load(reset: true);
+  }
+
+  Future<void> _pickOfferCategory() async {
+    final selection = await _showFilterPicker<OfferCategory>(
+      context,
+      title: 'Оберіть тип пропозиції',
+      allLabel: 'Всі типи',
+      values: OfferCategory.values,
+      labelFor: (category) => category.label,
+      selected: _selectedOfferCategory,
+    );
+    if (selection == null) return;
+    final value = selection.value;
+    if (!mounted || value == _selectedOfferCategory) return;
+    setState(() => _selectedOfferCategory = value);
+    await _load(reset: true);
+  }
+
+  Widget _filters() {
+    return SizedBox(
+      height: 52,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+        scrollDirection: Axis.horizontal,
+        children: [
+          _FilterButton(
+            label: _selectedCity ?? 'Всі міста',
+            icon: Icons.location_on_outlined,
+            selected: _selectedCity != null,
+            onTap: _pickCity,
+          ),
+          if (widget.type == CommunityAnnouncementType.service) ...[
+            const SizedBox(width: 8),
+            _FilterButton(
+              label: _selectedServiceCategory?.label ?? 'Всі послуги',
+              icon: Icons.design_services_outlined,
+              selected: _selectedServiceCategory != null,
+              onTap: _pickServiceCategory,
+            ),
+          ],
+          if (widget.type == CommunityAnnouncementType.offer) ...[
+            const SizedBox(width: 8),
+            _FilterButton(
+              label: _selectedOfferCategory?.label ?? 'Всі типи',
+              icon: Icons.category_outlined,
+              selected: _selectedOfferCategory != null,
+              onTap: _pickOfferCategory,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
     }
+    late final Widget content;
     if (_error != null && _items.isEmpty) {
-      return _MessageState(
+      content = _MessageState(
         icon: Icons.cloud_off_outlined,
         text: _error!,
         actionLabel: 'Спробувати ще раз',
         onAction: () => _load(reset: true),
       );
-    }
-    if (_items.isEmpty) {
-      return _MessageState(
+    } else if (_items.isEmpty) {
+      content = _MessageState(
         icon: _iconForType(widget.type),
         text: 'У цьому розділі ще немає оголошень.',
       );
+    } else {
+      content = RefreshIndicator(
+        onRefresh: () => _load(reset: true),
+        child: ListView.separated(
+          controller: _scrollController,
+          padding: const EdgeInsets.all(16),
+          itemCount: _items.length + (_loadingMore ? 1 : 0),
+          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          itemBuilder: (context, index) {
+            if (index == _items.length) {
+              return const Padding(
+                padding: EdgeInsets.all(16),
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
+            final item = _items[index];
+            return CommunityAnnouncementCard(
+              item: item,
+              onTap: () {
+                unawaited(_repository.recordAnnouncementView(item.id));
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        CommunityAnnouncementDetailScreen(item: item),
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      );
     }
 
-    return RefreshIndicator(
-      onRefresh: () => _load(reset: true),
-      child: ListView.separated(
-        controller: _scrollController,
-        padding: const EdgeInsets.all(16),
-        itemCount: _items.length + (_loadingMore ? 1 : 0),
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
-        itemBuilder: (context, index) {
-          if (index == _items.length) {
-            return const Padding(
-              padding: EdgeInsets.all(16),
-              child: Center(child: CircularProgressIndicator()),
-            );
-          }
-          final item = _items[index];
-          return CommunityAnnouncementCard(
-            item: item,
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => CommunityAnnouncementDetailScreen(item: item),
-              ),
-            ),
-          );
-        },
-      ),
+    return Column(
+      children: [
+        _filters(),
+        Expanded(child: content),
+      ],
     );
   }
 }
@@ -212,6 +320,19 @@ class CommunityAnnouncementCard extends StatelessWidget {
                         fontSize: 12,
                       ),
                     ),
+                    if (item.description.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        item.description,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppTheme.textMain,
+                          fontSize: 12,
+                          height: 1.25,
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 6),
                     Row(
                       children: [
@@ -312,9 +433,19 @@ class CommunityAnnouncementDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 14),
                   _InfoRow(
+                    icon: Icons.location_city_outlined,
+                    label: 'Місто',
+                    value: item.city,
+                  ),
+                  _InfoRow(
                     icon: Icons.location_on_outlined,
                     label: 'Адреса',
                     value: item.address,
+                  ),
+                  _InfoRow(
+                    icon: Icons.notes_outlined,
+                    label: 'Опис',
+                    value: item.description,
                   ),
                   if (item.type == CommunityAnnouncementType.event)
                     _InfoRow(
@@ -327,6 +458,12 @@ class CommunityAnnouncementDetailScreen extends StatelessWidget {
                       icon: Icons.design_services_outlined,
                       label: 'Категорія',
                       value: item.serviceCategory!.label,
+                    ),
+                  if (item.offerCategory != null)
+                    _InfoRow(
+                      icon: Icons.category_outlined,
+                      label: 'Тип пропозиції',
+                      value: item.offerCategory!.label,
                     ),
                   if (item.priceAmount != null)
                     _InfoRow(
@@ -404,10 +541,12 @@ class CommunityAnnouncementFormScreen extends StatefulWidget {
     super.key,
     required this.type,
     this.item,
+    this.listingCreditId,
   });
 
   final CommunityAnnouncementType type;
   final CommunityAnnouncement? item;
+  final String? listingCreditId;
 
   @override
   State<CommunityAnnouncementFormScreen> createState() =>
@@ -424,6 +563,10 @@ class _CommunityAnnouncementFormScreenState
       TextEditingController(text: widget.item?.title ?? '');
   late final TextEditingController _address =
       TextEditingController(text: widget.item?.address ?? '');
+  late final TextEditingController _city =
+      TextEditingController(text: widget.item?.city ?? '');
+  late final TextEditingController _description =
+      TextEditingController(text: widget.item?.description ?? '');
   late final TextEditingController _contact =
       TextEditingController(text: widget.item?.contact ?? '');
   late final TextEditingController _price = TextEditingController(
@@ -440,6 +583,7 @@ class _CommunityAnnouncementFormScreenState
   DateTime? _validFrom;
   DateTime? _validUntil;
   ServiceCategory _serviceCategory = ServiceCategory.dogTrainer;
+  OfferCategory _offerCategory = OfferCategory.other;
   XFile? _selectedPhoto;
   String? _photoUrl;
   String? _photoStoragePath;
@@ -455,6 +599,7 @@ class _CommunityAnnouncementFormScreenState
     _validUntil = widget.item?.validUntil;
     _serviceCategory =
         widget.item?.serviceCategory ?? ServiceCategory.dogTrainer;
+    _offerCategory = widget.item?.offerCategory ?? OfferCategory.other;
     _photoUrl = widget.item?.photoUrl;
     _photoStoragePath = widget.item?.photoStoragePath;
   }
@@ -463,6 +608,8 @@ class _CommunityAnnouncementFormScreenState
   void dispose() {
     _title.dispose();
     _address.dispose();
+    _city.dispose();
+    _description.dispose();
     _contact.dispose();
     _price.dispose();
     _website.dispose();
@@ -530,11 +677,16 @@ class _CommunityAnnouncementFormScreenState
         type: widget.type,
         title: _title.text.trim(),
         address: _address.text.trim(),
+        city: _city.text.trim(),
+        description: _description.text.trim(),
         createdAt: widget.item?.createdAt ?? DateTime.now(),
         eventDate: _eventDate,
         contact: _emptyToNull(_contact.text),
         serviceCategory: widget.type == CommunityAnnouncementType.service
             ? _serviceCategory
+            : null,
+        offerCategory: widget.type == CommunityAnnouncementType.offer
+            ? _offerCategory
             : null,
         priceAmount: widget.type == CommunityAnnouncementType.service
             ? int.tryParse(_price.text.trim())
@@ -553,6 +705,7 @@ class _CommunityAnnouncementFormScreenState
             : null,
         isActive: widget.item?.isActive ?? true,
         ownerId: widget.item?.ownerId ?? _repository.currentUserId,
+        listingCreditId: widget.item?.listingCreditId ?? widget.listingCreditId,
       );
       if (_editing) {
         await _repository.updateCommunityAnnouncement(item);
@@ -625,12 +778,33 @@ class _CommunityAnnouncementFormScreenState
               validator: _required,
             ),
             const SizedBox(height: 10),
+            CityAutocompleteField(
+              controller: _city,
+              label: 'Місто *',
+              validator: _required,
+            ),
+            const SizedBox(height: 10),
             TextFormField(
               controller: _address,
               decoration: const InputDecoration(
                 labelText: 'Адреса *',
                 prefixIcon: Icon(Icons.location_on_outlined),
               ),
+              validator: _required,
+            ),
+            const SizedBox(height: 10),
+            TextFormField(
+              controller: _description,
+              decoration: InputDecoration(
+                labelText: widget.type == CommunityAnnouncementType.offer
+                    ? 'Короткий опис *'
+                    : 'Опис *',
+                alignLabelWithHint: true,
+              ),
+              minLines: 2,
+              maxLines: 4,
+              maxLength:
+                  widget.type == CommunityAnnouncementType.offer ? 180 : 500,
               validator: _required,
             ),
             const SizedBox(height: 10),
@@ -688,6 +862,24 @@ class _CommunityAnnouncementFormScreenState
               ),
             ],
             if (widget.type == CommunityAnnouncementType.offer) ...[
+              DropdownButtonFormField<OfferCategory>(
+                initialValue: _offerCategory,
+                decoration: const InputDecoration(
+                  labelText: 'Тип пропозиції *',
+                ),
+                items: OfferCategory.values
+                    .map(
+                      (category) => DropdownMenuItem(
+                        value: category,
+                        child: Text(category.label),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (value) {
+                  if (value != null) setState(() => _offerCategory = value);
+                },
+              ),
+              const SizedBox(height: 10),
               TextFormField(
                 controller: _website,
                 decoration: const InputDecoration(labelText: 'Сайт *'),
@@ -891,6 +1083,109 @@ class _MessageState extends StatelessWidget {
               ),
             ],
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FilterSelection<T> {
+  const _FilterSelection(this.value);
+
+  final T? value;
+}
+
+Future<_FilterSelection<T>?> _showFilterPicker<T>(
+  BuildContext context, {
+  required String title,
+  required String allLabel,
+  required List<T> values,
+  required String Function(T value) labelFor,
+  required T? selected,
+}) {
+  return showModalBottomSheet<_FilterSelection<T>>(
+    context: context,
+    showDragHandle: true,
+    builder: (context) => SafeArea(
+      child: ListView(
+        shrinkWrap: true,
+        padding: const EdgeInsets.only(bottom: 12),
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+            child: Text(
+              title,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+            ),
+          ),
+          ListTile(
+            title: Text(allLabel),
+            trailing: selected == null
+                ? const Icon(Icons.check, color: AppTheme.primary)
+                : null,
+            onTap: () =>
+                Navigator.pop(context, _FilterSelection<T>(null)),
+          ),
+          ...values.map(
+            (value) => ListTile(
+              title: Text(labelFor(value)),
+              trailing: value == selected
+                  ? const Icon(Icons.check, color: AppTheme.primary)
+                  : null,
+              onTap: () => Navigator.pop(context, _FilterSelection<T>(value)),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _FilterButton extends StatelessWidget {
+  const _FilterButton({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected
+          ? AppTheme.primary.withValues(alpha: 0.12)
+          : Colors.transparent,
+      shape: StadiumBorder(
+        side: BorderSide(
+          color: selected ? AppTheme.primary : AppTheme.border,
+        ),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const StadiumBorder(),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 17, color: AppTheme.primary),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: AppTheme.primary,
+                  fontWeight: FontWeight.w700,
+                  height: 1,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

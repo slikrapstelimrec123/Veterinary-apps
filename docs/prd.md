@@ -19,6 +19,8 @@ Pet owners can:
 - publish and edit permitted announcements;
 - transfer a pet or accept an incoming transfer;
 - export their data and request account deletion.
+- use Free, Pro, or Pro+ owner plans;
+- purchase additional standard or promoted announcement publications.
 
 ## Access Rules
 
@@ -35,7 +37,37 @@ Pet owners can:
 - clinic-created visit records;
 - clinic and doctor reviews;
 - clinic subscriptions and billing;
-- payments, chat, AI diagnosis, insurance, and telemedicine.
+- chat, AI diagnosis, insurance, and telemedicine.
+
+## Plans And Monetization
+
+- `Free`: up to 3 pets and 1 standard personal announcement per calendar
+  month across breeding and puppy-sale categories.
+- `Pro`: up to 5 pets, 3 breeding announcements, and 3 puppy-sale
+  announcements per billing month.
+- `Pro+`: up to 50 pets, 20 breeding announcements, and 20 puppy-sale
+  announcements per billing month.
+- Events are free for every plan and do not consume announcement quotas.
+- Services and offers are commercial publications and require a one-time
+  announcement purchase.
+- Extra announcement tiers are Standard (30 days), Top 7 (30 days with 7
+  promoted days and 3 raises), and Top 15 (30 days with 15 promoted days and
+  5 raises).
+- Announcements stop being public after 30 days and are permanently deleted
+  60 days after publication unless the owner deletes them sooner.
+- Store purchases and entitlements are verified by the backend. The mobile
+  client is never the source of truth for paid access.
+- Pro prices are 79 UAH monthly and 799 UAH yearly. Pro+ prices are 499 UAH
+  monthly and 4,999 UAH yearly. Eligible new subscribers may receive a
+  one-time introductory month at 39 UAH for Pro or 249 UAH for Pro+.
+
+## Internal Administration
+
+- The platform may have a separate private web console for aggregate product,
+  city, pet, announcement, subscription, and revenue analytics.
+- The console is an internal platform tool, not a clinic or doctor workspace.
+- Analytics access is role-based and audited.
+- Medical records and private documents are excluded from general analytics.
 
 ## Product Principles
 

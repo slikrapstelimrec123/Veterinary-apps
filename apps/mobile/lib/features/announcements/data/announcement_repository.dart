@@ -22,13 +22,13 @@ class AnnouncementRepository {
     breed, pet_name, gender, birth_date, age_years, price_amount, photo_url,
     photo_storage_path, cover_photo_url, cover_photo_storage_path, color,
     has_vaccinations, has_pedigree, has_chip, desired_breed, conditions,
-    description, city, status, created_at
+    description, city, status, created_at, listing_credit_id
   ''';
   static const _communityProjection = '''
-    id, owner_id, announcement_type, title, address, event_date, contact_info,
-    service_category, price_amount, website, offer_text, valid_from,
-    valid_until, promo_code, cover_photo_url, cover_photo_storage_path,
-    status, created_at
+    id, owner_id, announcement_type, title, address, city, description,
+    event_date, contact_info, service_category, offer_category, price_amount,
+    website, offer_text, valid_from, valid_until, promo_code, cover_photo_url,
+    cover_photo_storage_path, status, created_at, listing_credit_id
   ''';
 
   bool get _useMockData => SupabaseConfig.useMockData;
@@ -50,8 +50,10 @@ class AnnouncementRepository {
       query = query.ilike('breed', '%$breed%');
     }
     if (city != null && city.isNotEmpty) query = query.ilike('city', '%$city%');
-    final rows =
-        await query.order('created_at', ascending: false).limit(_pageSize);
+    final rows = await query
+        .order('promoted_until', ascending: false, nullsFirst: false)
+        .order('ranking_at', ascending: false)
+        .limit(_pageSize);
     final hydratedRows = await _hydrateMyPetPhotos(rows as List);
     return hydratedRows.map(BreedingAnnouncement.fromJson).toList();
   }
@@ -69,8 +71,10 @@ class AnnouncementRepository {
       query = query.ilike('breed', '%$breed%');
     }
     if (city != null && city.isNotEmpty) query = query.ilike('city', '%$city%');
-    final rows =
-        await query.order('created_at', ascending: false).limit(_pageSize);
+    final rows = await query
+        .order('promoted_until', ascending: false, nullsFirst: false)
+        .order('ranking_at', ascending: false)
+        .limit(_pageSize);
     final hydratedRows = await _hydrateMyPetPhotos(rows as List);
     return hydratedRows.map(SaleAnnouncement.fromJson).toList();
   }
@@ -96,6 +100,7 @@ class AnnouncementRepository {
         .order('created_at', ascending: false)
         .limit(_pageSize);
     final hydratedRows = await _hydrateMyPetPhotos(rows as List);
+    await _attachOwnerMetrics(hydratedRows);
     return hydratedRows.map(SaleAnnouncement.fromJson).toList();
   }
 
@@ -116,6 +121,7 @@ class AnnouncementRepository {
         .order('created_at', ascending: false)
         .limit(_pageSize);
     final hydratedRows = await _hydrateMyPetPhotos(rows as List);
+    await _attachOwnerMetrics(hydratedRows);
     return hydratedRows.map(BreedingAnnouncement.fromJson).toList();
   }
 
@@ -149,6 +155,9 @@ class AnnouncementRepository {
     int page = 0,
     bool mine = false,
     bool active = true,
+    String? city,
+    ServiceCategory? serviceCategory,
+    OfferCategory? offerCategory,
   }) async {
     if (_useMockData) {
       final userId = currentUserId;
@@ -156,7 +165,11 @@ class AnnouncementRepository {
           .where((item) =>
               item.type == type &&
               item.isActive == active &&
-              (!mine || item.ownerId == userId))
+              (!mine || item.ownerId == userId) &&
+              (city == null || city.isEmpty || item.city == city) &&
+              (serviceCategory == null ||
+                  item.serviceCategory == serviceCategory) &&
+              (offerCategory == null || item.offerCategory == offerCategory))
           .skip(page * _pageSize)
           .take(_pageSize)
           .toList();
@@ -178,14 +191,26 @@ class AnnouncementRepository {
         query = query.gte('valid_until', today.split('T').first);
       }
     }
+    if (city != null && city.isNotEmpty) {
+      query = query.eq('city', city);
+    }
+    if (serviceCategory != null) {
+      query = query.eq('service_category', serviceCategory.databaseValue);
+    }
+    if (offerCategory != null) {
+      query = query.eq('offer_category', offerCategory.databaseValue);
+    }
     final from = page * _pageSize;
-    final rows = await query
-        .order(
-          type == CommunityAnnouncementType.event ? 'event_date' : 'created_at',
-          ascending: type == CommunityAnnouncementType.event,
-        )
-        .range(from, from + _pageSize - 1);
+    final rows = type == CommunityAnnouncementType.event
+        ? await query
+            .order('event_date', ascending: true)
+            .range(from, from + _pageSize - 1)
+        : await query
+            .order('promoted_until', ascending: false, nullsFirst: false)
+            .order('ranking_at', ascending: false)
+            .range(from, from + _pageSize - 1);
     final hydrated = await _hydrateCommunityPhotos(rows as List);
+    if (mine) await _attachOwnerMetrics(hydrated);
     return hydrated.map(CommunityAnnouncement.fromJson).toList();
   }
 
@@ -249,10 +274,13 @@ class AnnouncementRepository {
           type: item.type,
           title: item.title,
           address: item.address,
+          city: item.city,
+          description: item.description,
           createdAt: item.createdAt,
           eventDate: item.eventDate,
           contact: item.contact,
           serviceCategory: item.serviceCategory,
+          offerCategory: item.offerCategory,
           priceAmount: item.priceAmount,
           website: item.website,
           offerText: item.offerText,
@@ -263,6 +291,7 @@ class AnnouncementRepository {
           photoStoragePath: item.photoStoragePath,
           isActive: !item.isActive,
           ownerId: item.ownerId,
+          viewCount: item.viewCount,
         );
       }
       AppDataEvents.notifyChanged();
@@ -307,6 +336,7 @@ class AnnouncementRepository {
             isActive: !item.isActive,
             ownerId: item.ownerId,
             petId: item.petId,
+            viewCount: item.viewCount,
           );
         }
       } else {
@@ -333,6 +363,7 @@ class AnnouncementRepository {
             isActive: !item.isActive,
             ownerId: item.ownerId,
             petId: item.petId,
+            viewCount: item.viewCount,
           );
         }
       }
@@ -431,6 +462,33 @@ class AnnouncementRepository {
       'blocker_id': _requireUserId(),
       'blocked_user_id': ownerId,
     });
+  }
+
+  Future<void> recordAnnouncementView(String announcementId) async {
+    if (_useMockData) return;
+    await _supabase.rpc(
+      'record_announcement_view',
+      params: {'p_announcement_id': announcementId},
+    );
+  }
+
+  Future<void> _attachOwnerMetrics(
+    List<Map<String, dynamic>> rows,
+  ) async {
+    if (_useMockData || rows.isEmpty) return;
+    final ids = rows.map((row) => row['id'] as String).toList();
+    final metricRows = await _supabase
+        .from('announcement_owner_metrics')
+        .select('announcement_id, view_count')
+        .inFilter('announcement_id', ids);
+    final metrics = <String, int>{
+      for (final row in metricRows as List)
+        row['announcement_id'] as String:
+            (row['view_count'] as num?)?.toInt() ?? 0,
+    };
+    for (final row in rows) {
+      row['view_count'] = metrics[row['id']] ?? 0;
+    }
   }
 
   Future<List<Map<String, dynamic>>> _hydrateMyPetPhotos(List rows) async {

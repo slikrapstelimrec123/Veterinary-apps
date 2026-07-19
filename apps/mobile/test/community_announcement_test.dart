@@ -8,6 +8,8 @@ void main() {
       type: CommunityAnnouncementType.event,
       title: 'День адопції',
       address: 'Київ, парк',
+      city: 'Київ',
+      description: 'Подія для знайомства з тваринами.',
       createdAt: DateTime.utc(2026, 7, 19),
       eventDate: DateTime.utc(2026, 8, 1),
       contact: '+380000000000',

@@ -22,6 +22,8 @@ class SaleAnnouncement {
     this.isActive = true,
     this.ownerId,
     this.petId,
+    this.viewCount = 0,
+    this.listingCreditId,
   });
 
   final String id;
@@ -46,6 +48,8 @@ class SaleAnnouncement {
   final bool isActive;
   final String? ownerId;
   final String? petId;
+  final int viewCount;
+  final String? listingCreditId;
 
   factory SaleAnnouncement.fromJson(Map<String, dynamic> json) {
     return SaleAnnouncement(
@@ -76,6 +80,8 @@ class SaleAnnouncement {
       isActive: json['status'] == 'active',
       ownerId: json['owner_id'] as String?,
       petId: json['pet_id'] as String?,
+      viewCount: (json['view_count'] as num?)?.toInt() ?? 0,
+      listingCreditId: json['listing_credit_id'] as String?,
     );
   }
 
@@ -98,6 +104,7 @@ class SaleAnnouncement {
         'has_chip': hasChip,
         'description': notes,
         'city': location,
+        'listing_credit_id': listingCreditId,
       };
 
   Map<String, dynamic> toUpdateJson() => {

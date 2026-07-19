@@ -36,16 +36,38 @@ enum ServiceCategory {
   }
 }
 
+enum OfferCategory {
+  shop('shop', 'Магазин'),
+  clinic('clinic', 'Клініка'),
+  other('other', 'Інше');
+
+  const OfferCategory(this.databaseValue, this.label);
+
+  final String databaseValue;
+  final String label;
+
+  static OfferCategory? fromDatabase(String? value) {
+    if (value == null) return null;
+    for (final category in values) {
+      if (category.databaseValue == value) return category;
+    }
+    return null;
+  }
+}
+
 class CommunityAnnouncement {
   const CommunityAnnouncement({
     required this.id,
     required this.type,
     required this.title,
     required this.address,
+    required this.city,
+    required this.description,
     required this.createdAt,
     this.eventDate,
     this.contact,
     this.serviceCategory,
+    this.offerCategory,
     this.priceAmount,
     this.website,
     this.offerText,
@@ -56,16 +78,21 @@ class CommunityAnnouncement {
     this.photoStoragePath,
     this.isActive = true,
     this.ownerId,
+    this.viewCount = 0,
+    this.listingCreditId,
   });
 
   final String id;
   final CommunityAnnouncementType type;
   final String title;
   final String address;
+  final String city;
+  final String description;
   final DateTime createdAt;
   final DateTime? eventDate;
   final String? contact;
   final ServiceCategory? serviceCategory;
+  final OfferCategory? offerCategory;
   final int? priceAmount;
   final String? website;
   final String? offerText;
@@ -76,6 +103,8 @@ class CommunityAnnouncement {
   final String? photoStoragePath;
   final bool isActive;
   final String? ownerId;
+  final int viewCount;
+  final String? listingCreditId;
 
   factory CommunityAnnouncement.fromJson(Map<String, dynamic> json) {
     return CommunityAnnouncement(
@@ -85,12 +114,16 @@ class CommunityAnnouncement {
       ),
       title: json['title'] as String? ?? '',
       address: json['address'] as String? ?? '',
+      city: json['city'] as String? ?? '',
+      description: json['description'] as String? ?? '',
       createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
           DateTime.now(),
       eventDate: DateTime.tryParse(json['event_date'] as String? ?? ''),
       contact: json['contact_info'] as String?,
       serviceCategory:
           ServiceCategory.fromDatabase(json['service_category'] as String?),
+      offerCategory:
+          OfferCategory.fromDatabase(json['offer_category'] as String?),
       priceAmount: (json['price_amount'] as num?)?.toInt(),
       website: json['website'] as String?,
       offerText: json['offer_text'] as String?,
@@ -101,6 +134,8 @@ class CommunityAnnouncement {
       photoStoragePath: json['cover_photo_storage_path'] as String?,
       isActive: json['status'] == 'active',
       ownerId: json['owner_id'] as String?,
+      viewCount: (json['view_count'] as num?)?.toInt() ?? 0,
+      listingCreditId: json['listing_credit_id'] as String?,
     );
   }
 
@@ -111,9 +146,12 @@ class CommunityAnnouncement {
         'announcement_type': type.databaseValue,
         'title': title,
         'address': address,
+        'city': city,
+        'description': description,
         'event_date': eventDate?.toUtc().toIso8601String(),
         'contact_info': contact,
         'service_category': serviceCategory?.databaseValue,
+        'offer_category': offerCategory?.databaseValue,
         'price_amount': priceAmount,
         'website': website,
         'offer_text': offerText,
@@ -122,6 +160,7 @@ class CommunityAnnouncement {
         'promo_code': promoCode,
         'cover_photo_url': photoUrl,
         'cover_photo_storage_path': photoStoragePath,
+        'listing_credit_id': listingCreditId,
       };
 
   Map<String, dynamic> toUpdateJson() {
@@ -139,8 +178,8 @@ class CommunityAnnouncement {
       CommunityAnnouncementType.service =>
         '${serviceCategory?.label ?? 'Послуга'}${priceAmount == null ? '' : ' · $priceAmount грн'}',
       CommunityAnnouncementType.offer => validUntil == null
-          ? 'Спеціальна пропозиція'
-          : 'Діє до ${_dateLabel(validUntil)}',
+          ? offerCategory?.label ?? 'Спеціальна пропозиція'
+          : '${offerCategory?.label ?? 'Пропозиція'} · діє до ${_dateLabel(validUntil)}',
     };
   }
 

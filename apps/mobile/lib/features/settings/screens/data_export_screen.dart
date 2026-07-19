@@ -46,8 +46,7 @@ class _DataExportScreenState extends State<DataExportScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content:
-              Text('Не вдалося створити експорт. Спробуйте ще раз.'),
+          content: Text('Не вдалося створити експорт. Спробуйте ще раз.'),
         ),
       );
     } finally {
@@ -67,8 +66,7 @@ class _DataExportScreenState extends State<DataExportScreen> {
   Widget build(BuildContext context) {
     return AppScaffold(
       title: 'Експорт даних',
-      subtitle:
-          'Завантажте зрозумілий PDF та копії доступних медичних файлів.',
+      subtitle: 'Завантажте зрозумілий PDF та копії доступних медичних файлів.',
       children: [
         const Card(
           child: Padding(
@@ -92,8 +90,7 @@ class _DataExportScreenState extends State<DataExportScreen> {
                 Text('• окремий PDF з усіма записами'),
                 Text('• профіль та інформація про тварин'),
                 Text('• прийоми, препарати, харчування та події'),
-                Text(
-                    '• одна папка з усіма доступними фото й документами'),
+                Text('• одна папка з усіма доступними фото й документами'),
               ],
             ),
           ),
@@ -120,9 +117,7 @@ class _DataExportScreenState extends State<DataExportScreen> {
                 )
               : const Icon(Icons.download_outlined),
           label: Text(
-            _isExporting
-                ? 'Створення архіву...'
-                : 'Створити та зберегти ZIP',
+            _isExporting ? 'Створення архіву...' : 'Створити та зберегти ZIP',
           ),
         ),
       ],

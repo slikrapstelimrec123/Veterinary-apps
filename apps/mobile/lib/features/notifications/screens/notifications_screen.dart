@@ -69,16 +69,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content:
-            Text('Повʼязаний запис уже недоступний або був видалений.'),
+        content: Text('Повʼязаний запис уже недоступний або був видалений.'),
       ));
       return;
     }
 
     if (readStateFailed && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text(
-            'Розділ відкрито, але не вдалося оновити стан сповіщення.'),
+        content:
+            Text('Розділ відкрито, але не вдалося оновити стан сповіщення.'),
       ));
     }
   }

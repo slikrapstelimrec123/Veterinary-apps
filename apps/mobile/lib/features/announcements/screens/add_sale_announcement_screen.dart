@@ -12,8 +12,13 @@ import '../data/announcement_repository.dart';
 import '../domain/sale_announcement.dart';
 
 class AddSaleAnnouncementScreen extends StatefulWidget {
-  const AddSaleAnnouncementScreen({super.key, required this.pet});
+  const AddSaleAnnouncementScreen({
+    super.key,
+    required this.pet,
+    this.listingCreditId,
+  });
   final Pet pet;
+  final String? listingCreditId;
 
   @override
   State<AddSaleAnnouncementScreen> createState() =>
@@ -99,6 +104,7 @@ class _AddSaleAnnouncementScreenState extends State<AddSaleAnnouncementScreen> {
       createdAt: DateTime.now(),
       ownerId: _repo.currentUserId,
       petId: widget.pet.id,
+      listingCreditId: widget.listingCreditId,
     );
 
     try {

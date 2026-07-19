@@ -231,9 +231,16 @@ class _PetFormScreenState extends State<PetFormScreen> {
       }
       if (!mounted) return;
       Navigator.of(context).pop(saved);
-    } catch (_) {
-      setState(() => error =
-          'Не вдалося зберегти тварину. Перевірте дані та спробуйте ще раз.');
+    } catch (saveError) {
+      final planLimitReached =
+          saveError.toString().contains('PET_PLAN_LIMIT_REACHED');
+      setState(
+        () => error = planLimitReached
+            ? 'Досягнуто ліміт тварин вашого тарифу. '
+                'Змініть тариф у налаштуваннях, щоб додати ще одну.'
+            : 'Не вдалося зберегти тварину. '
+                'Перевірте дані та спробуйте ще раз.',
+      );
     } finally {
       if (mounted) setState(() => isSaving = false);
     }

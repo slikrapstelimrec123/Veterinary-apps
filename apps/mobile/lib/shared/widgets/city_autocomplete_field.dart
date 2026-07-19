@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
 
-const _kCities = [
+const supportedUkrainianCities = [
   'Київ',
   'Харків',
   'Одеса',
@@ -47,8 +47,10 @@ Future<String?> _showCityPicker(BuildContext context, String current) {
       return StatefulBuilder(builder: (ctx, setInner) {
         final q = search.text.trim().toLowerCase();
         final filtered = q.isEmpty
-            ? _kCities
-            : _kCities.where((c) => c.toLowerCase().contains(q)).toList();
+            ? supportedUkrainianCities
+            : supportedUkrainianCities
+                .where((c) => c.toLowerCase().contains(q))
+                .toList();
         return Padding(
           padding:
               EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),

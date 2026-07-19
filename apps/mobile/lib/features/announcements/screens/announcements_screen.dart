@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -10,6 +11,8 @@ import '../../../core/theme/app_theme.dart';
 import '../../../shared/services/private_pet_storage.dart';
 import '../../../shared/widgets/city_autocomplete_field.dart';
 import '../../../shared/widgets/pet_avatar.dart';
+import '../../billing/data/billing_repository.dart';
+import '../../billing/screens/listing_packages_screen.dart';
 import '../../pets/data/pet_repository.dart';
 import '../../pets/domain/pet.dart';
 import '../data/announcement_repository.dart';
@@ -150,6 +153,43 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen>
 
   Future<void> _createCurrent() async {
     final index = _tab.index;
+    final publicationType = switch (index) {
+      0 => 'breeding',
+      1 => 'sale',
+      2 => 'event',
+      3 => 'service',
+      4 => 'offer',
+      _ => null,
+    };
+    if (publicationType == null) return;
+
+    String? listingCreditId;
+    try {
+      final access =
+          await BillingRepository().getPublicationAccess(publicationType);
+      if (!access.allowed) {
+        if (!mounted) return;
+        listingCreditId = await Navigator.of(context).push<String>(
+          MaterialPageRoute(
+            builder: (_) => ListingPackagesScreen(
+              announcementType: publicationType,
+            ),
+          ),
+        );
+        if (listingCreditId == null || !mounted) return;
+      }
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Не вдалося перевірити доступ до публікації. Спробуйте ще раз.',
+          ),
+        ),
+      );
+      return;
+    }
+
     bool? saved;
     if (index == 0 || index == 1) {
       final pet = await _selectPet();
@@ -157,15 +197,24 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen>
       saved = await Navigator.of(context).push<bool>(
         MaterialPageRoute(
           builder: (_) => index == 0
-              ? AddBreedingAnnouncementScreen(pet: pet)
-              : AddSaleAnnouncementScreen(pet: pet),
+              ? AddBreedingAnnouncementScreen(
+                  pet: pet,
+                  listingCreditId: listingCreditId,
+                )
+              : AddSaleAnnouncementScreen(
+                  pet: pet,
+                  listingCreditId: listingCreditId,
+                ),
         ),
       );
     } else if (index >= 2 && index <= 4) {
       final type = CommunityAnnouncementType.values[index - 2];
       saved = await Navigator.of(context).push<bool>(
         MaterialPageRoute(
-          builder: (_) => CommunityAnnouncementFormScreen(type: type),
+          builder: (_) => CommunityAnnouncementFormScreen(
+            type: type,
+            listingCreditId: listingCreditId,
+          ),
         ),
       );
     }
@@ -311,9 +360,12 @@ class _BreedingTabState extends State<_BreedingTab> {
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, i) => _BreedingCard(
                   item: items[i],
-                  onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => _BreedingDetailScreen(item: items[i]),
-                  )),
+                  onTap: () {
+                    unawaited(_repo.recordAnnouncementView(items[i].id));
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => _BreedingDetailScreen(item: items[i]),
+                    ));
+                  },
                 ),
               );
             },
@@ -396,9 +448,12 @@ class _SaleTabState extends State<_SaleTab> {
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, i) => _SaleCard(
                   item: items[i],
-                  onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => _SaleDetailScreen(item: items[i]),
-                  )),
+                  onTap: () {
+                    unawaited(_repo.recordAnnouncementView(items[i].id));
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => _SaleDetailScreen(item: items[i]),
+                    ));
+                  },
                 ),
               );
             },
@@ -539,6 +594,7 @@ class _MyAnnouncementsList extends StatelessWidget {
                       location: s.location,
                       createdAt: s.createdAt,
                       active: s.isActive,
+                      viewCount: s.viewCount,
                       icon: Icons.pets,
                       photoUrl: s.petAvatarUrl,
                       onToggle: () async {
@@ -587,6 +643,7 @@ class _MyAnnouncementsList extends StatelessWidget {
                       location: b.location,
                       createdAt: b.createdAt,
                       active: b.isActive,
+                      viewCount: b.viewCount,
                       icon: Icons.favorite_outlined,
                       photoUrl: b.petAvatarUrl,
                       onToggle: () async {
@@ -640,6 +697,7 @@ class _MyAnnouncementsList extends StatelessWidget {
                     location: item.address,
                     createdAt: item.createdAt,
                     active: item.isActive,
+                    viewCount: item.viewCount,
                     icon: switch (item.type) {
                       CommunityAnnouncementType.event => Icons.event_outlined,
                       CommunityAnnouncementType.service =>
@@ -688,6 +746,7 @@ class _MyAnnouncementCard extends StatelessWidget {
     required this.location,
     required this.createdAt,
     required this.active,
+    required this.viewCount,
     required this.icon,
     this.photoUrl,
     required this.onToggle,
@@ -700,6 +759,7 @@ class _MyAnnouncementCard extends StatelessWidget {
   final String? location;
   final DateTime createdAt;
   final bool active;
+  final int viewCount;
   final IconData icon;
   final String? photoUrl;
   final VoidCallback onToggle;
@@ -785,6 +845,17 @@ class _MyAnnouncementCard extends StatelessWidget {
                       Text(_daysAgo(createdAt),
                           style: const TextStyle(
                               fontSize: 11, color: AppTheme.textSecondary)),
+                      const SizedBox(width: 8),
+                      const Icon(Icons.visibility_outlined,
+                          size: 13, color: AppTheme.textSecondary),
+                      const SizedBox(width: 3),
+                      Text(
+                        '$viewCount',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppTheme.textSecondary,
+                        ),
+                      ),
                     ],
                   ),
                 ],

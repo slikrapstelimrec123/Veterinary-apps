@@ -148,7 +148,7 @@ class VisitRecordRepository {
           storagePath,
           file,
           fileOptions: FileOptions(contentType: mimeType),
-    );
+        );
 
     try {
       final documentId = await _client.rpc(

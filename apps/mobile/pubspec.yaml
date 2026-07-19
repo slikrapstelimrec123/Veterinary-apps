@@ -16,6 +16,8 @@ dependencies:
   supabase_flutter: ^2.15.0
   qr_flutter: ^4.1.0
   image_picker: ^1.1.2
+  in_app_purchase: 3.2.3
+  in_app_purchase_android: 0.4.0
   flutter_local_notifications: ^18.0.1
   timezone: ^0.10.1
   path_provider: ^2.1.5

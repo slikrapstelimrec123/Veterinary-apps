@@ -35,8 +35,7 @@ class DataExportService {
       'Профіль',
       () => _client
           .from('profiles')
-          .select(
-              'id,email,full_name,phone,city,role,created_at,updated_at')
+          .select('id,email,full_name,phone,city,role,created_at,updated_at')
           .eq('id', user.id)
           .maybeSingle(),
       warnings,
@@ -105,8 +104,7 @@ class DataExportService {
     final preferences = await _readSingle(
       'Налаштування сповіщень',
       () async {
-        final value =
-            await _client.rpc('get_my_notification_preferences');
+        final value = await _client.rpc('get_my_notification_preferences');
         return Map<String, dynamic>.from(value as Map);
       },
       warnings,
@@ -214,8 +212,7 @@ class DataExportService {
     );
   }
 
-  Future<List<int>> _createReadablePdf(
-      List<_ExportSection> sections) async {
+  Future<List<int>> _createReadablePdf(List<_ExportSection> sections) async {
     final fontData =
         await rootBundle.load('assets/fonts/Montserrat-Variable.ttf');
     final font = pw.Font.ttf(fontData);
@@ -508,8 +505,7 @@ class DataExportService {
     }
     final text = value.toString().trim();
     final parsed = DateTime.tryParse(text);
-    if (parsed != null &&
-        RegExp(r'^\d{4}-\d{2}-\d{2}').hasMatch(text)) {
+    if (parsed != null && RegExp(r'^\d{4}-\d{2}-\d{2}').hasMatch(text)) {
       return text.length <= 10
           ? _formatDate(parsed.toLocal())
           : _formatDateTime(parsed.toLocal());
@@ -534,8 +530,7 @@ class DataExportService {
       '${value.month.toString().padLeft(2, '0')}.'
       '${value.year}';
 
-  String _formatDateTime(DateTime value) =>
-      '${_formatDate(value)} '
+  String _formatDateTime(DateTime value) => '${_formatDate(value)} '
       '${value.hour.toString().padLeft(2, '0')}:'
       '${value.minute.toString().padLeft(2, '0')}';
 

@@ -218,8 +218,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
           callback: (payload) {
             final transferId = payload.newRecord['id'] as String?;
             if (transferId != null) {
-              LocalNotificationService.instance
-                  .showTransferRequest(transferId);
+              LocalNotificationService.instance.showTransferRequest(transferId);
             }
             _refreshAllData();
           },
@@ -409,8 +408,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final medications = await medicationRepository.getMedications(pet.id);
       return medications
           .where((medication) =>
-              medication.reminderEnabled &&
-              medication.nextDoseDate != null)
+              medication.reminderEnabled && medication.nextDoseDate != null)
           .map(
             (medication) => _HomeFocusItem(
               type: _HomeFocusType.medication,
@@ -521,8 +519,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   onOpenPet: () async {
                     final result = await Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) =>
-                            PetProfileScreen(petId: selectedPet.id),
+                        builder: (_) => PetProfileScreen(petId: selectedPet.id),
                       ),
                     );
                     if (result != null && mounted) refresh();
@@ -622,8 +619,7 @@ class _HomeFocusCard extends StatelessWidget {
   final VoidCallback onOpenPet;
   final VoidCallback onRefresh;
 
-  DateTime _day(DateTime value) =>
-      DateTime(value.year, value.month, value.day);
+  DateTime _day(DateTime value) => DateTime(value.year, value.month, value.day);
 
   String _dateLabel(DateTime value) {
     final today = _day(DateTime.now());
