@@ -208,6 +208,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen>
         ),
       );
     } else if (index >= 2 && index <= 4) {
+      if (!mounted) return;
       final type = CommunityAnnouncementType.values[index - 2];
       saved = await Navigator.of(context).push<bool>(
         MaterialPageRoute(
