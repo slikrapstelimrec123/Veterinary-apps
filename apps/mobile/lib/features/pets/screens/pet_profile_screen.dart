@@ -106,7 +106,7 @@ class _PetProfileContent extends StatelessWidget {
             builder: (_) => AddSaleAnnouncementScreen(pet: pet),
           )),
           icon: const Icon(Icons.favorite_border),
-          label: const Text('Знайти нового власника'),
+          label: const Text('Додати оголошення про цуценят'),
         ),
         const SizedBox(height: 8),
         OutlinedButton.icon(
@@ -114,7 +114,7 @@ class _PetProfileContent extends StatelessWidget {
             builder: (_) => AddBreedingAnnouncementScreen(pet: pet),
           )),
           icon: const Icon(Icons.diversity_1_outlined),
-          label: const Text('Подати на вязку'),
+          label: const Text('Пошук партнера'),
         ),
         const SizedBox(height: 8),
         OutlinedButton.icon(

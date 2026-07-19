@@ -118,7 +118,9 @@ class _AddBreedingAnnouncementScreenState
   Future<void> _pickPhoto() async {
     final image = await _imagePicker.pickImage(
       source: ImageSource.gallery,
-      imageQuality: 88,
+      imageQuality: 78,
+      maxWidth: 1400,
+      maxHeight: 1400,
     );
     if (image != null && mounted) {
       setState(() => _selectedPhoto = image);

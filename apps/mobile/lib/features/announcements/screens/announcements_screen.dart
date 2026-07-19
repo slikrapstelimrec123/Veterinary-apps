@@ -9,9 +9,16 @@ import '../../../core/config/supabase_config.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/services/private_pet_storage.dart';
 import '../../../shared/widgets/city_autocomplete_field.dart';
+import '../../../shared/widgets/pet_avatar.dart';
+import '../../pets/data/pet_repository.dart';
+import '../../pets/domain/pet.dart';
 import '../data/announcement_repository.dart';
 import '../domain/breeding_announcement.dart';
+import '../domain/community_announcement.dart';
 import '../domain/sale_announcement.dart';
+import 'add_breeding_announcement_screen.dart';
+import 'add_sale_announcement_screen.dart';
+import 'community_announcement_screen.dart';
 
 class AnnouncementsScreen extends StatefulWidget {
   const AnnouncementsScreen({super.key});
@@ -22,9 +29,16 @@ class AnnouncementsScreen extends StatefulWidget {
 
 class _AnnouncementsScreenState extends State<AnnouncementsScreen>
     with SingleTickerProviderStateMixin {
-  late final TabController _tab = TabController(length: 3, vsync: this);
+  late final TabController _tab = TabController(length: 6, vsync: this);
   RealtimeChannel? _channel;
-  int _version = 0;
+  final Map<String, int> _versions = {
+    'breeding': 0,
+    'sale': 0,
+    'event': 0,
+    'service': 0,
+    'offer': 0,
+    'mine': 0,
+  };
 
   @override
   void initState() {
@@ -37,8 +51,17 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen>
             event: PostgresChangeEvent.all,
             schema: 'public',
             table: 'announcements',
-            callback: (_) {
-              if (mounted) setState(() => _version++);
+            callback: (payload) {
+              if (!mounted) return;
+              final type = (payload.newRecord['announcement_type'] ??
+                      payload.oldRecord['announcement_type'])
+                  ?.toString();
+              setState(() {
+                if (type != null && _versions.containsKey(type)) {
+                  _versions[type] = _versions[type]! + 1;
+                }
+                _versions['mine'] = _versions['mine']! + 1;
+              });
             },
           )
           .subscribe();
@@ -63,8 +86,22 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen>
         backgroundColor: Colors.transparent,
         title: const Text('Оголошення',
             style: TextStyle(fontWeight: FontWeight.w800)),
+        actions: [
+          AnimatedBuilder(
+            animation: _tab,
+            builder: (context, _) => _tab.index == 5
+                ? const SizedBox.shrink()
+                : IconButton(
+                    onPressed: _createCurrent,
+                    icon: const Icon(Icons.add),
+                    tooltip: 'Додати оголошення',
+                  ),
+          ),
+        ],
         bottom: TabBar(
           controller: _tab,
+          isScrollable: true,
+          tabAlignment: TabAlignment.start,
           labelColor: AppTheme.primary,
           unselectedLabelColor: AppTheme.textSecondary,
           indicatorColor: AppTheme.primary,
@@ -79,8 +116,11 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen>
             fontSize: 13,
           ),
           tabs: const [
-            Tab(text: 'В\'язка'),
-            Tab(text: 'Продаж'),
+            Tab(text: 'Пошук партнера'),
+            Tab(text: 'Цуценята'),
+            Tab(text: 'Події'),
+            Tab(text: 'Послуги'),
+            Tab(text: 'Пропозиції'),
             Tab(text: 'Мої'),
           ],
         ),
@@ -88,10 +128,112 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen>
       body: TabBarView(
         controller: _tab,
         children: [
-          _BreedingTab(key: ValueKey('breeding-$_version')),
-          _SaleTab(key: ValueKey('sale-$_version')),
-          _MyAnnouncementsTab(key: ValueKey('mine-$_version')),
+          _BreedingTab(key: ValueKey('breeding-${_versions['breeding']}')),
+          _SaleTab(key: ValueKey('sale-${_versions['sale']}')),
+          CommunityAnnouncementTab(
+            key: ValueKey('event-${_versions['event']}'),
+            type: CommunityAnnouncementType.event,
+          ),
+          CommunityAnnouncementTab(
+            key: ValueKey('service-${_versions['service']}'),
+            type: CommunityAnnouncementType.service,
+          ),
+          CommunityAnnouncementTab(
+            key: ValueKey('offer-${_versions['offer']}'),
+            type: CommunityAnnouncementType.offer,
+          ),
+          _MyAnnouncementsTab(key: ValueKey('mine-${_versions['mine']}')),
         ],
+      ),
+    );
+  }
+
+  Future<void> _createCurrent() async {
+    final index = _tab.index;
+    bool? saved;
+    if (index == 0 || index == 1) {
+      final pet = await _selectPet();
+      if (pet == null || !mounted) return;
+      saved = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(
+          builder: (_) => index == 0
+              ? AddBreedingAnnouncementScreen(pet: pet)
+              : AddSaleAnnouncementScreen(pet: pet),
+        ),
+      );
+    } else if (index >= 2 && index <= 4) {
+      final type = CommunityAnnouncementType.values[index - 2];
+      saved = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(
+          builder: (_) => CommunityAnnouncementFormScreen(type: type),
+        ),
+      );
+    }
+    if (saved == true && mounted) {
+      final type = switch (index) {
+        0 => 'breeding',
+        1 => 'sale',
+        2 => 'event',
+        3 => 'service',
+        4 => 'offer',
+        _ => 'mine',
+      };
+      setState(() {
+        _versions[type] = _versions[type]! + 1;
+        _versions['mine'] = _versions['mine']! + 1;
+      });
+    }
+  }
+
+  Future<Pet?> _selectPet() async {
+    List<Pet> pets;
+    try {
+      pets = await PetRepository().getPets();
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Не вдалося завантажити тварин.')),
+        );
+      }
+      return null;
+    }
+    if (!mounted) return null;
+    if (pets.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Спочатку додайте тварину до свого профілю.'),
+        ),
+      );
+      return null;
+    }
+    return showModalBottomSheet<Pet>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          children: [
+            const Text(
+              'Оберіть тварину',
+              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+            ),
+            const SizedBox(height: 10),
+            ...pets.map(
+              (pet) => ListTile(
+                leading: PetAvatar(
+                  name: pet.name,
+                  avatarUrl: pet.avatarUrl,
+                  size: 44,
+                ),
+                title: Text(pet.name),
+                subtitle: Text(pet.breed ?? pet.speciesLabel),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.pop(context, pet),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -293,6 +435,9 @@ class _MyAnnouncementsTabState extends State<_MyAnnouncementsTab>
   Future<List<BreedingAnnouncement>> _myBreeding(bool active) =>
       _repo.getMyBreedingAnnouncements(active: active);
 
+  Future<List<CommunityAnnouncement>> _myCommunity(bool active) =>
+      _repo.getMyCommunityAnnouncements(active: active);
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -313,11 +458,13 @@ class _MyAnnouncementsTabState extends State<_MyAnnouncementsTab>
               _MyAnnouncementsList(
                   saleFuture: _mySale(true),
                   breedingFuture: _myBreeding(true),
+                  communityFuture: _myCommunity(true),
                   active: true,
                   onToggle: () => setState(() {})),
               _MyAnnouncementsList(
                   saleFuture: _mySale(false),
                   breedingFuture: _myBreeding(false),
+                  communityFuture: _myCommunity(false),
                   active: false,
                   onToggle: () => setState(() {})),
             ],
@@ -332,27 +479,30 @@ class _MyAnnouncementsList extends StatelessWidget {
   const _MyAnnouncementsList({
     required this.saleFuture,
     required this.breedingFuture,
+    required this.communityFuture,
     required this.active,
     required this.onToggle,
   });
 
   final Future<List<SaleAnnouncement>> saleFuture;
   final Future<List<BreedingAnnouncement>> breedingFuture;
+  final Future<List<CommunityAnnouncement>> communityFuture;
   final bool active;
   final VoidCallback onToggle;
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-      future: Future.wait([saleFuture, breedingFuture]),
+      future: Future.wait([saleFuture, breedingFuture, communityFuture]),
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
         final sales = (snap.data?[0] as List<SaleAnnouncement>?) ?? [];
         final breedings = (snap.data?[1] as List<BreedingAnnouncement>?) ?? [];
+        final community = (snap.data?[2] as List<CommunityAnnouncement>?) ?? [];
 
-        if (sales.isEmpty && breedings.isEmpty) {
+        if (sales.isEmpty && breedings.isEmpty && community.isEmpty) {
           return Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -377,7 +527,7 @@ class _MyAnnouncementsList extends StatelessWidget {
             if (sales.isNotEmpty) ...[
               const Padding(
                 padding: EdgeInsets.only(bottom: 8),
-                child: Text('Продаж',
+                child: Text('Цуценята',
                     style:
                         TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
               ),
@@ -425,7 +575,7 @@ class _MyAnnouncementsList extends StatelessWidget {
               Padding(
                 padding:
                     EdgeInsets.only(top: sales.isNotEmpty ? 8 : 0, bottom: 8),
-                child: const Text('В\'язка',
+                child: const Text('Пошук партнера',
                     style:
                         TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
               ),
@@ -469,6 +619,60 @@ class _MyAnnouncementsList extends StatelessWidget {
                       }),
                     ),
                   )),
+            ],
+            if (community.isNotEmpty) ...[
+              Padding(
+                padding: EdgeInsets.only(
+                  top: sales.isNotEmpty || breedings.isNotEmpty ? 8 : 0,
+                  bottom: 8,
+                ),
+                child: const Text(
+                  'Інші оголошення',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                ),
+              ),
+              ...community.map(
+                (item) => Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: _MyAnnouncementCard(
+                    title: item.title,
+                    subtitle: '${item.type.label} · ${item.subtitle}',
+                    location: item.address,
+                    createdAt: item.createdAt,
+                    active: item.isActive,
+                    icon: switch (item.type) {
+                      CommunityAnnouncementType.event => Icons.event_outlined,
+                      CommunityAnnouncementType.service =>
+                        Icons.design_services_outlined,
+                      CommunityAnnouncementType.offer =>
+                        Icons.local_offer_outlined,
+                    },
+                    photoUrl: item.photoUrl,
+                    onToggle: () async {
+                      await AnnouncementRepository()
+                          .toggleCommunityActive(item.id);
+                      onToggle();
+                    },
+                    onDelete: () async {
+                      await AnnouncementRepository()
+                          .deleteCommunityAnnouncement(item.id);
+                      onToggle();
+                    },
+                    onEdit: () => Navigator.of(context)
+                        .push<bool>(
+                      MaterialPageRoute(
+                        builder: (_) => CommunityAnnouncementFormScreen(
+                          type: item.type,
+                          item: item,
+                        ),
+                      ),
+                    )
+                        .then((saved) {
+                      if (saved == true) onToggle();
+                    }),
+                  ),
+                ),
+              ),
             ],
           ],
         );
@@ -651,7 +855,9 @@ class _EditSaleScreenState extends State<_EditSaleScreen> {
   Future<void> _pickPhoto() async {
     final image = await _imagePicker.pickImage(
       source: ImageSource.gallery,
-      imageQuality: 88,
+      imageQuality: 78,
+      maxWidth: 1400,
+      maxHeight: 1400,
     );
     if (image != null && mounted) {
       setState(() => _selectedPhoto = image);
@@ -682,8 +888,7 @@ class _EditSaleScreenState extends State<_EditSaleScreen> {
           category: 'announcements',
           file: File(_selectedPhoto!.path),
         );
-        _photoUrl =
-            await PrivatePetStorage.signedUrl(_photoStoragePath!);
+        _photoUrl = await PrivatePetStorage.signedUrl(_photoStoragePath!);
       }
       await AnnouncementRepository()
           .updateSaleAnnouncement(
@@ -845,7 +1050,9 @@ class _EditBreedingScreenState extends State<_EditBreedingScreen> {
   Future<void> _pickPhoto() async {
     final image = await _imagePicker.pickImage(
       source: ImageSource.gallery,
-      imageQuality: 88,
+      imageQuality: 78,
+      maxWidth: 1400,
+      maxHeight: 1400,
     );
     if (image != null && mounted) {
       setState(() => _selectedPhoto = image);
@@ -867,8 +1074,7 @@ class _EditBreedingScreenState extends State<_EditBreedingScreen> {
           category: 'announcements',
           file: File(_selectedPhoto!.path),
         );
-        _photoUrl =
-            await PrivatePetStorage.signedUrl(_photoStoragePath!);
+        _photoUrl = await PrivatePetStorage.signedUrl(_photoStoragePath!);
       }
       await AnnouncementRepository()
           .updateBreedingAnnouncement(BreedingAnnouncement(
