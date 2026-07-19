@@ -34,6 +34,29 @@ test("ignores the private Sites token and uses password authentication only", as
   assert.doesNotMatch(source, /Увійти через Google/);
 });
 
+test("dashboard navigation switches between real views", async () => {
+  const source = await import("node:fs/promises").then(({ readFile }) =>
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+  );
+  assert.match(source, /type DashboardView =/);
+  assert.match(source, /setDashboardView\("overview"\)/);
+  assert.match(source, /setDashboardView\("users"\)/);
+  assert.match(source, /setDashboardView\("geography"\)/);
+  assert.match(source, /setDashboardView\("plans"\)/);
+  assert.doesNotMatch(source, /href="#(?:overview|geography|plans)"/);
+});
+
+test("user management is backed by protected admin RPC calls", async () => {
+  const source = await import("node:fs/promises").then(({ readFile }) =>
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+  );
+  assert.match(source, /admin_user_analytics/);
+  assert.match(source, /admin_set_user_banned/);
+  assert.match(source, /admin_set_owner_plan/);
+  assert.match(source, /admin_grant_listing_credit/);
+  assert.match(source, /window\.confirm/);
+});
+
 test("supports password recovery without exposing the Sites token", async () => {
   const source = await import("node:fs/promises").then(({ readFile }) =>
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),

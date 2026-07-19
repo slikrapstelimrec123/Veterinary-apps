@@ -29,13 +29,34 @@ type PlanRow = {
   yearly_subscriptions: number;
 };
 
+type UserRow = {
+  user_id: string;
+  email: string;
+  full_name: string;
+  phone: string | null;
+  city: string | null;
+  created_at: string;
+  pet_count: number;
+  visit_count: number;
+  document_count: number;
+  announcement_count: number;
+  active_announcement_count: number;
+  plan_code: string;
+  plan_status: string;
+  plan_end: string | null;
+  available_listing_credits: number;
+  is_banned: boolean;
+};
+
 type DashboardData = {
   overview: Overview;
   cities: CityRow[];
   plans: PlanRow[];
+  users: UserRow[];
 };
 
 type AuthMode = "login" | "request-reset" | "set-password";
+type DashboardView = "overview" | "users" | "geography" | "plans";
 
 const emptyOverview: Overview = {
   users_total: 0,
@@ -67,10 +88,17 @@ export default function Home() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
+  const [dashboardView, setDashboardView] =
+    useState<DashboardView>("overview");
+  const [userSearch, setUserSearch] = useState("");
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [actionBusy, setActionBusy] = useState(false);
+  const [actionMessage, setActionMessage] = useState("");
   const [data, setData] = useState<DashboardData>({
     overview: emptyOverview,
     cities: [],
     plans: [],
+    users: [],
   });
 
   useEffect(() => {
@@ -141,12 +169,14 @@ export default function Home() {
     if (!client) return;
     setBusy(true);
     setError("");
-    const [overview, cities, plans] = await Promise.all([
+    const [overview, cities, plans, users] = await Promise.all([
       client.rpc("admin_dashboard_overview"),
       client.rpc("admin_city_analytics"),
       client.rpc("admin_plan_analytics"),
+      client.rpc("admin_user_analytics"),
     ]);
-    const firstError = overview.error || cities.error || plans.error;
+    const firstError =
+      overview.error || cities.error || plans.error || users.error;
     if (firstError) {
       setError(
         "Немає доступу до аналітики. Перевірте роль platform_admin для цього облікового запису.",
@@ -156,6 +186,7 @@ export default function Home() {
         overview: (overview.data ?? emptyOverview) as Overview,
         cities: (cities.data ?? []) as CityRow[],
         plans: (plans.data ?? []) as PlanRow[],
+        users: (users.data ?? []) as UserRow[],
       });
       setUpdatedAt(new Date());
     }
@@ -169,7 +200,7 @@ export default function Home() {
     } = client.auth.onAuthStateChange((_event, session) => {
       setSignedIn(Boolean(session));
       if (!session) {
-        setData({ overview: emptyOverview, cities: [], plans: [] });
+        setData({ overview: emptyOverview, cities: [], plans: [], users: [] });
       }
     });
     return () => subscription.unsubscribe();
@@ -247,6 +278,42 @@ export default function Home() {
     setAuthMode("login");
     setNotice("Пароль встановлено. Тепер увійдіть із новим паролем.");
     setBusy(false);
+  }
+
+  const filteredUsers = useMemo(() => {
+    const query = userSearch.trim().toLocaleLowerCase("uk-UA");
+    if (!query) return data.users;
+    return data.users.filter((user) =>
+      [user.full_name, user.email, user.phone, user.city]
+        .filter(Boolean)
+        .some((value) =>
+          String(value).toLocaleLowerCase("uk-UA").includes(query),
+        ),
+    );
+  }, [data.users, userSearch]);
+
+  async function runUserAction(
+    userId: string,
+    rpc:
+      | "admin_set_user_banned"
+      | "admin_set_owner_plan"
+      | "admin_grant_listing_credit",
+    params: Record<string, string | number | boolean>,
+    successMessage: string,
+  ) {
+    if (!client) return;
+    setSelectedUserId(userId);
+    setActionBusy(true);
+    setActionMessage("");
+    setError("");
+    const { error: actionError } = await client.rpc(rpc, params);
+    if (actionError) {
+      setError("Не вдалося виконати дію. Перевірте права адміністратора.");
+    } else {
+      setActionMessage(successMessage);
+      await loadDashboard();
+    }
+    setActionBusy(false);
   }
 
   const metrics = useMemo(
@@ -420,15 +487,38 @@ export default function Home() {
       <aside className="sidebar">
         <Logo />
         <nav aria-label="Навігація">
-          <a className="active" href="#overview">
+          <button
+            type="button"
+            className={dashboardView === "overview" ? "active" : ""}
+            aria-current={dashboardView === "overview" ? "page" : undefined}
+            onClick={() => setDashboardView("overview")}
+          >
             <span>⌁</span> Огляд
-          </a>
-          <a href="#geography">
+          </button>
+          <button
+            type="button"
+            className={dashboardView === "users" ? "active" : ""}
+            aria-current={dashboardView === "users" ? "page" : undefined}
+            onClick={() => setDashboardView("users")}
+          >
+            <span>◎</span> Користувачі
+          </button>
+          <button
+            type="button"
+            className={dashboardView === "geography" ? "active" : ""}
+            aria-current={dashboardView === "geography" ? "page" : undefined}
+            onClick={() => setDashboardView("geography")}
+          >
             <span>⌖</span> Географія
-          </a>
-          <a href="#plans">
+          </button>
+          <button
+            type="button"
+            className={dashboardView === "plans" ? "active" : ""}
+            aria-current={dashboardView === "plans" ? "page" : undefined}
+            onClick={() => setDashboardView("plans")}
+          >
             <span>◇</span> Підписки
-          </a>
+          </button>
         </nav>
         <div className="sidebar-footer">
           <span className="status-dot" />
@@ -466,7 +556,9 @@ export default function Home() {
 
         {error && <p className="dashboard-error">{error}</p>}
 
-        <section id="overview" className="metrics-grid" aria-live="polite">
+        {dashboardView === "overview" && (
+          <>
+        <section className="metrics-grid" aria-live="polite">
           {metrics.map((metric) => (
             <article className={`metric-card ${metric.tone}`} key={metric.label}>
               <div className="metric-top">
@@ -492,9 +584,249 @@ export default function Home() {
           </div>
           <span className="plan-chip">Free · Pro · Pro+</span>
         </section>
+          </>
+        )}
 
-        <div className="panels-grid">
-          <section id="geography" className="panel">
+        {dashboardView === "users" && (
+          <div className="panels-grid single-panel">
+            <section className="panel">
+              <PanelHeading
+                eyebrow="Користувачі"
+                title="Клієнти та доступи"
+                note="Тарифи, тварини, оголошення й адміністративні дії"
+              />
+              <div className="users-toolbar">
+                <label className="user-search">
+                  <span>Пошук</span>
+                  <input
+                    type="search"
+                    placeholder="Ім’я, email, телефон або місто"
+                    value={userSearch}
+                    onChange={(event) => setUserSearch(event.target.value)}
+                  />
+                </label>
+                <span className="users-total">
+                  {number.format(filteredUsers.length)} користувачів
+                </span>
+              </div>
+              {actionMessage && (
+                <p className="action-success" role="status">
+                  {actionMessage}
+                </p>
+              )}
+              <div className="users-list">
+                {filteredUsers.length === 0 ? (
+                  <p className="users-empty">Користувачів не знайдено.</p>
+                ) : (
+                  filteredUsers.map((user) => {
+                    const expanded = selectedUserId === user.user_id;
+                    return (
+                      <article
+                        className={`user-card ${user.is_banned ? "banned" : ""}`}
+                        key={user.user_id}
+                      >
+                        <button
+                          type="button"
+                          className="user-summary"
+                          aria-expanded={expanded}
+                          onClick={() =>
+                            setSelectedUserId(expanded ? null : user.user_id)
+                          }
+                        >
+                          <span className="user-avatar">
+                            {(user.full_name || user.email)
+                              .slice(0, 1)
+                              .toUpperCase()}
+                          </span>
+                          <span className="user-identity">
+                            <strong>{user.full_name || "Без імені"}</strong>
+                            <small>{user.email}</small>
+                          </span>
+                          <span className="user-stat">
+                            <strong>{number.format(user.pet_count)}</strong>
+                            <small>тварин</small>
+                          </span>
+                          <span className="user-stat">
+                            <strong>
+                              {number.format(user.announcement_count)}
+                            </strong>
+                            <small>оголошень</small>
+                          </span>
+                          <span className={`user-plan ${user.plan_code}`}>
+                            {planName(user.plan_code)}
+                          </span>
+                          <span
+                            className={`user-state ${
+                              user.is_banned ? "blocked" : ""
+                            }`}
+                          >
+                            {user.is_banned ? "Заблокований" : "Активний"}
+                          </span>
+                          <span className="user-chevron">⌄</span>
+                        </button>
+
+                        {expanded && (
+                          <div className="user-details">
+                            <dl className="user-facts">
+                              <div>
+                                <dt>Місто</dt>
+                                <dd>{user.city || "Не вказано"}</dd>
+                              </div>
+                              <div>
+                                <dt>Телефон</dt>
+                                <dd>{user.phone || "Не вказано"}</dd>
+                              </div>
+                              <div>
+                                <dt>Прийоми</dt>
+                                <dd>{number.format(user.visit_count)}</dd>
+                              </div>
+                              <div>
+                                <dt>Документи</dt>
+                                <dd>{number.format(user.document_count)}</dd>
+                              </div>
+                              <div>
+                                <dt>Активні оголошення</dt>
+                                <dd>
+                                  {number.format(
+                                    user.active_announcement_count,
+                                  )}
+                                </dd>
+                              </div>
+                              <div>
+                                <dt>Безкоштовні публікації</dt>
+                                <dd>
+                                  {number.format(
+                                    user.available_listing_credits,
+                                  )}
+                                </dd>
+                              </div>
+                            </dl>
+
+                            <div className="admin-actions">
+                              <label>
+                                Тариф на 30 днів
+                                <select
+                                  value={user.plan_code}
+                                  disabled={actionBusy}
+                                  onChange={(event) =>
+                                    void runUserAction(
+                                      user.user_id,
+                                      "admin_set_owner_plan",
+                                      {
+                                        target_user_id: user.user_id,
+                                        target_plan_code: event.target.value,
+                                        target_duration_days: 30,
+                                      },
+                                      `Тариф для ${user.full_name} оновлено.`,
+                                    )
+                                  }
+                                >
+                                  <option value="free">Free</option>
+                                  <option value="pro">Pro</option>
+                                  <option value="pro_plus">Pro+</option>
+                                </select>
+                              </label>
+                              <div className="credit-actions">
+                                <span>Подарувати публікацію</span>
+                                <button
+                                  type="button"
+                                  disabled={actionBusy}
+                                  onClick={() =>
+                                    void runUserAction(
+                                      user.user_id,
+                                      "admin_grant_listing_credit",
+                                      {
+                                        target_user_id: user.user_id,
+                                        target_tier: "standard",
+                                      },
+                                      `Стандартну публікацію додано для ${user.full_name}.`,
+                                    )
+                                  }
+                                >
+                                  Звичайна
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={actionBusy}
+                                  onClick={() =>
+                                    void runUserAction(
+                                      user.user_id,
+                                      "admin_grant_listing_credit",
+                                      {
+                                        target_user_id: user.user_id,
+                                        target_tier: "top_7",
+                                      },
+                                      `Публікацію TOP 7 додано для ${user.full_name}.`,
+                                    )
+                                  }
+                                >
+                                  TOP 7
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={actionBusy}
+                                  onClick={() =>
+                                    void runUserAction(
+                                      user.user_id,
+                                      "admin_grant_listing_credit",
+                                      {
+                                        target_user_id: user.user_id,
+                                        target_tier: "top_15",
+                                      },
+                                      `Публікацію TOP 15 додано для ${user.full_name}.`,
+                                    )
+                                  }
+                                >
+                                  TOP 15
+                                </button>
+                              </div>
+                              <button
+                                type="button"
+                                className={
+                                  user.is_banned
+                                    ? "account-action unblock"
+                                    : "account-action block"
+                                }
+                                disabled={actionBusy}
+                                onClick={() => {
+                                  const confirmed =
+                                    user.is_banned ||
+                                    window.confirm(
+                                      `Заблокувати доступ для ${user.full_name}?`,
+                                    );
+                                  if (!confirmed) return;
+                                  void runUserAction(
+                                    user.user_id,
+                                    "admin_set_user_banned",
+                                    {
+                                      target_user_id: user.user_id,
+                                      target_banned: !user.is_banned,
+                                    },
+                                    user.is_banned
+                                      ? `Доступ для ${user.full_name} відновлено.`
+                                      : `${user.full_name} заблоковано.`,
+                                  );
+                                }}
+                              >
+                                {user.is_banned
+                                  ? "Розблокувати"
+                                  : "Заблокувати"}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </article>
+                    );
+                  })
+                )}
+              </div>
+            </section>
+          </div>
+        )}
+
+        {dashboardView === "geography" && (
+        <div className="panels-grid single-panel">
+          <section className="panel">
             <PanelHeading
               eyebrow="Географія"
               title="Клієнти за містами"
@@ -517,8 +849,12 @@ export default function Home() {
               ))}
             </Table>
           </section>
+        </div>
+        )}
 
-          <section id="plans" className="panel">
+        {dashboardView === "plans" && (
+        <div className="panels-grid single-panel">
+          <section className="panel">
             <PanelHeading
               eyebrow="Монетизація"
               title="Активні підписки"
@@ -542,6 +878,7 @@ export default function Home() {
             </Table>
           </section>
         </div>
+        )}
       </section>
     </main>
   );
