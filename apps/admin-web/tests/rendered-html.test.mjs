@@ -57,10 +57,21 @@ test("user management is backed by protected admin RPC calls", async () => {
   assert.match(source, /admin_grant_listing_credit/);
   assert.match(source, /admin_revoke_listing_credit/);
   assert.match(source, /admin_announcement_analytics/);
+  assert.match(source, /admin_archive_announcement/);
   assert.match(source, /standard_listing_credits/);
   assert.match(source, /top_7_listing_credits/);
   assert.match(source, /top_15_listing_credits/);
   assert.match(source, /window\.confirm/);
+});
+
+test("announcement moderation requires a reason and notifies the owner", async () => {
+  const source = await import("node:fs/promises").then(({ readFile }) =>
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+  );
+  assert.match(source, /moderationReason\.trim\(\)/);
+  assert.match(source, /target_announcement_id/);
+  assert.match(source, /target_reason/);
+  assert.match(source, /Причина буде показана власнику у сповіщенні/);
 });
 
 test("supports password recovery without exposing the Sites token", async () => {

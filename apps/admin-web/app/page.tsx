@@ -63,6 +63,8 @@ type AnnouncementRow = {
   city: string | null;
   status: string;
   moderation_status: string;
+  moderation_reason: string | null;
+  moderated_at: string | null;
   publication_tier: string;
   publication_source: string | null;
   view_count: number;
@@ -124,6 +126,7 @@ export default function Home() {
   const [selectedAnnouncementId, setSelectedAnnouncementId] = useState<
     string | null
   >(null);
+  const [moderationReason, setModerationReason] = useState("");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [actionBusy, setActionBusy] = useState(false);
   const [actionMessage, setActionMessage] = useState("");
@@ -392,6 +395,45 @@ export default function Home() {
       setError("Не вдалося виконати дію. Перевірте права адміністратора.");
     } else {
       setActionMessage(successMessage);
+      await loadDashboard();
+    }
+    setActionBusy(false);
+  }
+
+  async function archiveAnnouncement(announcement: AnnouncementRow) {
+    if (!client) return;
+    const reason = moderationReason.trim();
+    if (reason.length < 10) {
+      setError("Вкажіть зрозумілу причину архівування — щонайменше 10 символів.");
+      return;
+    }
+    if (
+      !window.confirm(
+        `Перемістити оголошення «${announcement.title}» в архів і повідомити власника?`,
+      )
+    ) {
+      return;
+    }
+
+    setActionBusy(true);
+    setActionMessage("");
+    setError("");
+    const { error: actionError } = await client.rpc(
+      "admin_archive_announcement",
+      {
+        target_announcement_id: announcement.announcement_id,
+        target_reason: reason,
+      },
+    );
+    if (actionError) {
+      setError(
+        "Не вдалося перемістити оголошення в архів. Перевірте права адміністратора та спробуйте ще раз.",
+      );
+    } else {
+      setModerationReason("");
+      setActionMessage(
+        `Оголошення «${announcement.title}» переміщено в архів. Власнику надіслано сповіщення.`,
+      );
       await loadDashboard();
     }
     setActionBusy(false);
@@ -1006,9 +1048,12 @@ export default function Home() {
                           className="announcement-summary"
                           aria-expanded={expanded}
                           onClick={() =>
-                            setSelectedAnnouncementId(
-                              expanded ? null : announcement.announcement_id,
-                            )
+                            {
+                              setSelectedAnnouncementId(
+                                expanded ? null : announcement.announcement_id,
+                              );
+                              setModerationReason("");
+                            }
                           }
                         >
                           <span className="announcement-kind">
@@ -1088,6 +1133,56 @@ export default function Home() {
                                 ),
                               )}
                             </dl>
+                            {announcement.moderation_status === "blocked" ? (
+                              <div className="moderation-result">
+                                <strong>Оголошення в архіві через порушення правил</strong>
+                                <p>
+                                  {announcement.moderation_reason ||
+                                    "Причину не вказано."}
+                                </p>
+                                {announcement.moderated_at && (
+                                  <small>
+                                    Рішення від{" "}
+                                    {formatDateTime(announcement.moderated_at)}
+                                  </small>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="moderation-action">
+                                <label htmlFor={`moderation-${announcement.announcement_id}`}>
+                                  Причина порушення
+                                </label>
+                                <textarea
+                                  id={`moderation-${announcement.announcement_id}`}
+                                  maxLength={500}
+                                  placeholder="Наприклад: оголошення містить оманливу інформацію або заборонений контент."
+                                  value={moderationReason}
+                                  onChange={(event) =>
+                                    setModerationReason(event.target.value)
+                                  }
+                                />
+                                <div>
+                                  <small>
+                                    Причина буде показана власнику у сповіщенні.
+                                  </small>
+                                  <button
+                                    type="button"
+                                    className="archive-announcement"
+                                    disabled={
+                                      actionBusy ||
+                                      moderationReason.trim().length < 10
+                                    }
+                                    onClick={() =>
+                                      archiveAnnouncement(announcement)
+                                    }
+                                  >
+                                    {actionBusy
+                                      ? "Архівуємо…"
+                                      : "Перемістити в архів"}
+                                  </button>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         )}
                       </article>
