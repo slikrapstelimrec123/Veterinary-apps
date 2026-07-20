@@ -16,6 +16,7 @@ import '../../billing/screens/listing_packages_screen.dart';
 import '../../pets/data/pet_repository.dart';
 import '../../pets/domain/pet.dart';
 import '../data/announcement_repository.dart';
+import '../domain/announcement_filter_options.dart';
 import '../domain/breeding_announcement.dart';
 import '../domain/community_announcement.dart';
 import '../domain/sale_announcement.dart';
@@ -301,12 +302,14 @@ class _BreedingTab extends StatefulWidget {
 class _BreedingTabState extends State<_BreedingTab> {
   final _repo = AnnouncementRepository();
   late Future<List<BreedingAnnouncement>> _future;
+  late Future<PetAnnouncementFilterOptions> _filterOptions;
   String? _selectedBreed;
   String? _selectedCity;
 
   @override
   void initState() {
     super.initState();
+    _filterOptions = _repo.getPetAnnouncementFilterOptions('breeding');
     _load();
   }
 
@@ -319,60 +322,64 @@ class _BreedingTabState extends State<_BreedingTab> {
 
   @override
   Widget build(BuildContext context) {
-    final breeds = _repo.getBreedingBreeds();
-    final cities = _repo.getBreedingCities();
-
-    return Column(
-      children: [
-        _BreedFilter(
-          breeds: breeds,
-          selected: _selectedBreed,
-          onChanged: (b) {
-            setState(() => _selectedBreed = b);
-            _load();
-          },
-        ),
-        _BreedFilter(
-          breeds: cities,
-          selected: _selectedCity,
-          onChanged: (c) {
-            setState(() => _selectedCity = c);
-            _load();
-          },
-          allLabel: 'Всі міста',
-        ),
-        Expanded(
-          child: FutureBuilder<List<BreedingAnnouncement>>(
-            future: _future,
-            builder: (context, snap) {
-              if (snap.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              final items = snap.data ?? [];
-              if (items.isEmpty) {
-                return const Center(
-                  child: Text('Оголошень не знайдено',
-                      style: TextStyle(color: AppTheme.textSecondary)),
-                );
-              }
-              return ListView.separated(
-                padding: const EdgeInsets.all(16),
-                itemCount: items.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, i) => _BreedingCard(
-                  item: items[i],
-                  onTap: () {
-                    unawaited(_repo.recordAnnouncementView(items[i].id));
-                    Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => _BreedingDetailScreen(item: items[i]),
-                    ));
-                  },
-                ),
-              );
-            },
-          ),
-        ),
-      ],
+    return FutureBuilder<PetAnnouncementFilterOptions>(
+      future: _filterOptions,
+      builder: (context, filtersSnapshot) {
+        final filters = filtersSnapshot.data ??
+            const PetAnnouncementFilterOptions(breeds: [], cities: []);
+        return Column(
+          children: [
+            _BreedFilter(
+              breeds: filters.breeds,
+              selected: _selectedBreed,
+              onChanged: (b) {
+                setState(() => _selectedBreed = b);
+                _load();
+              },
+            ),
+            _BreedFilter(
+              breeds: filters.cities,
+              selected: _selectedCity,
+              onChanged: (c) {
+                setState(() => _selectedCity = c);
+                _load();
+              },
+              allLabel: 'Всі міста',
+            ),
+            Expanded(
+              child: FutureBuilder<List<BreedingAnnouncement>>(
+                future: _future,
+                builder: (context, snap) {
+                  if (snap.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final items = snap.data ?? [];
+                  if (items.isEmpty) {
+                    return const Center(
+                      child: Text('Оголошень не знайдено',
+                          style: TextStyle(color: AppTheme.textSecondary)),
+                    );
+                  }
+                  return ListView.separated(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: items.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (context, i) => _BreedingCard(
+                      item: items[i],
+                      onTap: () {
+                        unawaited(_repo.recordAnnouncementView(items[i].id));
+                        Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => _BreedingDetailScreen(item: items[i]),
+                        ));
+                      },
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -389,12 +396,14 @@ class _SaleTab extends StatefulWidget {
 class _SaleTabState extends State<_SaleTab> {
   final _repo = AnnouncementRepository();
   late Future<List<SaleAnnouncement>> _future;
+  late Future<PetAnnouncementFilterOptions> _filterOptions;
   String? _selectedBreed;
   String? _selectedCity;
 
   @override
   void initState() {
     super.initState();
+    _filterOptions = _repo.getPetAnnouncementFilterOptions('sale');
     _load();
   }
 
@@ -407,60 +416,64 @@ class _SaleTabState extends State<_SaleTab> {
 
   @override
   Widget build(BuildContext context) {
-    final breeds = _repo.getSaleBreeds();
-    final cities = _repo.getSaleCities();
-
-    return Column(
-      children: [
-        _BreedFilter(
-          breeds: breeds,
-          selected: _selectedBreed,
-          onChanged: (b) {
-            setState(() => _selectedBreed = b);
-            _load();
-          },
-        ),
-        _BreedFilter(
-          breeds: cities,
-          selected: _selectedCity,
-          onChanged: (c) {
-            setState(() => _selectedCity = c);
-            _load();
-          },
-          allLabel: 'Всі міста',
-        ),
-        Expanded(
-          child: FutureBuilder<List<SaleAnnouncement>>(
-            future: _future,
-            builder: (context, snap) {
-              if (snap.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              final items = snap.data ?? [];
-              if (items.isEmpty) {
-                return const Center(
-                  child: Text('Оголошень не знайдено',
-                      style: TextStyle(color: AppTheme.textSecondary)),
-                );
-              }
-              return ListView.separated(
-                padding: const EdgeInsets.all(16),
-                itemCount: items.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, i) => _SaleCard(
-                  item: items[i],
-                  onTap: () {
-                    unawaited(_repo.recordAnnouncementView(items[i].id));
-                    Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => _SaleDetailScreen(item: items[i]),
-                    ));
-                  },
-                ),
-              );
-            },
-          ),
-        ),
-      ],
+    return FutureBuilder<PetAnnouncementFilterOptions>(
+      future: _filterOptions,
+      builder: (context, filtersSnapshot) {
+        final filters = filtersSnapshot.data ??
+            const PetAnnouncementFilterOptions(breeds: [], cities: []);
+        return Column(
+          children: [
+            _BreedFilter(
+              breeds: filters.breeds,
+              selected: _selectedBreed,
+              onChanged: (b) {
+                setState(() => _selectedBreed = b);
+                _load();
+              },
+            ),
+            _BreedFilter(
+              breeds: filters.cities,
+              selected: _selectedCity,
+              onChanged: (c) {
+                setState(() => _selectedCity = c);
+                _load();
+              },
+              allLabel: 'Всі міста',
+            ),
+            Expanded(
+              child: FutureBuilder<List<SaleAnnouncement>>(
+                future: _future,
+                builder: (context, snap) {
+                  if (snap.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final items = snap.data ?? [];
+                  if (items.isEmpty) {
+                    return const Center(
+                      child: Text('Оголошень не знайдено',
+                          style: TextStyle(color: AppTheme.textSecondary)),
+                    );
+                  }
+                  return ListView.separated(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: items.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (context, i) => _SaleCard(
+                      item: items[i],
+                      onTap: () {
+                        unawaited(_repo.recordAnnouncementView(items[i].id));
+                        Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => _SaleDetailScreen(item: items[i]),
+                        ));
+                      },
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

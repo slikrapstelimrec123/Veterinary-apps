@@ -10,6 +10,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../shared/services/announcement_media_storage.dart';
 import '../../../shared/widgets/city_autocomplete_field.dart';
 import '../data/announcement_repository.dart';
+import '../domain/announcement_filter_options.dart';
 import '../domain/community_announcement.dart';
 
 class CommunityAnnouncementTab extends StatefulWidget {
@@ -37,6 +38,12 @@ class _CommunityAnnouncementTabState extends State<CommunityAnnouncementTab> {
   String? _selectedCity;
   ServiceCategory? _selectedServiceCategory;
   OfferCategory? _selectedOfferCategory;
+  CommunityAnnouncementFilterOptions _filterOptions =
+      const CommunityAnnouncementFilterOptions(
+    cities: [],
+    serviceCategories: [],
+    offerCategories: [],
+  );
 
   @override
   void initState() {
@@ -85,6 +92,21 @@ class _CommunityAnnouncementTabState extends State<CommunityAnnouncementTab> {
     }
 
     try {
+      if (reset) {
+        final options = await _repository
+            .getCommunityAnnouncementFilterOptions(widget.type);
+        if (!mounted) return;
+        _filterOptions = options;
+        if (!options.cities.contains(_selectedCity)) {
+          _selectedCity = null;
+        }
+        if (!options.serviceCategories.contains(_selectedServiceCategory)) {
+          _selectedServiceCategory = null;
+        }
+        if (!options.offerCategories.contains(_selectedOfferCategory)) {
+          _selectedOfferCategory = null;
+        }
+      }
       final page = reset ? 0 : _page;
       final items = await _repository.getCommunityAnnouncements(
         widget.type,
@@ -121,7 +143,7 @@ class _CommunityAnnouncementTabState extends State<CommunityAnnouncementTab> {
       context,
       title: 'Оберіть місто',
       allLabel: 'Всі міста',
-      values: supportedUkrainianCities,
+      values: _filterOptions.cities,
       labelFor: (city) => city,
       selected: _selectedCity,
     );
@@ -137,7 +159,7 @@ class _CommunityAnnouncementTabState extends State<CommunityAnnouncementTab> {
       context,
       title: 'Оберіть тип послуги',
       allLabel: 'Всі послуги',
-      values: ServiceCategory.values,
+      values: _filterOptions.serviceCategories,
       labelFor: (category) => category.label,
       selected: _selectedServiceCategory,
     );
@@ -153,7 +175,7 @@ class _CommunityAnnouncementTabState extends State<CommunityAnnouncementTab> {
       context,
       title: 'Оберіть тип пропозиції',
       allLabel: 'Всі типи',
-      values: OfferCategory.values,
+      values: _filterOptions.offerCategories,
       labelFor: (category) => category.label,
       selected: _selectedOfferCategory,
     );
@@ -742,6 +764,8 @@ class _CommunityAnnouncementFormScreenState
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            _FormGuidanceCard(type: widget.type),
+            const SizedBox(height: 14),
             if (widget.type == CommunityAnnouncementType.event) ...[
               AspectRatio(
                 aspectRatio: 1,
@@ -773,7 +797,17 @@ class _CommunityAnnouncementFormScreenState
             ],
             TextFormField(
               controller: _title,
-              decoration: const InputDecoration(labelText: 'Назва *'),
+              decoration: InputDecoration(
+                labelText: 'Назва *',
+                helperText: switch (widget.type) {
+                  CommunityAnnouncementType.event =>
+                    'Коротка назва події, яку побачать користувачі.',
+                  CommunityAnnouncementType.service =>
+                    'Назва послуги або ім’я спеціаліста.',
+                  CommunityAnnouncementType.offer =>
+                    'Назва спеціальної акції або знижки.',
+                },
+              ),
               maxLength: 100,
               validator: _required,
             ),
@@ -800,6 +834,14 @@ class _CommunityAnnouncementFormScreenState
                     ? 'Короткий опис *'
                     : 'Опис *',
                 alignLabelWithHint: true,
+                helperText: switch (widget.type) {
+                  CommunityAnnouncementType.event =>
+                    'Опишіть формат, програму та для кого проводиться подія.',
+                  CommunityAnnouncementType.service =>
+                    'Поясніть, що входить у послугу та умови її надання.',
+                  CommunityAnnouncementType.offer =>
+                    'Коротко поясніть, для кого діє спеціальна пропозиція.',
+                },
               ),
               minLines: 2,
               maxLines: 4,
@@ -890,7 +932,9 @@ class _CommunityAnnouncementFormScreenState
               TextFormField(
                 controller: _offer,
                 decoration: const InputDecoration(
-                  labelText: 'Пропозиція *',
+                  labelText: 'Знижка або спеціальна вигода *',
+                  helperText:
+                      'Наприклад: «−20%», «2+1 безкоштовно» або подарунок до замовлення.',
                   alignLabelWithHint: true,
                 ),
                 minLines: 3,
@@ -986,6 +1030,55 @@ class _DateField extends StatelessWidget {
           suffixIcon: const Icon(Icons.calendar_today_outlined),
         ),
         child: Text(value == null ? 'Оберіть дату' : _formatDate(value!)),
+      ),
+    );
+  }
+}
+
+class _FormGuidanceCard extends StatelessWidget {
+  const _FormGuidanceCard({required this.type});
+
+  final CommunityAnnouncementType type;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = switch (type) {
+      CommunityAnnouncementType.event =>
+        'Додавайте лише реальні події для власників тварин: зустрічі, лекції, виставки або благодійні заходи.',
+      CommunityAnnouncementType.service =>
+        'Опишіть конкретну послугу для тварин, її вартість, місце надання та актуальні контакти.',
+      CommunityAnnouncementType.offer =>
+        'Цей розділ лише для спеціальних знижок, акцій і промокодів. Не додавайте сюди звичайний перелік товарів або послуг.',
+    };
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppTheme.primary.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppTheme.primary.withOpacity(0.18),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.info_outline,
+            color: AppTheme.primary,
+            size: 21,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(
+                color: AppTheme.textMain,
+                fontSize: 13,
+                height: 1.35,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1123,8 +1216,7 @@ Future<_FilterSelection<T>?> _showFilterPicker<T>(
             trailing: selected == null
                 ? const Icon(Icons.check, color: AppTheme.primary)
                 : null,
-            onTap: () =>
-                Navigator.pop(context, _FilterSelection<T>(null)),
+            onTap: () => Navigator.pop(context, _FilterSelection<T>(null)),
           ),
           ...values.map(
             (value) => ListTile(

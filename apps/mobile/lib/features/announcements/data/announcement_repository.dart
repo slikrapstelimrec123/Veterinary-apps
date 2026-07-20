@@ -5,6 +5,7 @@ import '../../../core/data/app_data_events.dart';
 import '../../../shared/services/announcement_media_storage.dart';
 import '../../../shared/services/private_pet_storage.dart';
 import '../domain/breeding_announcement.dart';
+import '../domain/announcement_filter_options.dart';
 import '../domain/community_announcement.dart';
 import '../domain/sale_announcement.dart';
 
@@ -77,6 +78,35 @@ class AnnouncementRepository {
         .limit(_pageSize);
     final hydratedRows = await _hydrateMyPetPhotos(rows as List);
     return hydratedRows.map(SaleAnnouncement.fromJson).toList();
+  }
+
+  Future<PetAnnouncementFilterOptions> getPetAnnouncementFilterOptions(
+    String announcementType,
+  ) async {
+    if (_useMockData) {
+      final breeds = announcementType == 'breeding'
+          ? _breedingMock.map((item) => item.breed)
+          : _saleMock.map((item) => item.breed);
+      final cities = announcementType == 'breeding'
+          ? _breedingMock.map((item) => item.location)
+          : _saleMock.map((item) => item.location);
+      return PetAnnouncementFilterOptions(
+        breeds: distinctFilterValues(breeds),
+        cities: distinctFilterValues(cities),
+      );
+    }
+    final rows = await _supabase
+        .from('announcements')
+        .select('breed, city')
+        .eq('announcement_type', announcementType)
+        .eq('status', 'active')
+        .eq('moderation_status', 'published')
+        .limit(1000);
+    final maps = (rows as List).cast<Map<String, dynamic>>();
+    return PetAnnouncementFilterOptions(
+      breeds: distinctFilterValues(maps.map((row) => row['breed'])),
+      cities: distinctFilterValues(maps.map((row) => row['city'])),
+    );
   }
 
   Future<List<BreedingAnnouncement>> getBreedingAnnouncementsFiltered(
@@ -212,6 +242,64 @@ class AnnouncementRepository {
     final hydrated = await _hydrateCommunityPhotos(rows as List);
     if (mine) await _attachOwnerMetrics(hydrated);
     return hydrated.map(CommunityAnnouncement.fromJson).toList();
+  }
+
+  Future<CommunityAnnouncementFilterOptions>
+      getCommunityAnnouncementFilterOptions(
+    CommunityAnnouncementType type,
+  ) async {
+    if (_useMockData) {
+      final items = _communityMock.where(
+        (item) => item.type == type && item.isActive,
+      );
+      return CommunityAnnouncementFilterOptions(
+        cities: distinctFilterValues(items.map((item) => item.city)),
+        serviceCategories: ServiceCategory.values
+            .where((category) => items.any(
+                  (item) => item.serviceCategory == category,
+                ))
+            .toList(),
+        offerCategories: OfferCategory.values
+            .where((category) => items.any(
+                  (item) => item.offerCategory == category,
+                ))
+            .toList(),
+      );
+    }
+
+    var query = _supabase
+        .from('announcements')
+        .select('city, service_category, offer_category')
+        .eq('announcement_type', type.databaseValue)
+        .eq('status', 'active')
+        .eq('moderation_status', 'published');
+    final today = DateTime.now().toUtc().toIso8601String();
+    if (type == CommunityAnnouncementType.event) {
+      query = query.gte('event_date', today);
+    } else if (type == CommunityAnnouncementType.offer) {
+      query = query.gte('valid_until', today.split('T').first);
+    }
+    final rows = await query.limit(1000);
+    final maps = (rows as List).cast<Map<String, dynamic>>();
+    final serviceValues = maps
+        .map((row) => ServiceCategory.fromDatabase(
+              row['service_category'] as String?,
+            ))
+        .whereType<ServiceCategory>()
+        .toSet();
+    final offerValues = maps
+        .map((row) => OfferCategory.fromDatabase(
+              row['offer_category'] as String?,
+            ))
+        .whereType<OfferCategory>()
+        .toSet();
+    return CommunityAnnouncementFilterOptions(
+      cities: distinctFilterValues(maps.map((row) => row['city'])),
+      serviceCategories:
+          ServiceCategory.values.where(serviceValues.contains).toList(),
+      offerCategories:
+          OfferCategory.values.where(offerValues.contains).toList(),
+    );
   }
 
   Future<List<CommunityAnnouncement>> getMyCommunityAnnouncements({
@@ -537,13 +625,6 @@ class AnnouncementRepository {
     return result;
   }
 
-  List<String> getBreedingBreeds() =>
-      _sorted(_breedingMock.map((e) => e.breed));
-  List<String> getSaleBreeds() => _sorted(_saleMock.map((e) => e.breed));
-  List<String> getSaleCities() => _cities(_saleMock.map((e) => e.location));
-  List<String> getBreedingCities() =>
-      _cities(_breedingMock.map((e) => e.location));
-
   String _requireUserId() {
     final userId = currentUserId;
     if (userId == null) throw StateError('Потрібно увійти в акаунт.');
@@ -583,9 +664,4 @@ class AnnouncementRepository {
     result.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return result;
   }
-
-  static List<String> _sorted(Iterable<String> values) =>
-      (values.toSet().toList()..sort());
-  static List<String> _cities(Iterable<String?> values) => _sorted(
-      values.whereType<String>().map((value) => value.split(',').first.trim()));
 }

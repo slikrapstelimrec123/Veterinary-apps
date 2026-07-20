@@ -27,7 +27,7 @@ class CurrentUser {
 
   static UserRole roleFromString(String? value) {
     return switch (value) {
-      'pet_owner' => UserRole.petOwner,
+      'pet_owner' || 'platform_admin' => UserRole.petOwner,
       _ => UserRole.unsupported,
     };
   }

@@ -16,6 +16,7 @@ class OwnerPlan {
     this.currentPeriodEnd,
     this.cancelAtPeriodEnd = false,
     this.introOfferUsed = false,
+    this.unlimited = false,
   });
 
   final OwnerPlanCode code;
@@ -32,6 +33,7 @@ class OwnerPlan {
   final DateTime? currentPeriodEnd;
   final bool cancelAtPeriodEnd;
   final bool introOfferUsed;
+  final bool unlimited;
 
   bool get isPaid => code != OwnerPlanCode.free;
 
@@ -59,6 +61,7 @@ class OwnerPlan {
       ),
       cancelAtPeriodEnd: json['cancel_at_period_end'] == true,
       introOfferUsed: json['intro_offer_used'] == true,
+      unlimited: json['unlimited'] == true,
     );
   }
 

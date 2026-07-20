@@ -221,7 +221,7 @@ class _PlansScreenState extends State<PlansScreen> with WidgetsBindingObserver {
           features: const [
             'До 2 тварин',
             'Медичні записи та документи',
-            '1 особисте оголошення на місяць',
+            '1 особисте оголошення для в’язки або продажу на місяць',
             'Події безкоштовно',
           ],
           selected: _current.code == OwnerPlanCode.free,
@@ -316,9 +316,11 @@ class _CurrentPlanCard extends StatelessWidget {
           style: const TextStyle(fontWeight: FontWeight.w800),
         ),
         subtitle: Text(
-          plan.currentPeriodEnd == null
-              ? 'Доступно до ${plan.petLimit} тварин'
-              : 'Діє до ${_date(plan.currentPeriodEnd!)}',
+          plan.unlimited
+              ? 'Безлімітний доступ до всіх можливостей'
+              : plan.currentPeriodEnd == null
+                  ? 'Доступно до ${plan.petLimit} тварин'
+                  : 'Діє до ${_date(plan.currentPeriodEnd!)}',
         ),
       ),
     );
