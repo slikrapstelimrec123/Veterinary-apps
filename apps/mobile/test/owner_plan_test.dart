@@ -7,7 +7,7 @@ void main() {
       final plan = OwnerPlan.fromJson({
         'code': 'pro_plus',
         'name': 'Pro+',
-        'pet_limit': 50,
+        'pet_limit': 20,
         'breeding_monthly_limit': 20,
         'sale_monthly_limit': 20,
         'monthly_price_minor': 49900,
@@ -18,7 +18,7 @@ void main() {
       });
 
       expect(plan.code, OwnerPlanCode.proPlus);
-      expect(plan.petLimit, 50);
+      expect(plan.petLimit, 20);
       expect(plan.breedingMonthlyLimit, 20);
       expect(plan.saleMonthlyLimit, 20);
       expect(plan.isPaid, isTrue);
@@ -29,7 +29,7 @@ void main() {
       final plan = OwnerPlan.fromJson(const {});
 
       expect(plan.code, OwnerPlanCode.free);
-      expect(plan.petLimit, 3);
+      expect(plan.petLimit, 2);
       expect(plan.breedingMonthlyLimit, 1);
       expect(plan.saleMonthlyLimit, 1);
       expect(plan.isPaid, isFalse);

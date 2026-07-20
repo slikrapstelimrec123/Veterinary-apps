@@ -140,7 +140,7 @@ class _PlansScreenState extends State<PlansScreen> {
           subtitle: 'Для базового ведення медичної картки',
           accent: AppTheme.textSecondary,
           features: const [
-            'До 3 тварин',
+            'До 2 тварин',
             'Медичні записи та документи',
             '1 особисте оголошення на місяць',
             'Події безкоштовно',
@@ -174,7 +174,7 @@ class _PlansScreenState extends State<PlansScreen> {
           accent: const Color(0xFF3D2A73),
           badge: 'Перший місяць — 249 грн',
           features: const [
-            'До 50 тварин',
+            'До 20 тварин',
             '20 оголошень пошуку партнера на місяць',
             '20 оголошень продажу на місяць',
             'Події безкоштовно',

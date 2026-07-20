@@ -41,11 +41,11 @@ Pet owners can:
 
 ## Plans And Monetization
 
-- `Free`: up to 3 pets and 1 standard personal announcement per calendar
+- `Free`: up to 2 pets and 1 standard personal announcement per calendar
   month across breeding and puppy-sale categories.
 - `Pro`: up to 5 pets, 3 breeding announcements, and 3 puppy-sale
   announcements per billing month.
-- `Pro+`: up to 50 pets, 20 breeding announcements, and 20 puppy-sale
+- `Pro+`: up to 20 pets, 20 breeding announcements, and 20 puppy-sale
   announcements per billing month.
 - Events are free for every plan and do not consume announcement quotas.
 - Services and offers are commercial publications and require a one-time

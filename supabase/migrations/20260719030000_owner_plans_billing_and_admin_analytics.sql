@@ -30,9 +30,9 @@ insert into public.owner_plan_catalog (
   sale_monthly_limit, sort_order
 )
 values
-  ('free', 'Free', null, null, null, 3, 1, 1, 0),
+  ('free', 'Free', null, null, null, 2, 1, 1, 0),
   ('pro', 'Pro', 7900, 79900, 3900, 5, 3, 3, 10),
-  ('pro_plus', 'Pro+', 49900, 499900, 24900, 50, 20, 20, 20)
+  ('pro_plus', 'Pro+', 49900, 499900, 24900, 20, 20, 20, 20)
 on conflict (code) do update set
   name = excluded.name,
   monthly_price_minor = excluded.monthly_price_minor,
@@ -360,7 +360,7 @@ begin
 
   -- Always resolve the limit for the actual owner. This also protects
   -- ownership transfers and service-role maintenance jobs.
-  select coalesce(plan.pet_limit, 3)
+  select coalesce(plan.pet_limit, 2)
   into allowed_pets
   from (select 1) seed
   left join public.owner_entitlements entitlement

@@ -175,20 +175,36 @@ export default function Home() {
       client.rpc("admin_plan_analytics"),
       client.rpc("admin_user_analytics"),
     ]);
-    const firstError =
-      overview.error || cities.error || plans.error || users.error;
-    if (firstError) {
+    const failures = [
+      ["overview", overview.error],
+      ["cities", cities.error],
+      ["plans", plans.error],
+      ["users", users.error],
+    ].filter((entry) => entry[1]);
+
+    setData({
+      overview: overview.error
+        ? emptyOverview
+        : ((overview.data ?? emptyOverview) as Overview),
+      cities: cities.error ? [] : ((cities.data ?? []) as CityRow[]),
+      plans: plans.error ? [] : ((plans.data ?? []) as PlanRow[]),
+      users: users.error ? [] : ((users.data ?? []) as UserRow[]),
+    });
+    setUpdatedAt(new Date());
+
+    if (failures.length > 0) {
+      const details = failures
+        .map(([name, failure]) => {
+          const code =
+            typeof failure === "object" && failure && "code" in failure
+              ? String(failure.code)
+              : "UNKNOWN";
+          return `${name}: ${code}`;
+        })
+        .join(", ");
       setError(
-        "Немає доступу до аналітики. Перевірте роль platform_admin для цього облікового запису.",
+        `Не вдалося завантажити частину аналітики (${details}). Оновіть сторінку після застосування міграцій бази.`,
       );
-    } else {
-      setData({
-        overview: (overview.data ?? emptyOverview) as Overview,
-        cities: (cities.data ?? []) as CityRow[],
-        plans: (plans.data ?? []) as PlanRow[],
-        users: (users.data ?? []) as UserRow[],
-      });
-      setUpdatedAt(new Date());
     }
     setBusy(false);
   }, [client]);

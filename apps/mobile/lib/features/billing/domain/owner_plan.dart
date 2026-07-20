@@ -43,7 +43,7 @@ class OwnerPlan {
         _ => OwnerPlanCode.free,
       },
       name: (json['name'] as String?) ?? 'Free',
-      petLimit: (json['pet_limit'] as num?)?.toInt() ?? 3,
+      petLimit: (json['pet_limit'] as num?)?.toInt() ?? 2,
       breedingMonthlyLimit:
           (json['breeding_monthly_limit'] as num?)?.toInt() ?? 1,
       saleMonthlyLimit: (json['sale_monthly_limit'] as num?)?.toInt() ?? 1,
@@ -65,7 +65,7 @@ class OwnerPlan {
   static const free = OwnerPlan(
     code: OwnerPlanCode.free,
     name: 'Free',
-    petLimit: 3,
+    petLimit: 2,
     breedingMonthlyLimit: 1,
     saleMonthlyLimit: 1,
   );

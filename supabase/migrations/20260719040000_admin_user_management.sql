@@ -45,7 +45,8 @@ begin
     select pet.owner_id, count(document.id) as document_count
     from public.pets pet
     join public.visit_records visit on visit.pet_id = pet.id
-    join public.visit_documents document on document.visit_id = visit.id
+    join public.visit_documents document
+      on document.visit_record_id = visit.id
     group by pet.owner_id
   ),
   announcement_totals as (
