@@ -36,6 +36,7 @@ type UserRow = {
   phone: string | null;
   city: string | null;
   created_at: string;
+  role: string;
   pet_count: number;
   visit_count: number;
   document_count: number;
@@ -45,7 +46,29 @@ type UserRow = {
   plan_status: string;
   plan_end: string | null;
   available_listing_credits: number;
+  standard_listing_credits: number;
+  top_7_listing_credits: number;
+  top_15_listing_credits: number;
   is_banned: boolean;
+};
+
+type AnnouncementRow = {
+  announcement_id: string;
+  owner_id: string;
+  owner_email: string;
+  owner_name: string;
+  announcement_type: string;
+  title: string;
+  summary: string | null;
+  city: string | null;
+  status: string;
+  moderation_status: string;
+  publication_tier: string;
+  publication_source: string | null;
+  view_count: number;
+  created_at: string;
+  publication_expires_at: string | null;
+  details: Record<string, unknown>;
 };
 
 type DashboardData = {
@@ -53,10 +76,16 @@ type DashboardData = {
   cities: CityRow[];
   plans: PlanRow[];
   users: UserRow[];
+  announcements: AnnouncementRow[];
 };
 
 type AuthMode = "login" | "request-reset" | "set-password";
-type DashboardView = "overview" | "users" | "geography" | "plans";
+type DashboardView =
+  | "overview"
+  | "users"
+  | "announcements"
+  | "geography"
+  | "plans";
 
 const emptyOverview: Overview = {
   users_total: 0,
@@ -91,6 +120,10 @@ export default function Home() {
   const [dashboardView, setDashboardView] =
     useState<DashboardView>("overview");
   const [userSearch, setUserSearch] = useState("");
+  const [announcementSearch, setAnnouncementSearch] = useState("");
+  const [selectedAnnouncementId, setSelectedAnnouncementId] = useState<
+    string | null
+  >(null);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [actionBusy, setActionBusy] = useState(false);
   const [actionMessage, setActionMessage] = useState("");
@@ -99,6 +132,7 @@ export default function Home() {
     cities: [],
     plans: [],
     users: [],
+    announcements: [],
   });
 
   useEffect(() => {
@@ -169,17 +203,19 @@ export default function Home() {
     if (!client) return;
     setBusy(true);
     setError("");
-    const [overview, cities, plans, users] = await Promise.all([
+    const [overview, cities, plans, users, announcements] = await Promise.all([
       client.rpc("admin_dashboard_overview"),
       client.rpc("admin_city_analytics"),
       client.rpc("admin_plan_analytics"),
       client.rpc("admin_user_analytics"),
+      client.rpc("admin_announcement_analytics"),
     ]);
     const failures = [
       ["overview", overview.error],
       ["cities", cities.error],
       ["plans", plans.error],
       ["users", users.error],
+      ["announcements", announcements.error],
     ].filter((entry) => entry[1]);
 
     setData({
@@ -189,6 +225,9 @@ export default function Home() {
       cities: cities.error ? [] : ((cities.data ?? []) as CityRow[]),
       plans: plans.error ? [] : ((plans.data ?? []) as PlanRow[]),
       users: users.error ? [] : ((users.data ?? []) as UserRow[]),
+      announcements: announcements.error
+        ? []
+        : ((announcements.data ?? []) as AnnouncementRow[]),
     });
     setUpdatedAt(new Date());
 
@@ -216,7 +255,13 @@ export default function Home() {
     } = client.auth.onAuthStateChange((_event, session) => {
       setSignedIn(Boolean(session));
       if (!session) {
-        setData({ overview: emptyOverview, cities: [], plans: [], users: [] });
+        setData({
+          overview: emptyOverview,
+          cities: [],
+          plans: [],
+          users: [],
+          announcements: [],
+        });
       }
     });
     return () => subscription.unsubscribe();
@@ -308,12 +353,32 @@ export default function Home() {
     );
   }, [data.users, userSearch]);
 
+  const filteredAnnouncements = useMemo(() => {
+    const query = announcementSearch.trim().toLocaleLowerCase("uk-UA");
+    if (!query) return data.announcements;
+    return data.announcements.filter((announcement) =>
+      [
+        announcement.title,
+        announcement.summary,
+        announcement.city,
+        announcement.owner_name,
+        announcement.owner_email,
+        announcementTypeName(announcement.announcement_type),
+      ]
+        .filter(Boolean)
+        .some((value) =>
+          String(value).toLocaleLowerCase("uk-UA").includes(query),
+        ),
+    );
+  }, [announcementSearch, data.announcements]);
+
   async function runUserAction(
     userId: string,
     rpc:
       | "admin_set_user_banned"
       | "admin_set_owner_plan"
-      | "admin_grant_listing_credit",
+      | "admin_grant_listing_credit"
+      | "admin_revoke_listing_credit",
     params: Record<string, string | number | boolean>,
     successMessage: string,
   ) {
@@ -521,6 +586,16 @@ export default function Home() {
           </button>
           <button
             type="button"
+            className={dashboardView === "announcements" ? "active" : ""}
+            aria-current={
+              dashboardView === "announcements" ? "page" : undefined
+            }
+            onClick={() => setDashboardView("announcements")}
+          >
+            <span>▤</span> Публікації
+          </button>
+          <button
+            type="button"
             className={dashboardView === "geography" ? "active" : ""}
             aria-current={dashboardView === "geography" ? "page" : undefined}
             onClick={() => setDashboardView("geography")}
@@ -676,7 +751,11 @@ export default function Home() {
                               user.is_banned ? "blocked" : ""
                             }`}
                           >
-                            {user.is_banned ? "Заблокований" : "Активний"}
+                            {user.role === "platform_admin"
+                              ? "Адміністратор"
+                              : user.is_banned
+                                ? "Заблокований"
+                                : "Активний"}
                           </span>
                           <span className="user-chevron">⌄</span>
                         </button>
@@ -709,15 +788,42 @@ export default function Home() {
                                 </dd>
                               </div>
                               <div>
-                                <dt>Безкоштовні публікації</dt>
+                                <dt>Усього подарованих</dt>
                                 <dd>
                                   {number.format(
                                     user.available_listing_credits,
                                   )}
                                 </dd>
                               </div>
+                              <div>
+                                <dt>Звичайні</dt>
+                                <dd>
+                                  {number.format(
+                                    user.standard_listing_credits,
+                                  )}
+                                </dd>
+                              </div>
+                              <div>
+                                <dt>TOP 7</dt>
+                                <dd>
+                                  {number.format(user.top_7_listing_credits)}
+                                </dd>
+                              </div>
+                              <div>
+                                <dt>TOP 15</dt>
+                                <dd>
+                                  {number.format(user.top_15_listing_credits)}
+                                </dd>
+                              </div>
                             </dl>
 
+                            {user.role === "platform_admin" ? (
+                              <p className="protected-admin-note">
+                                Це захищений обліковий запис адміністратора.
+                                Керування тарифом, публікаціями та блокування
+                                недоступне.
+                              </p>
+                            ) : (
                             <div className="admin-actions">
                               <label>
                                 Тариф на 30 днів
@@ -743,58 +849,76 @@ export default function Home() {
                                 </select>
                               </label>
                               <div className="credit-actions">
-                                <span>Подарувати публікацію</span>
-                                <button
-                                  type="button"
-                                  disabled={actionBusy}
-                                  onClick={() =>
-                                    void runUserAction(
-                                      user.user_id,
-                                      "admin_grant_listing_credit",
-                                      {
-                                        target_user_id: user.user_id,
-                                        target_tier: "standard",
-                                      },
-                                      `Стандартну публікацію додано для ${user.full_name}.`,
-                                    )
-                                  }
-                                >
-                                  Звичайна
-                                </button>
-                                <button
-                                  type="button"
-                                  disabled={actionBusy}
-                                  onClick={() =>
-                                    void runUserAction(
-                                      user.user_id,
-                                      "admin_grant_listing_credit",
-                                      {
-                                        target_user_id: user.user_id,
-                                        target_tier: "top_7",
-                                      },
-                                      `Публікацію TOP 7 додано для ${user.full_name}.`,
-                                    )
-                                  }
-                                >
-                                  TOP 7
-                                </button>
-                                <button
-                                  type="button"
-                                  disabled={actionBusy}
-                                  onClick={() =>
-                                    void runUserAction(
-                                      user.user_id,
-                                      "admin_grant_listing_credit",
-                                      {
-                                        target_user_id: user.user_id,
-                                        target_tier: "top_15",
-                                      },
-                                      `Публікацію TOP 15 додано для ${user.full_name}.`,
-                                    )
-                                  }
-                                >
-                                  TOP 15
-                                </button>
+                                <span>Подаровані публікації</span>
+                                {[
+                                  {
+                                    tier: "standard",
+                                    label: "Звичайна",
+                                    count: user.standard_listing_credits,
+                                  },
+                                  {
+                                    tier: "top_7",
+                                    label: "TOP 7",
+                                    count: user.top_7_listing_credits,
+                                  },
+                                  {
+                                    tier: "top_15",
+                                    label: "TOP 15",
+                                    count: user.top_15_listing_credits,
+                                  },
+                                ].map((credit) => (
+                                  <div
+                                    className="credit-control"
+                                    key={credit.tier}
+                                  >
+                                    <strong>{credit.label}</strong>
+                                    <small>{number.format(credit.count)}</small>
+                                    <button
+                                      type="button"
+                                      className="credit-minus"
+                                      aria-label={`Прибрати ${credit.label}`}
+                                      title={`Прибрати останню подаровану публікацію ${credit.label}`}
+                                      disabled={actionBusy || credit.count < 1}
+                                      onClick={() => {
+                                        const confirmed = window.confirm(
+                                          `Прибрати одну доступну публікацію «${credit.label}» у ${user.full_name}? Придбані користувачем публікації не буде змінено.`,
+                                        );
+                                        if (!confirmed) return;
+                                        void runUserAction(
+                                          user.user_id,
+                                          "admin_revoke_listing_credit",
+                                          {
+                                            target_user_id: user.user_id,
+                                            target_tier: credit.tier,
+                                          },
+                                          `Публікацію ${credit.label} прибрано у ${user.full_name}.`,
+                                        );
+                                      }}
+                                    >
+                                      −
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="credit-plus"
+                                      aria-label={`Додати ${credit.label}`}
+                                      title={`Подарувати публікацію ${credit.label}`}
+                                      disabled={actionBusy}
+                                      onClick={() =>
+                                        void runUserAction(
+                                          user.user_id,
+                                          "admin_grant_listing_credit",
+                                          {
+                                            target_user_id: user.user_id,
+                                            target_tier: credit.tier,
+                                          },
+                                          `Публікацію ${credit.label} додано для ${user.full_name}.`,
+                                        )
+                                      }
+                                    >
+                                      +
+                                    </button>
+                                  </div>
+                                ))}
                               </div>
                               <button
                                 type="button"
@@ -829,6 +953,141 @@ export default function Home() {
                                   : "Заблокувати"}
                               </button>
                             </div>
+                            )}
+                          </div>
+                        )}
+                      </article>
+                    );
+                  })
+                )}
+              </div>
+            </section>
+          </div>
+        )}
+
+        {dashboardView === "announcements" && (
+          <div className="panels-grid single-panel">
+            <section className="panel">
+              <PanelHeading
+                eyebrow="Публікації"
+                title="Оголошення клієнтів"
+                note="Вміст, статус, термін і перегляди"
+              />
+              <div className="users-toolbar">
+                <label className="user-search">
+                  <span>Пошук</span>
+                  <input
+                    type="search"
+                    placeholder="Назва, власник, місто або тип"
+                    value={announcementSearch}
+                    onChange={(event) =>
+                      setAnnouncementSearch(event.target.value)
+                    }
+                  />
+                </label>
+                <span className="users-total">
+                  {number.format(filteredAnnouncements.length)} публікацій
+                </span>
+              </div>
+              <div className="announcement-list">
+                {filteredAnnouncements.length === 0 ? (
+                  <p className="users-empty">Публікацій не знайдено.</p>
+                ) : (
+                  filteredAnnouncements.map((announcement) => {
+                    const expanded =
+                      selectedAnnouncementId === announcement.announcement_id;
+                    return (
+                      <article
+                        className="announcement-card"
+                        key={announcement.announcement_id}
+                      >
+                        <button
+                          type="button"
+                          className="announcement-summary"
+                          aria-expanded={expanded}
+                          onClick={() =>
+                            setSelectedAnnouncementId(
+                              expanded ? null : announcement.announcement_id,
+                            )
+                          }
+                        >
+                          <span className="announcement-kind">
+                            {announcementTypeName(
+                              announcement.announcement_type,
+                            )}
+                          </span>
+                          <span className="announcement-main">
+                            <strong>{announcement.title}</strong>
+                            <small>
+                              {announcement.owner_name ||
+                                announcement.owner_email}
+                              {announcement.city
+                                ? ` · ${announcement.city}`
+                                : ""}
+                            </small>
+                          </span>
+                          <span className="announcement-meta">
+                            <strong>
+                              {number.format(announcement.view_count)}
+                            </strong>
+                            <small>переглядів</small>
+                          </span>
+                          <span
+                            className={`publication-status ${announcement.status}`}
+                          >
+                            {announcementStatusName(announcement.status)}
+                          </span>
+                          <span className="publication-tier">
+                            {listingTierName(announcement.publication_tier)}
+                          </span>
+                          <span className="user-chevron">⌄</span>
+                        </button>
+                        {expanded && (
+                          <div className="announcement-details">
+                            {announcement.summary && (
+                              <p className="announcement-description">
+                                {announcement.summary}
+                              </p>
+                            )}
+                            <dl className="publication-facts">
+                              <div>
+                                <dt>Власник</dt>
+                                <dd>{announcement.owner_name || "Без імені"}</dd>
+                                <small>{announcement.owner_email}</small>
+                              </div>
+                              <div>
+                                <dt>Створено</dt>
+                                <dd>
+                                  {formatDateTime(announcement.created_at)}
+                                </dd>
+                              </div>
+                              <div>
+                                <dt>Діє до</dt>
+                                <dd>
+                                  {announcement.publication_expires_at
+                                    ? formatDateTime(
+                                        announcement.publication_expires_at,
+                                      )
+                                    : "Не обмежено"}
+                                </dd>
+                              </div>
+                              <div>
+                                <dt>Модерація</dt>
+                                <dd>
+                                  {moderationStatusName(
+                                    announcement.moderation_status,
+                                  )}
+                                </dd>
+                              </div>
+                              {Object.entries(announcement.details).map(
+                                ([key, value]) => (
+                                  <div key={key}>
+                                    <dt>{announcementFieldName(key)}</dt>
+                                    <dd>{formatAnnouncementValue(value)}</dd>
+                                  </div>
+                                ),
+                              )}
+                            </dl>
                           </div>
                         )}
                       </article>
@@ -970,4 +1229,70 @@ function Table({
 
 function planName(code: string) {
   return { free: "Free", pro: "Pro", pro_plus: "Pro+" }[code] ?? code;
+}
+
+function announcementTypeName(type: string) {
+  return (
+    {
+      breeding: "Пошук партнера",
+      sale: "Цуценята",
+      event: "Подія",
+      service: "Послуга",
+      offer: "Пропозиція",
+    }[type] ?? type
+  );
+}
+
+function announcementStatusName(status: string) {
+  return { active: "Активна", inactive: "В архіві" }[status] ?? status;
+}
+
+function moderationStatusName(status: string) {
+  return (
+    { published: "Опубліковано", review: "На перевірці", blocked: "Заблоковано" }[
+      status
+    ] ?? status
+  );
+}
+
+function listingTierName(tier: string) {
+  return { standard: "Звичайна", top_7: "TOP 7", top_15: "TOP 15" }[tier] ?? tier;
+}
+
+function announcementFieldName(field: string) {
+  return (
+    {
+      pet_name: "Тварина",
+      breed: "Порода",
+      gender: "Стать",
+      birth_date: "Дата народження",
+      price_amount: "Ціна",
+      desired_breed: "Бажана порода",
+      address: "Адреса",
+      event_date: "Дата події",
+      service_category: "Тип послуги",
+      offer_category: "Тип пропозиції",
+      website: "Сайт",
+      offer_text: "Пропозиція",
+      valid_from: "Початок дії",
+      valid_until: "Кінець дії",
+      promo_code: "Промокод",
+      contact_name: "Контактна особа",
+      contact_phone: "Телефон",
+      contact_info: "Контакти",
+    }[field] ?? field
+  );
+}
+
+function formatAnnouncementValue(value: unknown) {
+  if (typeof value === "boolean") return value ? "Так" : "Ні";
+  if (typeof value === "number") return number.format(value);
+  return String(value);
+}
+
+function formatDateTime(value: string) {
+  return new Intl.DateTimeFormat("uk-UA", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
 }

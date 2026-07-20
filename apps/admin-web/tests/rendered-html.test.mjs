@@ -41,6 +41,7 @@ test("dashboard navigation switches between real views", async () => {
   assert.match(source, /type DashboardView =/);
   assert.match(source, /setDashboardView\("overview"\)/);
   assert.match(source, /setDashboardView\("users"\)/);
+  assert.match(source, /setDashboardView\("announcements"\)/);
   assert.match(source, /setDashboardView\("geography"\)/);
   assert.match(source, /setDashboardView\("plans"\)/);
   assert.doesNotMatch(source, /href="#(?:overview|geography|plans)"/);
@@ -54,6 +55,11 @@ test("user management is backed by protected admin RPC calls", async () => {
   assert.match(source, /admin_set_user_banned/);
   assert.match(source, /admin_set_owner_plan/);
   assert.match(source, /admin_grant_listing_credit/);
+  assert.match(source, /admin_revoke_listing_credit/);
+  assert.match(source, /admin_announcement_analytics/);
+  assert.match(source, /standard_listing_credits/);
+  assert.match(source, /top_7_listing_credits/);
+  assert.match(source, /top_15_listing_credits/);
   assert.match(source, /window\.confirm/);
 });
 
