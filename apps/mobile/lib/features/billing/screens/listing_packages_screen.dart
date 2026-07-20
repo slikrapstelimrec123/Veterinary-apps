@@ -26,8 +26,10 @@ class _ListingPackagesScreenState extends State<ListingPackagesScreen> {
       StorePurchaseService(repository: _repository);
   StreamSubscription<StorePurchaseUpdate>? _updates;
   List<ProductDetails> _products = const [];
+  Map<String, List<String>> _availableCredits = const {};
   bool _loading = true;
   bool _processing = false;
+  bool _creditsLoaded = false;
   String? _pendingTier;
 
   @override
@@ -45,12 +47,43 @@ class _ListingPackagesScreenState extends State<ListingPackagesScreen> {
   }
 
   Future<void> _load() async {
+    if (mounted) {
+      setState(() {
+        _loading = true;
+        _creditsLoaded = false;
+      });
+    }
+
+    List<ProductDetails> products = const [];
+    Map<String, List<String>> credits = const {};
     try {
-      final products = await _purchases.initialize();
-      if (mounted) setState(() => _products = products);
+      products = await _purchases.initialize();
+    } catch (_) {
+      // The user can still use an available credit when the store is unavailable.
+    }
+    try {
+      credits = await _repository.getAvailableListingCreditsByTier();
+      if (mounted) {
+        setState(() {
+          _products = products;
+          _availableCredits = credits;
+          _creditsLoaded = true;
+        });
+      }
+    } catch (_) {
+      // Keep purchases hidden until the balance can be checked safely.
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  List<String> _credits(String tier) =>
+      _availableCredits[tier] ?? const <String>[];
+
+  void _useAvailableCredit(String tier) {
+    final credits = _credits(tier);
+    if (credits.isEmpty || _processing) return;
+    Navigator.pop(context, credits.first);
   }
 
   ProductDetails? _product(String id) {
@@ -118,44 +151,109 @@ class _ListingPackagesScreenState extends State<ListingPackagesScreen> {
     }
     return AppScaffold(
       title: 'Публікація оголошення',
-      subtitle: 'Кожен пакет діє 30 днів. Оберіть потрібне охоплення.',
+      subtitle:
+          'Спочатку використайте доступну публікацію або придбайте потрібний пакет.',
       children: [
-        _PackageCard(
-          title: 'Стандарт',
-          price: _product(LappoProducts.listingStandard)?.price ?? '40 грн',
-          description: 'Звичайна позиція у списку протягом 30 днів.',
-          icon: Icons.article_outlined,
-          onTap: _processing
-              ? null
-              : () => _buy(
-                    LappoProducts.listingStandard,
-                    'standard',
-                  ),
-        ),
-        const SizedBox(height: 12),
-        _PackageCard(
-          title: 'ТОП 7',
-          price: _product(LappoProducts.listingTop7)?.price ?? '80 грн',
-          description:
-              '7 днів у ТОП, 3 автоматичні підняття та 30 днів публікації.',
-          icon: Icons.trending_up,
-          accent: AppTheme.primary,
-          onTap: _processing
-              ? null
-              : () => _buy(LappoProducts.listingTop7, 'top_7'),
-        ),
-        const SizedBox(height: 12),
-        _PackageCard(
-          title: 'ТОП 15',
-          price: _product(LappoProducts.listingTop15)?.price ?? '150 грн',
-          description:
-              '15 днів у ТОП, 5 автоматичних підняттів та 30 днів публікації.',
-          icon: Icons.auto_awesome,
-          accent: const Color(0xFF3D2A73),
-          onTap: _processing
-              ? null
-              : () => _buy(LappoProducts.listingTop15, 'top_15'),
-        ),
+        if (!_creditsLoaded)
+          _CreditsLoadError(onRetry: _load)
+        else ...[
+          if (_availableCredits.values.any((items) => items.isNotEmpty)) ...[
+            const _SectionTitle(
+              title: 'Доступні публікації',
+              subtitle:
+                  'Подаровані або придбані пакети можна використати без повторної оплати.',
+            ),
+            if (_credits('standard').isNotEmpty) ...[
+              _PackageCard(
+                title: 'Стандарт',
+                price: 'Доступно: ${_credits('standard').length}',
+                description: 'Звичайна позиція у списку протягом 30 днів.',
+                icon: Icons.article_outlined,
+                buttonLabel: 'Використати без оплати',
+                accent: const Color(0xFF16866D),
+                onTap:
+                    _processing ? null : () => _useAvailableCredit('standard'),
+              ),
+              const SizedBox(height: 12),
+            ],
+            if (_credits('top_7').isNotEmpty) ...[
+              _PackageCard(
+                title: 'ТОП 7',
+                price: 'Доступно: ${_credits('top_7').length}',
+                description:
+                    '7 днів у ТОП, 3 автоматичні підняття та 30 днів публікації.',
+                icon: Icons.trending_up,
+                buttonLabel: 'Використати без оплати',
+                accent: const Color(0xFF16866D),
+                onTap: _processing ? null : () => _useAvailableCredit('top_7'),
+              ),
+              const SizedBox(height: 12),
+            ],
+            if (_credits('top_15').isNotEmpty) ...[
+              _PackageCard(
+                title: 'ТОП 15',
+                price: 'Доступно: ${_credits('top_15').length}',
+                description:
+                    '15 днів у ТОП, 5 автоматичних підняттів та 30 днів публікації.',
+                icon: Icons.auto_awesome,
+                buttonLabel: 'Використати без оплати',
+                accent: const Color(0xFF16866D),
+                onTap: _processing ? null : () => _useAvailableCredit('top_15'),
+              ),
+              const SizedBox(height: 12),
+            ],
+            const SizedBox(height: 10),
+          ],
+          if (_availableCredits.values.any((items) => items.isEmpty)) ...[
+            const _SectionTitle(
+              title: 'Придбати публікацію',
+              subtitle:
+                  'Нижче показані лише пакети, яких зараз немає у вашому залишку.',
+            ),
+            if (_credits('standard').isEmpty) ...[
+              _PackageCard(
+                title: 'Стандарт',
+                price:
+                    _product(LappoProducts.listingStandard)?.price ?? '40 грн',
+                description: 'Звичайна позиція у списку протягом 30 днів.',
+                icon: Icons.article_outlined,
+                onTap: _processing
+                    ? null
+                    : () => _buy(
+                          LappoProducts.listingStandard,
+                          'standard',
+                        ),
+              ),
+              const SizedBox(height: 12),
+            ],
+            if (_credits('top_7').isEmpty) ...[
+              _PackageCard(
+                title: 'ТОП 7',
+                price: _product(LappoProducts.listingTop7)?.price ?? '80 грн',
+                description:
+                    '7 днів у ТОП, 3 автоматичні підняття та 30 днів публікації.',
+                icon: Icons.trending_up,
+                accent: AppTheme.primary,
+                onTap: _processing
+                    ? null
+                    : () => _buy(LappoProducts.listingTop7, 'top_7'),
+              ),
+              const SizedBox(height: 12),
+            ],
+            if (_credits('top_15').isEmpty)
+              _PackageCard(
+                title: 'ТОП 15',
+                price: _product(LappoProducts.listingTop15)?.price ?? '150 грн',
+                description:
+                    '15 днів у ТОП, 5 автоматичних підняттів та 30 днів публікації.',
+                icon: Icons.auto_awesome,
+                accent: const Color(0xFF3D2A73),
+                onTap: _processing
+                    ? null
+                    : () => _buy(LappoProducts.listingTop15, 'top_15'),
+              ),
+          ],
+        ],
         if (_processing) ...[
           const SizedBox(height: 18),
           const Center(child: CircularProgressIndicator()),
@@ -173,6 +271,7 @@ class _PackageCard extends StatelessWidget {
     required this.icon,
     required this.onTap,
     this.accent = AppTheme.textMain,
+    this.buttonLabel = 'Придбати та продовжити',
   });
 
   final String title;
@@ -181,6 +280,7 @@ class _PackageCard extends StatelessWidget {
   final IconData icon;
   final VoidCallback? onTap;
   final Color accent;
+  final String buttonLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -231,11 +331,93 @@ class _PackageCard extends StatelessWidget {
                     width: double.infinity,
                     child: FilledButton(
                       onPressed: onTap,
-                      child: const Text('Придбати та продовжити'),
+                      child: Text(buttonLabel),
                     ),
                   ),
                 ],
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle({
+    required this.title,
+    required this.subtitle,
+  });
+
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              color: AppTheme.textMain,
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            style: const TextStyle(
+              color: AppTheme.textSecondary,
+              fontSize: 13,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CreditsLoadError extends StatelessWidget {
+  const _CreditsLoadError({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          children: [
+            const Icon(
+              Icons.sync_problem_outlined,
+              color: AppTheme.danger,
+              size: 32,
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'Не вдалося перевірити доступні публікації.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Оновіть дані перед покупкою, щоб не оплачувати пакет повторно.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppTheme.textSecondary,
+                fontSize: 12,
+              ),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton(
+              onPressed: onRetry,
+              child: const Text('Оновити'),
             ),
           ],
         ),

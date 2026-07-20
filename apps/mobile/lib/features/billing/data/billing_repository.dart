@@ -48,6 +48,37 @@ class BillingRepository {
     return row?['id'] as String?;
   }
 
+  Future<Map<String, List<String>>> getAvailableListingCreditsByTier() async {
+    if (SupabaseConfig.useMockData) {
+      return {
+        'standard': ['mock-standard-credit'],
+        'top_7': ['mock-top-7-credit'],
+        'top_15': ['mock-top-15-credit'],
+      };
+    }
+
+    final rows = await _supabase
+        .from('owner_listing_credits')
+        .select('id, tier')
+        .eq('status', 'available')
+        .order('created_at');
+    final credits = <String, List<String>>{
+      'standard': <String>[],
+      'top_7': <String>[],
+      'top_15': <String>[],
+    };
+
+    for (final item in rows) {
+      final row = Map<String, dynamic>.from(item);
+      final id = row['id'] as String?;
+      final tier = row['tier'] as String?;
+      if (id != null && tier != null && credits.containsKey(tier)) {
+        credits[tier]!.add(id);
+      }
+    }
+    return credits;
+  }
+
   Future<void> track(
     String name, {
     String? entityType,
