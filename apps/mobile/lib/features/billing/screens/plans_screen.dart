@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/config/supabase_config.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../data/billing_repository.dart';
@@ -16,33 +18,73 @@ class PlansScreen extends StatefulWidget {
   State<PlansScreen> createState() => _PlansScreenState();
 }
 
-class _PlansScreenState extends State<PlansScreen> {
+class _PlansScreenState extends State<PlansScreen> with WidgetsBindingObserver {
   final _repository = BillingRepository();
   late final StorePurchaseService _purchases =
       StorePurchaseService(repository: _repository);
   StreamSubscription<StorePurchaseUpdate>? _updates;
+  RealtimeChannel? _entitlementChannel;
   OwnerPlan _current = OwnerPlan.free;
   List<ProductDetails> _products = const [];
   bool _loading = true;
+  bool _refreshing = false;
   bool _processing = false;
   String? _error;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _updates = _purchases.updates.listen(_onPurchaseUpdate);
     _load();
+    _subscribeToPlanChanges();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _updates?.cancel();
+    final entitlementChannel = _entitlementChannel;
+    if (entitlementChannel != null && SupabaseConfig.isConfigured) {
+      Supabase.instance.client.removeChannel(entitlementChannel);
+    }
     _purchases.dispose();
     super.dispose();
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _refreshPlan();
+    }
+  }
+
+  void _subscribeToPlanChanges() {
+    if (SupabaseConfig.useMockData) return;
+    final client = Supabase.instance.client;
+    final userId = client.auth.currentUser?.id;
+    if (userId == null) return;
+
+    _entitlementChannel = client
+        .channel('mobile-owner-entitlement-$userId')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'owner_entitlements',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'user_id',
+            value: userId,
+          ),
+          callback: (_) => _refreshPlan(),
+        )
+        .subscribe();
+  }
+
   Future<void> _load() async {
+    if (_refreshing) return;
     setState(() {
+      _refreshing = true;
       _loading = true;
       _error = null;
     });
@@ -64,7 +106,32 @@ class _PlansScreenState extends State<PlansScreen> {
         });
       }
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _refreshing = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _refreshPlan() async {
+    if (_refreshing || !mounted) return;
+    setState(() {
+      _refreshing = true;
+      _error = null;
+    });
+    try {
+      final plan = await _repository.getCurrentPlan();
+      if (!mounted) return;
+      setState(() => _current = plan);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'Не вдалося оновити активний тариф. Спробуйте ще раз.';
+      });
+    } finally {
+      if (mounted) setState(() => _refreshing = false);
     }
   }
 
@@ -132,6 +199,18 @@ class _PlansScreenState extends State<PlansScreen> {
     return AppScaffold(
       title: 'Тарифи Lappo',
       subtitle: 'Оберіть можливості, які відповідають кількості ваших тварин.',
+      actions: [
+        IconButton(
+          tooltip: 'Оновити тариф',
+          onPressed: _refreshing ? null : _refreshPlan,
+          icon: _refreshing
+              ? const SizedBox.square(
+                  dimension: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.refresh),
+        ),
+      ],
       children: [
         _CurrentPlanCard(plan: _current),
         const SizedBox(height: 16),
