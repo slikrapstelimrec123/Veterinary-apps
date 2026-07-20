@@ -1053,10 +1053,10 @@ class _FormGuidanceCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppTheme.primary.withOpacity(0.08),
+        color: AppTheme.primary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppTheme.primary.withOpacity(0.18),
+          color: AppTheme.primary.withValues(alpha: 0.18),
         ),
       ),
       child: Row(
