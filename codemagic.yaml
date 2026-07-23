@@ -1,6 +1,6 @@
 workflows:
   lappo-ios-testflight:
-    name: Lappo iOS - Internal TestFlight
+    name: Lappo iOS - TestFlight & App Store
     instance_type: mac_mini_m2
     max_build_duration: 120
 
@@ -64,7 +64,7 @@ workflows:
       - name: Configure App Store signing
         script: |
           cd "$CM_BUILD_DIR/$FLUTTER_APP_PATH"
-          xcode-project use-profiles --custom-export-options='{"testFlightInternalTestingOnly": true}'
+          xcode-project use-profiles
 
       - name: Build signed IPA
         script: |
