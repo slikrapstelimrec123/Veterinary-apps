@@ -37,36 +37,28 @@ class _AccountDeletionScreenState extends State<AccountDeletionScreen> {
 
     try {
       if (!SupabaseConfig.useMockData) {
-        final user = Supabase.instance.client.auth.currentUser;
-        if (user == null) throw const AuthException('Authentication required');
-        await Supabase.instance.client
-            .from('account_deletion_requests')
-            .insert({
-          'user_id': user.id,
-          'status': 'pending',
-        });
+        final response = await Supabase.instance.client.functions.invoke(
+          'delete-my-account',
+          body: const <String, dynamic>{},
+        );
+        if (response.status < 200 || response.status >= 300) {
+          throw StateError('ACCOUNT_DELETION_FAILED');
+        }
       }
 
       if (!mounted) return;
+      await AuthScope.of(context).logout();
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Запит прийнято. Видалення буде завершено протягом 30 днів.',
-          ),
+          content: Text('Акаунт і пов’язані з ним дані видалено.'),
         ),
       );
-      await AuthScope.of(context).logout();
-    } on PostgrestException catch (exception) {
-      if (!mounted) return;
-      final alreadyRequested = exception.code == '23505';
-      setState(() {
-        error = alreadyRequested
-            ? 'Запит на видалення вже прийнято.'
-            : 'Не вдалося надіслати запит. Спробуйте ще раз.';
-      });
     } catch (_) {
       if (mounted) {
-        setState(() => error = 'Не вдалося надіслати запит. Спробуйте ще раз.');
+        setState(() {
+          error = 'Не вдалося видалити акаунт. Спробуйте ще раз.';
+        });
       }
     } finally {
       if (mounted) setState(() => isSubmitting = false);
@@ -83,7 +75,7 @@ class _AccountDeletionScreenState extends State<AccountDeletionScreen> {
           child: Padding(
             padding: EdgeInsets.all(16),
             child: Text(
-              'Після підтвердження ми почнемо видалення акаунта та персональних даних. Процес триває до 30 днів. Медичні записи, які ми зобов’язані зберігати за законом, можуть бути знеособлені та збережені лише на необхідний строк. Дію неможливо скасувати через застосунок.',
+              'Акаунт, картки тварин, медичні записи, оголошення та завантажені файли буде видалено одразу й безповоротно. Цю дію неможливо скасувати.',
             ),
           ),
         ),
@@ -108,7 +100,7 @@ class _AccountDeletionScreenState extends State<AccountDeletionScreen> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : const Icon(Icons.delete_forever_outlined),
-          label: const Text('Подати запит на видалення'),
+          label: const Text('Видалити акаунт і дані'),
         ),
       ],
     );

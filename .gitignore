@@ -9,6 +9,8 @@ node_modules/
 .flutter-plugins
 .flutter-plugins-dependencies
 build/
+!apps/public-web/build/
+!apps/public-web/build/**
 
 # Environment
 .env
@@ -27,6 +29,8 @@ build/
 # OS
 .DS_Store
 Thumbs.db
+/artifacts/
+/tmp/
 
 # Logs
 *.log
