@@ -4,6 +4,7 @@ import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
+import '../notifications/local_notification_service.dart';
 import 'auth_repository.dart';
 export 'auth_repository.dart' show RegisterResult;
 import 'current_user.dart';
@@ -75,6 +76,7 @@ class AuthState extends ChangeNotifier {
 
   Future<void> _handleAuthChange(supabase.AuthState state) async {
     if (state.event == supabase.AuthChangeEvent.signedOut) {
+      await LocalNotificationService.instance.resetForAccountChange();
       currentUser = null;
       passwordRecoveryRequired = false;
       errorMessage = null;
@@ -212,6 +214,7 @@ class AuthState extends ChangeNotifier {
   }
 
   Future<void> logout() async {
+    await LocalNotificationService.instance.resetForAccountChange();
     await _repository.logout();
     currentUser = null;
     passwordRecoveryRequired = false;

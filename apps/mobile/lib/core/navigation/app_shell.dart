@@ -60,12 +60,27 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     if (payload.startsWith('visit:')) {
       final parts = payload.split(':');
       final recordId = parts.length > 1 ? parts[1] : null;
-      if (recordId != null) {
-        await Navigator.of(context).push(MaterialPageRoute(
-          builder: (_) => VisitRecordDetailsScreen(recordId: recordId),
-        ));
-        return;
+      if (recordId != null && SupabaseConfig.isConfigured) {
+        try {
+          final row = await Supabase.instance.client
+              .from('visit_records')
+              .select('id')
+              .eq('id', recordId)
+              .maybeSingle();
+          if (row != null && mounted) {
+            await Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => VisitRecordDetailsScreen(recordId: recordId),
+            ));
+            return;
+          }
+        } catch (_) {
+          // An old notification can belong to an account that previously
+          // used this device. RLS deliberately makes that record unavailable.
+        }
       }
+
+      // Do not open an inaccessible medical record or expose its metadata.
+      return;
     }
 
     if (payload.startsWith('medication:') && SupabaseConfig.isConfigured) {
@@ -163,6 +178,10 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
 
     await LocalNotificationService.instance.initialize();
     await LocalNotificationService.instance.requestPermission();
+    // iOS and Android keep scheduled local notifications after logout. Clear
+    // schedules from any previous session before rebuilding the current
+    // owner's reminders from RLS-protected data.
+    await LocalNotificationService.instance.cancelAll();
     await _restoreScheduledReminders();
 
     _notificationChannel = client

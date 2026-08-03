@@ -126,6 +126,11 @@ class LocalNotificationService {
     await _plugin.cancelAll();
   }
 
+  Future<void> resetForAccountChange() async {
+    await cancelAll();
+    tappedPayload.value = null;
+  }
+
   Future<void> scheduleVisitReminder({
     required String visitRecordId,
     required String petName,
