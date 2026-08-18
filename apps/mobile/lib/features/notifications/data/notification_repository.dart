@@ -80,6 +80,24 @@ class NotificationRepository {
     AppDataEvents.notifyChanged();
   }
 
+  Future<void> archiveNotification(String id) async {
+    if (_useMockData) {
+      MockData.notifications
+          .removeWhere((notification) => notification.id == id);
+      AppDataEvents.notifyChanged();
+      return;
+    }
+
+    final changed = await _client.rpc(
+      'archive_my_notification',
+      params: {'target_notification_id': id},
+    );
+    if (changed != 1) {
+      throw StateError('Notification is unavailable');
+    }
+    AppDataEvents.notifyChanged();
+  }
+
   Future<NotificationPreferences> getPreferences() async {
     if (_useMockData) {
       return MockData.notificationPreferences;

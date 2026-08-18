@@ -82,6 +82,19 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
   }
 
+  Future<bool> archiveNotification(AppNotification notification) async {
+    try {
+      await repository.archiveNotification(notification.id);
+      return true;
+    } catch (_) {
+      if (!mounted) return false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Не вдалося видалити сповіщення.')),
+      );
+      return false;
+    }
+  }
+
   Future<void> _openDestination(AppNotification notification) async {
     final type = notification.type.toLowerCase();
     Widget? destination;
@@ -179,7 +192,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 const SizedBox(height: 8),
                 ...unread.map((notification) => _NotificationTile(
                     notification: notification,
-                    onTap: () => openNotification(notification))),
+                    onTap: () => openNotification(notification),
+                    onArchive: () => archiveNotification(notification),
+                    onDismissed: refresh)),
                 const SizedBox(height: 16),
               ],
               if (read.isNotEmpty) ...[
@@ -188,7 +203,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 const SizedBox(height: 8),
                 ...read.map((notification) => _NotificationTile(
                     notification: notification,
-                    onTap: () => openNotification(notification))),
+                    onTap: () => openNotification(notification),
+                    onArchive: () => archiveNotification(notification),
+                    onDismissed: refresh)),
               ],
             ],
           ],
@@ -199,33 +216,72 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 }
 
 class _NotificationTile extends StatelessWidget {
-  const _NotificationTile({required this.notification, required this.onTap});
+  const _NotificationTile({
+    required this.notification,
+    required this.onTap,
+    required this.onArchive,
+    required this.onDismissed,
+  });
 
   final AppNotification notification;
   final VoidCallback onTap;
+  final Future<bool> Function() onArchive;
+  final VoidCallback onDismissed;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
-      child: Card(
-        child: ListTile(
-          leading: Icon(notificationIcon(notification.type),
-              color: notification.isUnread
-                  ? Theme.of(context).colorScheme.primary
-                  : null),
-          title: Text(notification.title,
-              style: TextStyle(
-                  fontWeight: notification.isUnread
-                      ? FontWeight.w800
-                      : FontWeight.w500)),
-          subtitle: Text(
-              '${notification.body}\n${dateLabel(notification.createdAt)}'),
-          isThreeLine: true,
-          trailing: notification.isUnread
-              ? const Icon(Icons.circle, size: 10)
-              : const Icon(Icons.chevron_right),
-          onTap: onTap,
+      child: Dismissible(
+        key: ValueKey(notification.id),
+        direction: DismissDirection.endToStart,
+        confirmDismiss: (_) => onArchive(),
+        onDismissed: (_) => onDismissed(),
+        background: Container(
+          alignment: Alignment.centerRight,
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.errorContainer,
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Icon(
+                Icons.delete_outline,
+                color: Theme.of(context).colorScheme.onErrorContainer,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Видалити',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onErrorContainer,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+        child: Card(
+          margin: EdgeInsets.zero,
+          child: ListTile(
+            leading: Icon(notificationIcon(notification.type),
+                color: notification.isUnread
+                    ? Theme.of(context).colorScheme.primary
+                    : null),
+            title: Text(notification.title,
+                style: TextStyle(
+                    fontWeight: notification.isUnread
+                        ? FontWeight.w800
+                        : FontWeight.w500)),
+            subtitle: Text(
+                '${notification.body}\n${dateLabel(notification.createdAt)}'),
+            isThreeLine: true,
+            trailing: notification.isUnread
+                ? const Icon(Icons.circle, size: 10)
+                : const Icon(Icons.chevron_right),
+            onTap: onTap,
+          ),
         ),
       ),
     );
