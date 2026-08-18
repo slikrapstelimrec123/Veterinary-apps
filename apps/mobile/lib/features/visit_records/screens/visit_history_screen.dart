@@ -85,7 +85,15 @@ class _VisitHistoryScreenState extends State<VisitHistoryScreen> {
             else ...[
               ...records.map((record) => Padding(
                     padding: const EdgeInsets.only(bottom: 12),
-                    child: _VisitRecordCard(record: record),
+                    child: _VisitRecordCard(
+                      record: record,
+                      onEdit: record.status == 'self_reported'
+                          ? () => _editRecord(record)
+                          : null,
+                      onDelete: record.status == 'self_reported'
+                          ? () => _deleteRecord(record)
+                          : null,
+                    ),
                   )),
               const SizedBox(height: 4),
               OutlinedButton.icon(
@@ -99,12 +107,58 @@ class _VisitHistoryScreenState extends State<VisitHistoryScreen> {
       },
     );
   }
+
+  Future<void> _editRecord(VisitRecord record) async {
+    final result = await Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => AddVisitRecordScreen(
+        petId: widget.petId,
+        petName: widget.petName,
+        record: record,
+      ),
+    ));
+    if (result != null) refresh();
+  }
+
+  Future<void> _deleteRecord(VisitRecord record) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Видалити запис?'),
+        content: const Text('Цю дію неможливо скасувати.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Скасувати'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Видалити'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await repository.deleteSelfReportedVisitRecord(
+        id: record.id,
+        petId: widget.petId,
+      );
+      if (mounted) refresh();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Не вдалося видалити запис.')),
+      );
+    }
+  }
 }
 
 class _VisitRecordCard extends StatelessWidget {
-  const _VisitRecordCard({required this.record});
+  const _VisitRecordCard({required this.record, this.onEdit, this.onDelete});
 
   final VisitRecord record;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -124,8 +178,11 @@ class _VisitRecordCard extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                      child: Text(date,
-                          style: Theme.of(context).textTheme.titleMedium)),
+                    child: Text(
+                      date,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
                   if (isSelfReported)
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -134,10 +191,30 @@ class _VisitRecordCard extends StatelessWidget {
                         color: Theme.of(context).colorScheme.primaryContainer,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Text('Власний запис',
-                          style: TextStyle(
-                              fontSize: 11,
-                              color: Theme.of(context).colorScheme.primary)),
+                      child: Text(
+                        'Власний запис',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                  if (onEdit != null || onDelete != null)
+                    PopupMenuButton<String>(
+                      onSelected: (value) =>
+                          value == 'edit' ? onEdit?.call() : onDelete?.call(),
+                      itemBuilder: (_) => [
+                        if (onEdit != null)
+                          const PopupMenuItem(
+                            value: 'edit',
+                            child: Text('Редагувати'),
+                          ),
+                        if (onDelete != null)
+                          const PopupMenuItem(
+                            value: 'delete',
+                            child: Text('Видалити'),
+                          ),
+                      ],
                     ),
                 ],
               ),

@@ -68,7 +68,8 @@ class AuthRepository {
       'phone': phone,
       'city': city,
       'updated_at': DateTime.now().toUtc().toIso8601String(),
-      if (normalizedEmail?.isNotEmpty == true) 'email': normalizedEmail,
+      if (normalizedEmail?.isNotEmpty == true && normalizedEmail != user.email)
+        'email': normalizedEmail,
     };
 
     final profile = await _client

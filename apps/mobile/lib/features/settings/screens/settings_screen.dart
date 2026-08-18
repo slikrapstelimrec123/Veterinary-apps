@@ -117,14 +117,7 @@ class SettingsScreen extends StatelessWidget {
                           const ListTile(
                             leading: Icon(Icons.email_outlined),
                             title: Text('Написати на email'),
-                            subtitle: Text('support@lappo.app'),
-                            contentPadding: EdgeInsets.zero,
-                          ),
-                          const Divider(height: 1),
-                          const ListTile(
-                            leading: Icon(Icons.chat_bubble_outline),
-                            title: Text('Telegram'),
-                            subtitle: Text('@lappo_support'),
+                            subtitle: Text('lappo.apps@gmail.com'),
                             contentPadding: EdgeInsets.zero,
                           ),
                           const SizedBox(height: 8),

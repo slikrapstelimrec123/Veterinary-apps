@@ -118,6 +118,132 @@ class VisitRecordRepository {
     return saved;
   }
 
+  Future<VisitRecord> updateSelfReportedVisitRecord({
+    required String id,
+    required String petId,
+    required DateTime visitDate,
+    required String reason,
+    String? providerName,
+    String? symptoms,
+    String? diagnosis,
+    String? treatmentNotes,
+    String? prescribedMedications,
+    String? recommendations,
+    bool nextVisitRecommended = false,
+    DateTime? nextVisitDate,
+  }) async {
+    if (_useMockData) {
+      final index =
+          MockData.visitRecords.indexWhere((record) => record.id == id);
+      if (index == -1) throw StateError('Visit record not found');
+      final current = MockData.visitRecords[index];
+      final updated = VisitRecord(
+        id: id,
+        petId: petId,
+        visitDate: visitDate,
+        providerName: _nullable(providerName),
+        reason: reason.trim(),
+        symptoms: _nullable(symptoms),
+        diagnosis: _nullable(diagnosis),
+        proceduresPerformed: current.proceduresPerformed,
+        treatmentNotes: _nullable(treatmentNotes),
+        prescribedMedications: _nullable(prescribedMedications),
+        recommendations: _nullable(recommendations),
+        nextVisitRecommended: nextVisitRecommended,
+        nextVisitDate: nextVisitRecommended ? nextVisitDate : null,
+        status: current.status,
+        documentCount: current.documentCount,
+      );
+      MockData.visitRecords[index] = updated;
+      AppDataEvents.notifyChanged();
+      return updated;
+    }
+    final row = await _client
+        .from('visit_records')
+        .update({
+          'visit_date': visitDate.toIso8601String().split('T').first,
+          'reason': reason.trim(),
+          'reason_for_visit': reason.trim(),
+          'provider_name': _nullable(providerName),
+          'symptoms': _nullable(symptoms),
+          'diagnosis': _nullable(diagnosis),
+          'treatment_notes': _nullable(treatmentNotes),
+          'prescribed_medications': _nullable(prescribedMedications),
+          'recommendations': _nullable(recommendations),
+          'next_visit_recommended': nextVisitRecommended,
+          'next_visit_date': nextVisitRecommended && nextVisitDate != null
+              ? nextVisitDate.toIso8601String().split('T').first
+              : null,
+        })
+        .eq('id', id)
+        .eq('pet_id', petId)
+        .eq('status', 'self_reported')
+        .select(_ownerSafeColumns)
+        .single();
+
+    final saved = VisitRecord.fromJson(row);
+    await _syncVisitReminder(saved);
+    AppDataEvents.notifyChanged();
+    return saved;
+  }
+
+  Future<void> deleteSelfReportedVisitRecord({
+    required String id,
+    required String petId,
+  }) async {
+    if (_useMockData) {
+      MockData.visitRecords.removeWhere((record) => record.id == id);
+      AppDataEvents.notifyChanged();
+      return;
+    }
+    final documents = await _client
+        .from('visit_documents')
+        .select('storage_path')
+        .eq('visit_record_id', id);
+    await _client
+        .from('visit_records')
+        .delete()
+        .eq('id', id)
+        .eq('pet_id', petId)
+        .eq('status', 'self_reported');
+
+    final storagePaths = (documents as List<dynamic>)
+        .whereType<Map<String, dynamic>>()
+        .map((document) => document['storage_path'] as String?)
+        .whereType<String>()
+        .where((path) => path.isNotEmpty)
+        .toList();
+    if (storagePaths.isNotEmpty) {
+      try {
+        await _client.storage.from('visit-documents').remove(storagePaths);
+      } catch (_) {
+        // Database references are already removed; storage cleanup can retry.
+      }
+    }
+    try {
+      await LocalNotificationService.instance.cancelVisitReminder(id);
+    } catch (_) {
+      // The database deletion remains successful if local cleanup is blocked.
+    }
+    AppDataEvents.notifyChanged();
+  }
+
+  Future<void> _syncVisitReminder(VisitRecord record) async {
+    try {
+      await LocalNotificationService.instance.cancelVisitReminder(record.id);
+      if (record.nextVisitRecommended && record.nextVisitDate != null) {
+        final pet = await PetRepository().getPet(record.petId);
+        await LocalNotificationService.instance.scheduleVisitReminder(
+          visitRecordId: record.id,
+          petName: pet?.name ?? 'Тварина',
+          dueDate: record.nextVisitDate!,
+        );
+      }
+    } catch (_) {
+      // The medical record remains updated if local scheduling is unavailable.
+    }
+  }
+
   Future<VisitDocument> uploadVisitImage({
     required String visitRecordId,
     required String petId,

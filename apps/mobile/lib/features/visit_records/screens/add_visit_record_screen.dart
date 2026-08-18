@@ -6,13 +6,15 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../../core/theme/app_theme.dart';
 import '../data/visit_record_repository.dart';
+import '../domain/visit_record.dart';
 
 class AddVisitRecordScreen extends StatefulWidget {
   const AddVisitRecordScreen(
-      {super.key, required this.petId, required this.petName});
+      {super.key, required this.petId, required this.petName, this.record});
 
   final String petId;
   final String petName;
+  final VisitRecord? record;
 
   @override
   State<AddVisitRecordScreen> createState() => _AddVisitRecordScreenState();
@@ -36,6 +38,25 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
 
   bool _saving = false;
   final List<XFile> _attachments = [];
+
+  bool get _isEditing => widget.record != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final record = widget.record;
+    if (record == null) return;
+    _visitDate = record.visitDate;
+    _providerNameController.text = record.providerName ?? '';
+    _reasonController.text = record.reason ?? '';
+    _symptomsController.text = record.symptoms ?? '';
+    _diagnosisController.text = record.diagnosis ?? '';
+    _treatmentController.text = record.treatmentNotes ?? '';
+    _medicationsController.text = record.prescribedMedications ?? '';
+    _recommendationsController.text = record.recommendations ?? '';
+    _nextVisitRecommended = record.nextVisitRecommended;
+    _nextVisitDate = record.nextVisitDate;
+  }
 
   @override
   void dispose() {
@@ -76,8 +97,10 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
     setState(() => _saving = true);
 
     try {
-      if (!SupabaseConfig.useMockData) {
-        final saved = await _repository.createSelfReportedVisitRecord(
+      final VisitRecord? saved;
+      if (_isEditing) {
+        saved = await _repository.updateSelfReportedVisitRecord(
+          id: widget.record!.id,
           petId: widget.petId,
           visitDate: _visitDate,
           reason: _reasonController.text,
@@ -90,6 +113,25 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
           nextVisitRecommended: _nextVisitRecommended,
           nextVisitDate: _nextVisitDate,
         );
+      } else if (!SupabaseConfig.useMockData) {
+        saved = await _repository.createSelfReportedVisitRecord(
+          petId: widget.petId,
+          visitDate: _visitDate,
+          reason: _reasonController.text,
+          providerName: _providerNameController.text,
+          symptoms: _symptomsController.text,
+          diagnosis: _diagnosisController.text,
+          treatmentNotes: _treatmentController.text,
+          prescribedMedications: _medicationsController.text,
+          recommendations: _recommendationsController.text,
+          nextVisitRecommended: _nextVisitRecommended,
+          nextVisitDate: _nextVisitDate,
+        );
+      } else {
+        saved = null;
+      }
+
+      if (saved != null) {
         var failedUploads = 0;
         for (final attachment in _attachments) {
           try {
@@ -145,7 +187,7 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Додати прийом'),
+        title: Text(_isEditing ? 'Редагувати прийом' : 'Додати прийом'),
         actions: [
           if (_saving)
             const Padding(

@@ -174,6 +174,12 @@ class LocalNotificationService {
     );
   }
 
+  Future<void> cancelVisitReminder(String visitRecordId) async {
+    await initialize();
+    await _plugin.cancel(_stableId('visit:$visitRecordId:two-days'));
+    await _plugin.cancel(_stableId('visit:$visitRecordId:day'));
+  }
+
   Future<void> _scheduleAt({
     required int id,
     required String title,
