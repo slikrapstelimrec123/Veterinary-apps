@@ -97,14 +97,16 @@ class _PlansScreenState extends State<PlansScreen> with WidgetsBindingObserver {
       _error = null;
     });
     try {
-      final results = await Future.wait([
-        _repository.getCurrentPlan(),
-        _purchases.initialize(),
-      ]);
+      final initialPlan = await _repository.getCurrentPlan();
+      if (!mounted) return;
+      setState(() => _current = initialPlan);
+
+      final products = await _purchases.initialize();
+      final confirmedPlan = await _repository.getCurrentPlan();
       if (!mounted) return;
       setState(() {
-        _current = results[0] as OwnerPlan;
-        _products = results[1] as List<ProductDetails>;
+        _current = confirmedPlan;
+        _products = products;
       });
       await _repository.track('paywall_viewed');
     } catch (_) {
@@ -120,7 +122,19 @@ class _PlansScreenState extends State<PlansScreen> with WidgetsBindingObserver {
           _refreshing = false;
           _refreshInFlight = false;
         });
+        unawaited(_refreshAfterStartup());
       }
+    }
+  }
+
+  Future<void> _refreshAfterStartup() async {
+    for (final delay in const [
+      Duration(milliseconds: 800),
+      Duration(seconds: 2),
+    ]) {
+      await Future<void>.delayed(delay);
+      if (!mounted) return;
+      await _refreshPlan(showProgress: false);
     }
   }
 
