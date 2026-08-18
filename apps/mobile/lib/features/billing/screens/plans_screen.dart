@@ -24,10 +24,12 @@ class _PlansScreenState extends State<PlansScreen> with WidgetsBindingObserver {
       StorePurchaseService(repository: _repository);
   StreamSubscription<StorePurchaseUpdate>? _updates;
   RealtimeChannel? _entitlementChannel;
+  Timer? _planRefreshTimer;
   OwnerPlan _current = OwnerPlan.free;
   List<ProductDetails> _products = const [];
   bool _loading = true;
   bool _refreshing = false;
+  bool _refreshInFlight = false;
   bool _processing = false;
   String? _error;
 
@@ -38,12 +40,17 @@ class _PlansScreenState extends State<PlansScreen> with WidgetsBindingObserver {
     _updates = _purchases.updates.listen(_onPurchaseUpdate);
     _load();
     _subscribeToPlanChanges();
+    _planRefreshTimer = Timer.periodic(
+      const Duration(seconds: 15),
+      (_) => _refreshPlan(showProgress: false),
+    );
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _updates?.cancel();
+    _planRefreshTimer?.cancel();
     final entitlementChannel = _entitlementChannel;
     if (entitlementChannel != null && SupabaseConfig.isConfigured) {
       Supabase.instance.client.removeChannel(entitlementChannel);
@@ -55,7 +62,7 @@ class _PlansScreenState extends State<PlansScreen> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _refreshPlan();
+      _refreshPlan(showProgress: false);
     }
   }
 
@@ -76,14 +83,15 @@ class _PlansScreenState extends State<PlansScreen> with WidgetsBindingObserver {
             column: 'user_id',
             value: userId,
           ),
-          callback: (_) => _refreshPlan(),
+          callback: (_) => _refreshPlan(showProgress: false),
         )
         .subscribe();
   }
 
   Future<void> _load() async {
-    if (_refreshing) return;
+    if (_refreshInFlight) return;
     setState(() {
+      _refreshInFlight = true;
       _refreshing = true;
       _loading = true;
       _error = null;
@@ -110,28 +118,64 @@ class _PlansScreenState extends State<PlansScreen> with WidgetsBindingObserver {
         setState(() {
           _loading = false;
           _refreshing = false;
+          _refreshInFlight = false;
         });
       }
     }
   }
 
-  Future<void> _refreshPlan() async {
-    if (_refreshing || !mounted) return;
-    setState(() {
-      _refreshing = true;
-      _error = null;
-    });
+  Future<OwnerPlan?> _refreshPlan({bool showProgress = true}) async {
+    if (_refreshInFlight || !mounted) return null;
+    _refreshInFlight = true;
+    if (showProgress) {
+      setState(() {
+        _refreshing = true;
+        _error = null;
+      });
+    }
     try {
       final plan = await _repository.getCurrentPlan();
-      if (!mounted) return;
-      setState(() => _current = plan);
-    } catch (_) {
-      if (!mounted) return;
+      if (!mounted) return null;
       setState(() {
-        _error = 'Не вдалося оновити активний тариф. Спробуйте ще раз.';
+        _current = plan;
+        _error = null;
       });
+      return plan;
+    } catch (_) {
+      if (mounted && showProgress) {
+        setState(() {
+          _error = 'Не вдалося оновити активний тариф. Спробуйте ще раз.';
+        });
+      }
+      return null;
     } finally {
-      if (mounted) setState(() => _refreshing = false);
+      _refreshInFlight = false;
+      if (mounted && showProgress) setState(() => _refreshing = false);
+    }
+  }
+
+  Future<void> _refreshAfterPurchase(String? productId) async {
+    final expectedPlan = switch (productId) {
+      LappoProducts.proMonthly || LappoProducts.proYearly => OwnerPlanCode.pro,
+      LappoProducts.proPlusMonthly ||
+      LappoProducts.proPlusYearly =>
+        OwnerPlanCode.proPlus,
+      _ => null,
+    };
+    const delays = [
+      Duration.zero,
+      Duration(seconds: 1),
+      Duration(seconds: 2),
+      Duration(seconds: 4),
+    ];
+
+    for (final delay in delays) {
+      if (delay != Duration.zero) await Future<void>.delayed(delay);
+      if (!mounted) return;
+      final plan = await _refreshPlan(showProgress: false);
+      if (plan != null && (expectedPlan == null || plan.code == expectedPlan)) {
+        return;
+      }
     }
   }
 
@@ -146,7 +190,7 @@ class _PlansScreenState extends State<PlansScreen> with WidgetsBindingObserver {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Підписку успішно активовано.')),
       );
-      _load();
+      unawaited(_refreshAfterPurchase(update.productId));
     } else if (update.state == StorePurchaseState.error) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -315,13 +359,7 @@ class _CurrentPlanCard extends StatelessWidget {
           'Ваш тариф — ${plan.name}',
           style: const TextStyle(fontWeight: FontWeight.w800),
         ),
-        subtitle: Text(
-          plan.unlimited
-              ? 'Безлімітний доступ до всіх можливостей'
-              : plan.currentPeriodEnd == null
-                  ? 'Доступно до ${plan.petLimit} тварин'
-                  : 'Діє до ${_date(plan.currentPeriodEnd!)}',
-        ),
+        subtitle: Text(_currentPlanDetails(plan)),
       ),
     );
   }
@@ -463,4 +501,17 @@ String _date(DateTime value) {
   final day = value.day.toString().padLeft(2, '0');
   final month = value.month.toString().padLeft(2, '0');
   return '$day.$month.${value.year}';
+}
+
+String _currentPlanDetails(OwnerPlan plan) {
+  if (plan.unlimited) return 'Безлімітний доступ до всіх можливостей';
+
+  final announcements = plan.breedingMonthlyLimit + plan.saleMonthlyLimit;
+  final limits = 'До ${plan.petLimit} тварин · '
+      '$announcements особистих оголошень/міс.';
+  final periodEnd = plan.currentPeriodEnd;
+  if (periodEnd == null) return limits;
+
+  final renewal = plan.cancelAtPeriodEnd ? ' · без автопоновлення' : '';
+  return '$limits\nДіє до ${_date(periodEnd)}$renewal';
 }
