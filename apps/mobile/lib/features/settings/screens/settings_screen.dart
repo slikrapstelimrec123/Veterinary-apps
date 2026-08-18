@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/auth/auth_state.dart';
 import '../../../shared/widgets/app_scaffold.dart';
@@ -12,6 +13,32 @@ import 'legal_text_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
+
+  static const _supportEmail = 'lappo.apps@gmail.com';
+
+  Future<void> _openSupportEmail(BuildContext context) async {
+    final uri = Uri(
+      scheme: 'mailto',
+      path: _supportEmail,
+      queryParameters: const {'subject': 'Звернення до підтримки Lappo'},
+    );
+
+    try {
+      if (await launchUrl(uri, mode: LaunchMode.externalApplication)) return;
+    } catch (_) {
+      // Fall back to copying the address when no mail app is configured.
+    }
+
+    await Clipboard.setData(const ClipboardData(text: _supportEmail));
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Не вдалося відкрити пошту. Email підтримки скопійовано.',
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -114,11 +141,12 @@ class SettingsScreen extends StatelessWidget {
                             style: TextStyle(color: Color(0xFF707784)),
                           ),
                           const SizedBox(height: 20),
-                          const ListTile(
-                            leading: Icon(Icons.email_outlined),
-                            title: Text('Написати на email'),
-                            subtitle: Text('lappo.apps@gmail.com'),
+                          ListTile(
+                            leading: const Icon(Icons.email_outlined),
+                            title: const Text('Написати на email'),
+                            subtitle: const Text(_supportEmail),
                             contentPadding: EdgeInsets.zero,
+                            onTap: () => _openSupportEmail(context),
                           ),
                           const SizedBox(height: 8),
                         ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/error_state.dart';
@@ -199,22 +200,21 @@ class _VisitRecordCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                  if (onEdit != null || onDelete != null)
-                    PopupMenuButton<String>(
-                      onSelected: (value) =>
-                          value == 'edit' ? onEdit?.call() : onDelete?.call(),
-                      itemBuilder: (_) => [
-                        if (onEdit != null)
-                          const PopupMenuItem(
-                            value: 'edit',
-                            child: Text('Редагувати'),
-                          ),
-                        if (onDelete != null)
-                          const PopupMenuItem(
-                            value: 'delete',
-                            child: Text('Видалити'),
-                          ),
-                      ],
+                  if (onEdit != null)
+                    IconButton(
+                      icon: const Icon(Icons.edit_outlined, size: 20),
+                      color: AppTheme.textSecondary,
+                      onPressed: onEdit,
+                      visualDensity: VisualDensity.compact,
+                      tooltip: 'Редагувати',
+                    ),
+                  if (onDelete != null)
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline, size: 20),
+                      color: AppTheme.textSecondary,
+                      onPressed: onDelete,
+                      visualDensity: VisualDensity.compact,
+                      tooltip: 'Видалити',
                     ),
                 ],
               ),
