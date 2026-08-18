@@ -2,11 +2,11 @@
 
 ## Identity
 
-- App name: `Lappo`
-- Bundle ID: `com.lappo.app`
+- App name: `Lappo: турбота про тварин`
+- Bundle ID: `com.lappo.owner`
 - Version: `1.0.0`
 - Increase the build number for every upload.
-- OAuth deep link: `com.lappo.app://login-callback`
+- OAuth deep link: `lappo://login-callback`
 
 ## Supabase
 

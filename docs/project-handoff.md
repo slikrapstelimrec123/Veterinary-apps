@@ -85,11 +85,11 @@ These are identifiers and locations, not credentials.
 
 ### Apple / App Store Connect
 
-- App name: Lappo
-- App Store Connect app ID: `6790752960`
-- Bundle identifier: `com.lappo.app`
+- App name: Lappo: турбота про тварин
+- App Store Connect app ID: `6802735037`
+- Bundle identifier: `com.lappo.owner`
 - Distribution is configured through the Codemagic App Store Connect
-  integration named `codemagic`.
+  integration named `codemagic-owner`.
 - Sign in with Apple service configuration has been set up for the project.
 - Signing certificates, profiles, API keys, bank/tax details, subscription
   metadata, screenshots, and review information remain in Apple's portals and
@@ -176,4 +176,3 @@ Use the checklists under `docs/`, especially:
 - Run proportionate automated checks before pushing a build.
 - Report the exact TestFlight build number after every successful release
   build.
-

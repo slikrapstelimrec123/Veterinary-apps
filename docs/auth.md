@@ -8,7 +8,7 @@ The supported application role is `pet_owner`.
 - Google OAuth;
 - Sign in with Apple.
 
-OAuth returns to the `com.lappo.app://login-callback` deep link. Supabase URL allow-lists and provider callback URLs must match the production configuration.
+OAuth returns to the `lappo://login-callback` deep link. Supabase URL allow-lists and provider callback URLs must match the production configuration.
 
 ## Profile Bootstrap
 

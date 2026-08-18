@@ -14,14 +14,14 @@ workflows:
       cancel_previous_builds: true
 
     integrations:
-      app_store_connect: codemagic
+      app_store_connect: codemagic-owner
 
     environment:
       groups:
         - lappo_supabase
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: com.lappo.app
+        bundle_identifier: com.lappo.owner
       flutter: stable
       xcode: 26.4
       cocoapods: default
