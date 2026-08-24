@@ -25,7 +25,7 @@ const productMap = {
     period: 'monthly',
     amount: 49900,
   },
-  lappo_pro_plus_yearly: {
+  lappo_pro_plus_annual: {
     kind: 'subscription',
     plan: 'pro_plus',
     period: 'yearly',

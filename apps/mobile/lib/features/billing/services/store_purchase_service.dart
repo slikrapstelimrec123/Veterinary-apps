@@ -10,7 +10,7 @@ class LappoProducts {
   static const proMonthly = 'lappo_pro_monthly';
   static const proYearly = 'lappo_pro_yearly';
   static const proPlusMonthly = 'lappo_pro_plus_monthly';
-  static const proPlusYearly = 'lappo_pro_plus_yearly';
+  static const proPlusYearly = 'lappo_pro_plus_annual';
   static const listingStandard = 'lappo_listing_standard';
   static const listingTop7 = 'lappo_listing_top_7';
   static const listingTop15 = 'lappo_listing_top_15';
