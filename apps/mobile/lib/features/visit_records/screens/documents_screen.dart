@@ -1,6 +1,4 @@
 import 'dart:io';
-
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -208,7 +206,7 @@ class DocumentViewerScreen extends StatelessWidget {
       appBar: AppBar(title: Text(title)),
       backgroundColor: Colors.black,
       body: _isPdf
-          ? PdfViewer.data(bytes)
+          ? PdfViewer.data(bytes, sourceName: fileName)
           : InteractiveViewer(
               minScale: 0.5,
               maxScale: 4,
