@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -370,5 +371,17 @@ class VisitRecordRepository {
     return _client.storage
         .from(document.storageBucket)
         .createSignedUrl(document.storagePath!, 60);
+  }
+
+  Future<Uint8List?> downloadDocument(VisitDocument document) async {
+    if (_useMockData ||
+        document.storagePath == null ||
+        !document.isVisibleToOwner) {
+      return null;
+    }
+
+    return _client.storage
+        .from(document.storageBucket)
+        .download(document.storagePath!);
   }
 }

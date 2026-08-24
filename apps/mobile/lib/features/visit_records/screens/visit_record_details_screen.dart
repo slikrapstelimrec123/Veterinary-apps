@@ -1,4 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../shared/widgets/app_scaffold.dart';
@@ -169,37 +173,119 @@ class _RecordSection extends StatelessWidget {
   }
 }
 
-class _DocumentTile extends StatelessWidget {
+class _DocumentTile extends StatefulWidget {
   const _DocumentTile({required this.document, required this.repository});
 
   final VisitDocument document;
   final VisitRecordRepository repository;
 
   @override
+  State<_DocumentTile> createState() => _DocumentTileState();
+}
+
+class _DocumentTileState extends State<_DocumentTile> {
+  bool _busy = false;
+
+  Future<void> _view() async {
+    setState(() => _busy = true);
+    try {
+      final url = await widget.repository.getSignedDocumentUrl(widget.document);
+      if (!mounted) return;
+      if (url == null ||
+          !await launchUrl(
+            Uri.parse(url),
+            mode: LaunchMode.externalApplication,
+          )) {
+        throw StateError('OPEN_DOCUMENT_FAILED');
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Не вдалося відкрити файл.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _download() async {
+    setState(() => _busy = true);
+    try {
+      final bytes =
+          await widget.repository.downloadDocument(widget.document);
+      if (bytes == null) throw StateError('DOWNLOAD_DOCUMENT_FAILED');
+      final directory = await getTemporaryDirectory();
+      final fileName = _safeFileName(
+        widget.document.fileName ?? widget.document.title,
+      );
+      final file = File('${directory.path}/$fileName');
+      await file.writeAsBytes(bytes, flush: true);
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        text: widget.document.title,
+      );
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Не вдалося завантажити файл.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  String _safeFileName(String value) {
+    final normalized = value.trim().replaceAll(RegExp(r'[\\/:*?"<>|]'), '_');
+    return normalized.isEmpty ? 'document' : normalized;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Card(
-      child: ListTile(
-        leading: const Icon(Icons.description_outlined),
-        title: Text(document.title),
-        subtitle: Text(
-          '${document.type} · ${document.fileSizeLabel} · '
-          '${document.createdAt.toIso8601String().split('T').first}',
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Column(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.description_outlined),
+              title: Text(widget.document.title),
+              subtitle: Text(
+                '${widget.document.type} · ${widget.document.fileSizeLabel} · '
+                '${widget.document.createdAt.toIso8601String().split('T').first}',
+              ),
+              trailing: const Icon(Icons.lock_outline),
+            ),
+            if (_busy)
+              const Padding(
+                padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: LinearProgressIndicator(minHeight: 2),
+              )
+            else
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextButton.icon(
+                        onPressed: _view,
+                        icon: const Icon(Icons.visibility_outlined, size: 18),
+                        label: const Text('Переглянути'),
+                      ),
+                    ),
+                    Expanded(
+                      child: TextButton.icon(
+                        onPressed: _download,
+                        icon: const Icon(Icons.download_outlined, size: 18),
+                        label: const Text('Завантажити'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
         ),
-        trailing: const Icon(Icons.lock_outline),
-        onTap: () async {
-          final url = await repository.getSignedDocumentUrl(document);
-          if (!context.mounted) return;
-          if (url == null ||
-              !await launchUrl(
-                Uri.parse(url),
-                mode: LaunchMode.externalApplication,
-              )) {
-            if (!context.mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Не вдалося відкрити файл.')),
-            );
-          }
-        },
       ),
     );
   }

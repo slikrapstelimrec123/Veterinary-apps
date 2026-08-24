@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/supabase_config.dart';
@@ -74,8 +73,6 @@ class _PassportContent extends StatelessWidget {
         _PassportCard(pet: pet),
         const SizedBox(height: 16),
         _PassportPhotoSection(pet: pet, onChanged: onChanged),
-        const SizedBox(height: 16),
-        _QrSection(pet: pet),
         const SizedBox(height: 16),
         _InfoSection(pet: pet),
       ],
@@ -349,54 +346,6 @@ class _PassportCard extends StatelessWidget {
                 ],
               ),
             ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─── QR ───────────────────────────────────────────────────────────────────────
-
-class _QrSection extends StatelessWidget {
-  const _QrSection({required this.pet});
-  final Pet pet;
-
-  String _buildQrData() {
-    final parts = [
-      'Lappo — Паспорт тварини',
-      'Ім\'я: ${pet.name}',
-      'Вид: ${pet.speciesLabel}',
-      if (pet.breed != null) 'Порода: ${pet.breed}',
-      if (pet.microchipNumber != null) 'Мікрочип: ${pet.microchipNumber}',
-      if (pet.weightKg != null) 'Вага: ${pet.weightKg} кг',
-      'Для повних даних встановіть Lappo',
-    ];
-    return parts.join('\n');
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            Text('QR-код історії лікування',
-                style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 12),
-            QrImageView(
-              data: _buildQrData(),
-              version: QrVersions.auto,
-              size: 200,
-              backgroundColor: Colors.white,
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Відскануйте QR-код для перегляду даних тварини',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
-            ),
           ],
         ),
       ),
