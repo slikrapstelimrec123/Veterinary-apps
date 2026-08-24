@@ -32,7 +32,7 @@ export default function TermsPage() {
         </nav>
       </header>
       <section className="legal-hero">
-        <p className="eyebrow">РЕДАКЦІЯ ВІД 23 ЛИПНЯ 2026 РОКУ</p>
+        <p className="eyebrow">РЕДАКЦІЯ ВІД 24 СЕРПНЯ 2026 РОКУ</p>
         <h1>Умови використання</h1>
         <p>Правила безпечного й відповідального використання Lappo.</p>
       </section>
@@ -45,7 +45,7 @@ export default function TermsPage() {
         ))}
         <section>
           <h2>10. Контакти</h2>
-          <p>Звернення щодо сервісу: <a className="support-email" href="mailto:support@lappo.app">support@lappo.app</a></p>
+          <p>Оператор: ФОП Шепетюк Іванна Валентинівна, РНОКПП 3466711705.<br />Адреса: Україна, 02034, місто Київ, вул. Лаврухіна Миколи, будинок 5, квартира 65.<br />Звернення щодо сервісу: <a className="support-email" href="mailto:lappo.apps@gmail.com">lappo.apps@gmail.com</a></p>
         </section>
       </article>
       <footer className="site-footer">

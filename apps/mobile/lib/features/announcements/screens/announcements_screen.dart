@@ -1485,61 +1485,34 @@ class _BreedFilter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 44,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        children: [
-          _Chip(
-              label: allLabel,
-              selected: selected == null,
-              onTap: () => onChanged(null)),
-          ...breeds.map((b) => _Chip(
-                label: b,
-                selected: selected == b,
-                onTap: () => onChanged(selected == b ? null : b),
-              )),
-        ],
-      ),
-    );
-  }
-}
-
-class _Chip extends StatelessWidget {
-  const _Chip(
-      {required this.label, required this.selected, required this.onTap});
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          constraints: const BoxConstraints(minHeight: 32),
-          alignment: Alignment.center,
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          decoration: BoxDecoration(
-            color: selected ? AppTheme.primary : AppTheme.surface,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-                color: selected ? AppTheme.primary : AppTheme.border),
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 2),
+      child: DropdownButtonFormField<String>(
+        value: selected ?? '',
+        isExpanded: true,
+        decoration: InputDecoration(
+          filled: true,
+          fillColor: AppTheme.surface,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: AppTheme.border),
           ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              height: 1,
-              fontWeight: FontWeight.w600,
-              color: selected ? Colors.white : AppTheme.textSecondary,
-            ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: AppTheme.border),
           ),
         ),
+        items: [
+          DropdownMenuItem<String>(value: '', child: Text(allLabel)),
+          ...breeds.map((value) => DropdownMenuItem<String>(
+                value: value,
+                child: Text(value),
+              )),
+        ],
+        onChanged: (value) =>
+            onChanged(value == null || value.isEmpty ? null : value),
       ),
     );
   }

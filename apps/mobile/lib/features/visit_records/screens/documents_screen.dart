@@ -1,9 +1,12 @@
 import 'dart:io';
 
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:pdfrx/pdfrx.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/empty_state.dart';
@@ -84,15 +87,16 @@ class _DocumentTileState extends State<_DocumentTile> {
   Future<void> _view() async {
     setState(() => _busy = true);
     try {
-      final url = await widget.repository.getSignedDocumentUrl(widget.document);
+      final bytes = await widget.repository.downloadDocument(widget.document);
+      if (bytes == null) throw StateError('OPEN_DOCUMENT_FAILED');
       if (!mounted) return;
-      if (url == null ||
-          !await launchUrl(
-            Uri.parse(url),
-            mode: LaunchMode.externalApplication,
-          )) {
-        throw StateError('OPEN_DOCUMENT_FAILED');
-      }
+      await Navigator.of(context).push(MaterialPageRoute<void>(
+        builder: (_) => DocumentViewerScreen(
+          title: widget.document.title,
+          fileName: widget.document.fileName ?? widget.document.title,
+          bytes: bytes,
+        ),
+      ));
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -180,6 +184,36 @@ class _DocumentTileState extends State<_DocumentTile> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class DocumentViewerScreen extends StatelessWidget {
+  const DocumentViewerScreen({
+    super.key,
+    required this.title,
+    required this.fileName,
+    required this.bytes,
+  });
+
+  final String title;
+  final String fileName;
+  final Uint8List bytes;
+
+  bool get _isPdf => fileName.toLowerCase().endsWith('.pdf');
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(title)),
+      backgroundColor: Colors.black,
+      body: _isPdf
+          ? PdfViewer.data(bytes)
+          : InteractiveViewer(
+              minScale: 0.5,
+              maxScale: 4,
+              child: Center(child: Image.memory(bytes, fit: BoxFit.contain)),
+            ),
     );
   }
 }

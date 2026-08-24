@@ -218,7 +218,7 @@ class _ActionGrid extends StatelessWidget {
             Expanded(
               child: _ActionCard(
                 icon: Icons.qr_code_outlined,
-                title: 'Іст. лікування',
+                title: 'Паспорт',
                 onTap: () => Navigator.of(context).push(InstantPageRoute(
                   builder: (_) =>
                       PetPassportScreen(petId: pet.id, petName: pet.name),

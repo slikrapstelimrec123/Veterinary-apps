@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/empty_state.dart';
@@ -11,6 +10,7 @@ import '../../../shared/widgets/error_state.dart';
 import '../data/visit_record_repository.dart';
 import '../domain/visit_document.dart';
 import '../domain/visit_record.dart';
+import 'documents_screen.dart';
 
 class VisitRecordDetailsScreen extends StatefulWidget {
   const VisitRecordDetailsScreen({super.key, required this.recordId});
@@ -189,15 +189,16 @@ class _DocumentTileState extends State<_DocumentTile> {
   Future<void> _view() async {
     setState(() => _busy = true);
     try {
-      final url = await widget.repository.getSignedDocumentUrl(widget.document);
+      final bytes = await widget.repository.downloadDocument(widget.document);
+      if (bytes == null) throw StateError('OPEN_DOCUMENT_FAILED');
       if (!mounted) return;
-      if (url == null ||
-          !await launchUrl(
-            Uri.parse(url),
-            mode: LaunchMode.externalApplication,
-          )) {
-        throw StateError('OPEN_DOCUMENT_FAILED');
-      }
+      await Navigator.of(context).push(MaterialPageRoute<void>(
+        builder: (_) => DocumentViewerScreen(
+          title: widget.document.title,
+          fileName: widget.document.fileName ?? widget.document.title,
+          bytes: bytes,
+        ),
+      ));
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

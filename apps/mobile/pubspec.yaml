@@ -22,6 +22,7 @@ dependencies:
   timezone: ^0.10.1
   path_provider: ^2.1.5
   pdf: ^3.11.3
+  pdfrx: ^2.4.7
   share_plus: ^10.1.4
   flutter_svg: ^2.0.9
   url_launcher: ^6.3.0

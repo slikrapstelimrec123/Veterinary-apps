@@ -31,8 +31,8 @@ export default function SupportPage() {
         <article className="support-card">
           <h2>Зв’язатися з нами</h2>
           <p>Вкажіть email акаунта, модель телефона, версію системи та коротко опишіть проблему. Не надсилайте пароль.</p>
-          <a className="support-email" href="mailto:support@lappo.app?subject=Lappo%20—%20підтримка">
-            support@lappo.app
+          <a className="support-email" href="mailto:lappo.apps@gmail.com?subject=Lappo%20—%20підтримка">
+            lappo.apps@gmail.com
           </a>
         </article>
         <article className="support-card">

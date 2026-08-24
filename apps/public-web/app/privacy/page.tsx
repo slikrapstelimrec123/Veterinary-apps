@@ -20,7 +20,7 @@ export default function PrivacyPage() {
         </nav>
       </header>
       <section className="legal-hero">
-        <p className="eyebrow">РЕДАКЦІЯ ВІД 23 ЛИПНЯ 2026 РОКУ</p>
+        <p className="eyebrow">РЕДАКЦІЯ ВІД 24 СЕРПНЯ 2026 РОКУ</p>
         <h1>Політика конфіденційності</h1>
         <p>
           Ця Політика пояснює, які дані обробляє Lappo, навіщо вони
@@ -60,8 +60,9 @@ export default function PrivacyPage() {
           <p>
             Для зберігання й авторизації використовується Supabase, для
             входу — Apple та Google, для покупок — Apple App Store або
-            Google Play. Ці постачальники обробляють лише дані, необхідні
-            для відповідної послуги. Lappo не продає персональні чи медичні дані.
+            Google Play. Локальні нагадування обробляються на пристрої.
+            У поточній версії Lappo не використовує рекламні мережі чи
+            сторонню аналітику. Lappo не продає персональні чи медичні дані.
           </p>
         </section>
         <section>
@@ -86,9 +87,11 @@ export default function PrivacyPage() {
         <section>
           <h2>7. Контакти</h2>
           <p>
+            Володілець даних: ФОП Шепетюк Іванна Валентинівна, РНОКПП 3466711705.<br />
+            Адреса: Україна, 02034, місто Київ, вул. Лаврухіна Миколи, будинок 5, квартира 65.<br />
             Питання щодо даних і приватності:{" "}
-            <a className="support-email" href="mailto:support@lappo.app">
-              support@lappo.app
+            <a className="support-email" href="mailto:lappo.apps@gmail.com">
+              lappo.apps@gmail.com
             </a>
           </p>
         </section>
