@@ -1488,7 +1488,7 @@ class _BreedFilter extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 6, 16, 2),
       child: DropdownButtonFormField<String>(
-        value: selected ?? '',
+        initialValue: selected ?? '',
         isExpanded: true,
         decoration: InputDecoration(
           filled: true,
