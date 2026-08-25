@@ -150,7 +150,6 @@ class _DocumentTileState extends State<_DocumentTile> {
               title: Text(widget.document.title),
               subtitle: Text(
                   '${widget.document.type} - ${widget.document.fileSizeLabel} - ${widget.document.createdAt.toIso8601String().split('T').first}'),
-              trailing: const Icon(Icons.lock_outline),
             ),
             if (_busy)
               const Padding(

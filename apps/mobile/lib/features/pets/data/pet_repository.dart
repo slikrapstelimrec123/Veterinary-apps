@@ -4,6 +4,7 @@ import '../../../core/config/supabase_config.dart';
 import '../../../core/data/app_data_events.dart';
 import '../../../shared/data/mock_data.dart';
 import '../../../shared/services/private_pet_storage.dart';
+import '../../../core/notifications/local_notification_service.dart';
 import '../domain/pet.dart';
 
 class PetRepository {
@@ -54,6 +55,7 @@ class PetRepository {
     );
     final saved =
         await _fromPrivateRow(Map<String, dynamic>.from(created as Map));
+    await _syncBirthdayReminder(saved);
     AppDataEvents.notifyChanged();
     return saved;
   }
@@ -75,6 +77,7 @@ class PetRepository {
         .select('*')
         .single();
     final saved = await _fromPrivateRow(updated);
+    await _syncBirthdayReminder(saved);
     AppDataEvents.notifyChanged();
     return saved;
   }
@@ -103,5 +106,17 @@ class PetRepository {
       // Keep legacy URLs available if signing is temporarily unavailable.
     }
     return Pet.fromJson(hydrated);
+  }
+
+  Future<void> _syncBirthdayReminder(Pet pet) async {
+    if (pet.birthDate == null) {
+      await LocalNotificationService.instance.cancelBirthdayReminder(pet.id);
+      return;
+    }
+    await LocalNotificationService.instance.scheduleBirthdayReminder(
+      petId: pet.id,
+      petName: pet.name,
+      birthDate: pet.birthDate!,
+    );
   }
 }

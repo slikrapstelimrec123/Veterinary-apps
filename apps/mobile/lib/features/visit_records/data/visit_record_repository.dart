@@ -380,8 +380,27 @@ class VisitRecordRepository {
       return null;
     }
 
-    return _client.storage
-        .from(document.storageBucket)
-        .download(document.storagePath!);
+    // Download through a short-lived signed URL. This keeps the bucket
+    // private while avoiding platform-specific failures from the storage
+    // download helper on iOS.
+    final signedUrl = await getSignedDocumentUrl(document);
+    if (signedUrl == null) return null;
+
+    final client = HttpClient();
+    try {
+      final request = await client.getUrl(Uri.parse(signedUrl));
+      final response = await request.close();
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        await response.drain();
+        throw StateError('DOCUMENT_DOWNLOAD_HTTP_${response.statusCode}');
+      }
+      final builder = await response.fold<BytesBuilder>(
+        BytesBuilder(),
+        (builder, chunk) => builder..add(chunk),
+      );
+      return builder.takeBytes();
+    } finally {
+      client.close(force: true);
+    }
   }
 }

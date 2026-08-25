@@ -268,6 +268,13 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     try {
       final pets = await PetRepository().getPets();
       for (final pet in pets) {
+        if (pet.birthDate != null) {
+          await LocalNotificationService.instance.scheduleBirthdayReminder(
+            petId: pet.id,
+            petName: pet.name,
+            birthDate: pet.birthDate!,
+          );
+        }
         final medications = await MedicationRepository().getMedications(pet.id);
         for (final medication in medications) {
           final dueDate = medication.nextDoseDate;

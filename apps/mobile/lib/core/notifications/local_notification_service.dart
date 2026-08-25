@@ -121,6 +121,52 @@ class LocalNotificationService {
     await _plugin.cancel(_stableId('medication:$medicationId'));
   }
 
+  Future<void> scheduleBirthdayReminder({
+    required String petId,
+    required String petName,
+    required DateTime birthDate,
+  }) async {
+    await initialize();
+    final id = _stableId('birthday:$petId');
+    await _plugin.cancel(id);
+
+    final now = tz.TZDateTime.now(tz.local);
+    var scheduled = tz.TZDateTime(
+      tz.local,
+      now.year,
+      birthDate.month,
+      birthDate.day,
+      9,
+    );
+    if (!scheduled.isAfter(now)) {
+      scheduled = tz.TZDateTime(
+        tz.local,
+        now.year + 1,
+        birthDate.month,
+        birthDate.day,
+        9,
+      );
+    }
+
+    await _plugin.zonedSchedule(
+      id,
+      'День народження улюбленця',
+      'Сьогодні день народження $petName.',
+      scheduled,
+      _details,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      matchDateTimeComponents: DateTimeComponents.dayOfMonthAndMonth,
+      payload: 'birthday:$petId',
+    );
+  }
+
+  Future<void> cancelBirthdayReminder(String petId) async {
+    await initialize();
+    await _plugin.cancel(_stableId('birthday:$petId'));
+  }
+
   Future<void> cancelAll() async {
     await initialize();
     await _plugin.cancelAll();

@@ -157,6 +157,13 @@ class _PetCard extends StatelessWidget {
                     Text(pet.breed!,
                         style: const TextStyle(color: AppTheme.textSecondary)),
                   ],
+                  if (pet.birthDate != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      'День народження: ${_formatDate(pet.birthDate!)}',
+                      style: const TextStyle(color: AppTheme.textSecondary),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -165,6 +172,9 @@ class _PetCard extends StatelessWidget {
       ),
     );
   }
+
+  String _formatDate(DateTime date) =>
+      '${date.day.toString().padLeft(2, '0')}.${date.month.toString().padLeft(2, '0')}.${date.year}';
 }
 
 class _ActionGrid extends StatelessWidget {

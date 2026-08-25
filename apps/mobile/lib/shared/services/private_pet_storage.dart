@@ -31,6 +31,10 @@ class PrivatePetStorage {
           file,
           fileOptions: FileOptions(upsert: upsert),
         );
+    // The common avatar path is uploaded with upsert. Invalidate the cached
+    // signed URL so screens can receive a fresh URL and show the new image
+    // immediately after saving.
+    _signedUrlCache.remove(path);
     return path;
   }
 
