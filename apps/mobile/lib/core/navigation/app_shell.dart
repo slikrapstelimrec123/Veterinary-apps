@@ -538,7 +538,7 @@ class _HomeScreenState extends State<HomeScreen> {
               else ...[
                 _HomeFocusCard(
                   pets: pets,
-                  selectedPet: selectedPet,
+                  selectedPet: selectedPet!,
                   focusItems: data.focusItems,
                   focusDataComplete: data.focusDataComplete,
                   onPetSelected: (petId) =>
@@ -564,7 +564,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   onOpenPet: () async {
                     final result = await Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) => PetProfileScreen(petId: selectedPet.id),
+                        builder: (_) =>
+                            PetProfileScreen(petId: selectedPet!.id),
                       ),
                     );
                     if (result != null && mounted) refresh();
@@ -871,7 +872,7 @@ class _PetCalendarScreen extends StatefulWidget {
 }
 
 class _PetCalendarScreenState extends State<_PetCalendarScreen> {
-  late DateTime _selectedDate = _day(DateTime.now());
+  DateTime _selectedDate = DateTime.now();
 
   DateTime _day(DateTime value) => DateTime(value.year, value.month, value.day);
 
@@ -947,7 +948,7 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
   final _visitRepository = VisitRecordRepository();
   late Future<List<_HomeFocusItem>> _events = _loadEvents();
   List<Pet> _pets = const [];
-  DateTime _selectedDate = _day(DateTime.now());
+  DateTime _selectedDate = DateTime.now();
 
   DateTime _day(DateTime value) => DateTime(value.year, value.month, value.day);
 
@@ -1154,36 +1155,6 @@ class _AnnouncementsCard extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _HomePetPreview extends StatelessWidget {
-  const _HomePetPreview({required this.pet, required this.onChanged});
-
-  final Pet pet;
-  final VoidCallback onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Card(
-        child: ListTile(
-          leading: PetAvatar(name: pet.name, avatarUrl: pet.avatarUrl),
-          title: Text(pet.name,
-              style: const TextStyle(fontWeight: FontWeight.w700)),
-          subtitle:
-              Text('${pet.speciesLabel} · ${pet.breed ?? 'Породу не вказано'}'),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () async {
-            final result = await Navigator.of(context).push(MaterialPageRoute(
-              builder: (_) => PetProfileScreen(petId: pet.id),
-            ));
-            if (result != null) onChanged();
-          },
         ),
       ),
     );
