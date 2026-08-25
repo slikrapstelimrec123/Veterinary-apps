@@ -432,14 +432,19 @@ class _BreedingTabState extends State<_BreedingTab> {
             const PetAnnouncementFilterOptions(breeds: [], cities: []);
         return Column(
           children: [
-            _BreedFilter(
-              breeds: filters.cities,
-              selected: _selectedCity,
-              onChanged: (c) {
-                setState(() => _selectedCity = c);
+            _PetAnnouncementFilters(
+              cities: filters.cities,
+              breeds: filters.breeds,
+              selectedCity: _selectedCity,
+              selectedBreed: _selectedBreed,
+              onCityChanged: (city) {
+                setState(() => _selectedCity = city);
                 _load();
               },
-              allLabel: 'Всі міста',
+              onBreedChanged: (breed) {
+                setState(() => _selectedBreed = breed);
+                _load();
+              },
             ),
             Expanded(
               child: FutureBuilder<List<BreedingAnnouncement>>(
@@ -518,14 +523,19 @@ class _SaleTabState extends State<_SaleTab> {
             const PetAnnouncementFilterOptions(breeds: [], cities: []);
         return Column(
           children: [
-            _BreedFilter(
-              breeds: filters.cities,
-              selected: _selectedCity,
-              onChanged: (c) {
-                setState(() => _selectedCity = c);
+            _PetAnnouncementFilters(
+              cities: filters.cities,
+              breeds: filters.breeds,
+              selectedCity: _selectedCity,
+              selectedBreed: _selectedBreed,
+              onCityChanged: (city) {
+                setState(() => _selectedCity = city);
                 _load();
               },
-              allLabel: 'Всі міста',
+              onBreedChanged: (breed) {
+                setState(() => _selectedBreed = breed);
+                _load();
+              },
             ),
             Expanded(
               child: FutureBuilder<List<SaleAnnouncement>>(
@@ -1455,58 +1465,107 @@ class _EditField extends StatelessWidget {
 
 // ─── Breed Filter ─────────────────────────────────────────────────────────────
 
-class _BreedFilter extends StatelessWidget {
-  const _BreedFilter(
-      {required this.breeds,
-      required this.selected,
-      required this.onChanged,
-      this.allLabel = 'Всі'});
+class _PetAnnouncementFilters extends StatelessWidget {
+  const _PetAnnouncementFilters({
+    required this.cities,
+    required this.breeds,
+    required this.selectedCity,
+    required this.selectedBreed,
+    required this.onCityChanged,
+    required this.onBreedChanged,
+  });
 
+  final List<String> cities;
   final List<String> breeds;
-  final String? selected;
-  final ValueChanged<String?> onChanged;
-  final String allLabel;
+  final String? selectedCity;
+  final String? selectedBreed;
+  final ValueChanged<String?> onCityChanged;
+  final ValueChanged<String?> onBreedChanged;
+
+  Future<void> _pick(
+    BuildContext context, {
+    required String title,
+    required String allLabel,
+    required List<String> values,
+    required String? selected,
+    required ValueChanged<String?> onChanged,
+  }) async {
+    final selection = await showModalBottomSheet<_PetFilterSelection>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+              child: Text(title,
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.w800)),
+            ),
+            ListTile(
+              title: Text(allLabel),
+              trailing: selected == null
+                  ? const Icon(Icons.check, color: AppTheme.primary)
+                  : null,
+              onTap: () =>
+                  Navigator.pop(sheetContext, const _PetFilterSelection(null)),
+            ),
+            ...values.map((value) => ListTile(
+                  title: Text(value),
+                  trailing: selected == value
+                      ? const Icon(Icons.check, color: AppTheme.primary)
+                      : null,
+                  onTap: () =>
+                      Navigator.pop(sheetContext, _PetFilterSelection(value)),
+                )),
+          ],
+        ),
+      ),
+    );
+    if (selection == null || selection.value == selected) return;
+    onChanged(selection.value);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 6, 16, 2),
-      child: ChoiceChip(
-        label: Text(selected ?? allLabel),
-        selected: selected != null,
-        onSelected: (_) async {
-          final value = await showModalBottomSheet<String?>(
-            context: context,
-            showDragHandle: true,
-            builder: (sheetContext) => SafeArea(
-              child: ListView(
-                shrinkWrap: true,
-                children: [
-                  ListTile(
-                    title: Text(allLabel),
-                    trailing: selected == null
-                        ? const Icon(Icons.check, color: AppTheme.primary)
-                        : null,
-                    onTap: () => Navigator.pop(sheetContext),
-                  ),
-                  ...breeds.map(
-                    (value) => ListTile(
-                      title: Text(value),
-                      trailing: selected == value
-                          ? const Icon(Icons.check, color: AppTheme.primary)
-                          : null,
-                      onTap: () => Navigator.pop(sheetContext, value),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-          onChanged(value);
-        },
+    return SizedBox(
+      height: 52,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+        scrollDirection: Axis.horizontal,
+        children: [
+          ChoiceChip(
+            label: Text(selectedCity ?? 'Всі міста'),
+            selected: selectedCity != null,
+            onSelected: (_) => _pick(context,
+                title: 'Оберіть місто',
+                allLabel: 'Всі міста',
+                values: cities,
+                selected: selectedCity,
+                onChanged: onCityChanged),
+          ),
+          const SizedBox(width: 8),
+          ChoiceChip(
+            label: Text(selectedBreed ?? 'Всі породи'),
+            selected: selectedBreed != null,
+            onSelected: (_) => _pick(context,
+                title: 'Оберіть породу',
+                allLabel: 'Всі породи',
+                values: breeds,
+                selected: selectedBreed,
+                onChanged: onBreedChanged),
+          ),
+        ],
       ),
     );
   }
+}
+
+class _PetFilterSelection {
+  const _PetFilterSelection(this.value);
+
+  final String? value;
 }
 
 // ─── Breeding Card ────────────────────────────────────────────────────────────

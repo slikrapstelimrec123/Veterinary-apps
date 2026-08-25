@@ -35,6 +35,7 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   int _index = 0;
+  late final PageController _pageController = PageController();
   final _tabVersions = List<int>.filled(5, 0);
   final Set<int> _staleTabs = <int>{};
   RealtimeChannel? _notificationChannel;
@@ -156,6 +157,13 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
         unreadFuture = notificationRepository.getUnreadCount();
       }
     });
+    if (_pageController.hasClients && _pageController.page?.round() != value) {
+      _pageController.animateToPage(
+        value,
+        duration: const Duration(milliseconds: 240),
+        curve: Curves.easeOutCubic,
+      );
+    }
   }
 
   @override
@@ -323,6 +331,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     if (transferChannel != null && SupabaseConfig.isConfigured) {
       Supabase.instance.client.removeChannel(transferChannel);
     }
+    _pageController.dispose();
     super.dispose();
   }
 
@@ -337,7 +346,8 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     final tabs = [
       HomeScreen(
           key: ValueKey('home-${_tabVersions[0]}'),
-          onOpenPets: () => _selectTab(1)),
+          onOpenPets: () => _selectTab(1),
+          onOpenAnnouncements: () => _selectTab(2)),
       PetListScreen(key: ValueKey('pets-${_tabVersions[1]}')),
       AnnouncementsScreen(key: ValueKey('announcements-${_tabVersions[2]}')),
       NotificationsScreen(key: ValueKey('notifications-${_tabVersions[3]}')),
@@ -345,10 +355,13 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     ];
 
     return Scaffold(
-      // Render only the selected tab. Keeping every transparent tab inside an
-      // IndexedStack allowed an old frame to remain visible for a moment on
-      // slower devices while the next tab was being rebuilt.
-      body: tabs[_index],
+      body: PageView(
+        controller: _pageController,
+        onPageChanged: (value) {
+          if (value != _index) _selectTab(value);
+        },
+        children: tabs,
+      ),
       bottomNavigationBar: FutureBuilder<int>(
         future: unreadFuture,
         builder: (context, snapshot) {
@@ -383,9 +396,14 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
 }
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, required this.onOpenPets});
+  const HomeScreen({
+    super.key,
+    required this.onOpenPets,
+    required this.onOpenAnnouncements,
+  });
 
   final VoidCallback onOpenPets;
+  final VoidCallback onOpenAnnouncements;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -525,6 +543,32 @@ class _HomeScreenState extends State<HomeScreen> {
                   focusDataComplete: data.focusDataComplete,
                   onPetSelected: (petId) =>
                       setState(() => _selectedPetId = petId),
+                  onOpenCalendar: () {
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => _PetCalendarScreen(
+                        pet: selectedPet!,
+                        items: data.focusItems
+                            .where((item) => item.pet.id == selectedPet.id)
+                            .toList(growable: false),
+                        onOpenItem: (item) async {
+                          if (item.type == _HomeFocusType.medication) {
+                            await Navigator.of(context).push(MaterialPageRoute(
+                              builder: (_) => MedicationsScreen(
+                                petId: item.pet.id,
+                                petName: item.pet.name,
+                              ),
+                            ));
+                          } else if (item.visitRecordId != null) {
+                            await Navigator.of(context).push(MaterialPageRoute(
+                              builder: (_) => VisitRecordDetailsScreen(
+                                recordId: item.visitRecordId!,
+                              ),
+                            ));
+                          }
+                        },
+                      ),
+                    ));
+                  },
                   onOpenItem: (item) async {
                     if (item.type == _HomeFocusType.medication) {
                       await Navigator.of(context).push(MaterialPageRoute(
@@ -575,7 +619,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
               const SizedBox(height: 12),
-              const _AnnouncementsCard(),
+              _AnnouncementsCard(onTap: widget.onOpenAnnouncements),
             ],
           ],
         );
@@ -631,6 +675,7 @@ class _HomeFocusCard extends StatelessWidget {
     required this.focusItems,
     required this.focusDataComplete,
     required this.onPetSelected,
+    required this.onOpenCalendar,
     required this.onOpenItem,
     required this.onOpenPet,
     required this.onRefresh,
@@ -641,6 +686,7 @@ class _HomeFocusCard extends StatelessWidget {
   final List<_HomeFocusItem> focusItems;
   final bool focusDataComplete;
   final ValueChanged<String> onPetSelected;
+  final VoidCallback onOpenCalendar;
   final ValueChanged<_HomeFocusItem> onOpenItem;
   final VoidCallback onOpenPet;
   final VoidCallback onRefresh;
@@ -735,14 +781,16 @@ class _HomeFocusCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                Icon(
-                  !focusDataComplete && monthItems.isEmpty
-                      ? Icons.sync_problem_outlined
-                      : Icons.calendar_month_outlined,
-                  color: !focusDataComplete && monthItems.isEmpty
-                      ? AppTheme.danger
-                      : AppTheme.primary,
-                ),
+                if (!focusDataComplete && monthItems.isEmpty)
+                  const Icon(Icons.sync_problem_outlined,
+                      color: AppTheme.danger)
+                else
+                  IconButton(
+                    onPressed: onOpenCalendar,
+                    tooltip: 'Відкрити календар',
+                    icon: const Icon(Icons.calendar_month_outlined),
+                    color: AppTheme.primary,
+                  ),
               ],
             ),
             const SizedBox(height: 16),
@@ -853,32 +901,117 @@ class _HomeFocusCard extends StatelessWidget {
   }
 }
 
+class _PetCalendarScreen extends StatefulWidget {
+  const _PetCalendarScreen({
+    required this.pet,
+    required this.items,
+    required this.onOpenItem,
+  });
+
+  final Pet pet;
+  final List<_HomeFocusItem> items;
+  final ValueChanged<_HomeFocusItem> onOpenItem;
+
+  @override
+  State<_PetCalendarScreen> createState() => _PetCalendarScreenState();
+}
+
+class _PetCalendarScreenState extends State<_PetCalendarScreen> {
+  late DateTime _selectedDate = _day(DateTime.now());
+
+  DateTime _day(DateTime value) => DateTime(value.year, value.month, value.day);
+
+  String _dateLabel(DateTime value) =>
+      '${value.day.toString().padLeft(2, '0')}.${value.month.toString().padLeft(2, '0')}.${value.year}';
+
+  List<_HomeFocusItem> get _selectedItems => widget.items
+      .where((item) => _day(item.date) == _selectedDate)
+      .toList(growable: false);
+
+  @override
+  Widget build(BuildContext context) {
+    return AppScaffold(
+      title: 'Календар',
+      subtitle: widget.pet.name,
+      children: [
+        Card(
+          child: CalendarDatePicker(
+            initialDate: _selectedDate,
+            firstDate: DateTime(2020),
+            lastDate: DateTime(2100),
+            onDateChanged: (date) => setState(() => _selectedDate = _day(date)),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          '${_selectedDate.day.toString().padLeft(2, '0')}.${_selectedDate.month.toString().padLeft(2, '0')}.${_selectedDate.year}',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 8),
+        if (_selectedItems.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 28),
+            child: Center(
+              child: Text(
+                'На цей день подій немає.',
+                style: TextStyle(color: AppTheme.textSecondary),
+              ),
+            ),
+          )
+        else
+          ..._selectedItems.map(
+            (item) => Card(
+              child: ListTile(
+                leading: Icon(
+                  item.type == _HomeFocusType.medication
+                      ? Icons.medication_outlined
+                      : Icons.medical_information_outlined,
+                  color: AppTheme.primary,
+                ),
+                title: Text(item.title),
+                subtitle: Text(_dateLabel(item.date)),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => widget.onOpenItem(item),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
 class _AnnouncementsCard extends StatelessWidget {
-  const _AnnouncementsCard();
+  const _AnnouncementsCard({required this.onTap});
+
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.campaign_outlined,
-                    size: 18, color: AppTheme.primary),
-                const SizedBox(width: 6),
-                Text('Оголошення',
-                    style: Theme.of(context).textTheme.titleMedium),
-              ],
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'Знайдіть партнера для в\'язки або цуценят улюбленої породи у розділі оголошень.',
-              style: TextStyle(color: AppTheme.textSecondary),
-            ),
-          ],
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.campaign_outlined,
+                      size: 18, color: AppTheme.primary),
+                  const SizedBox(width: 6),
+                  Text('Оголошення',
+                      style: Theme.of(context).textTheme.titleMedium),
+                ],
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Знайдіть партнера для в\'язки або цуценят улюбленої породи у розділі оголошень.',
+                style: TextStyle(color: AppTheme.textSecondary),
+              ),
+            ],
+          ),
         ),
       ),
     );

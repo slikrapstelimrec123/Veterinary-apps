@@ -430,7 +430,10 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
           error: _error,
           speciesOptions: _speciesOptions,
           speciesLabel: _speciesLabel,
-          onSpeciesChanged: (value) => setState(() => _species = value),
+          onSpeciesChanged: (value) => setState(() {
+            _species = value;
+            _breedController.clear();
+          }),
           onSexChanged: (value) => setState(() => _sex = value),
           onContinue: _continuePetBasics,
         ),

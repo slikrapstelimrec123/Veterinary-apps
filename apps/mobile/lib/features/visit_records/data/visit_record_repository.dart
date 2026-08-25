@@ -383,9 +383,14 @@ class VisitRecordRepository {
     try {
       // Prefer the authenticated storage client so the private bucket and
       // its RLS policy remain the source of truth.
-      return await _client.storage
+      final bytes = await _client.storage
           .from(document.storageBucket)
           .download(document.storagePath!);
+      if (bytes.isNotEmpty) return bytes;
+      // Treat an empty response as a failed direct download. Some storage
+      // client versions return an empty buffer for a private object while a
+      // signed URL still returns the actual file.
+      throw StateError('DOCUMENT_DOWNLOAD_EMPTY');
     } catch (_) {
       // Some iOS Storage client versions fail on a direct download while the
       // same private object is reachable through a short-lived signed URL.

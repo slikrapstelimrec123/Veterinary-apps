@@ -1,7 +1,4 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../shared/widgets/app_scaffold.dart';
@@ -213,19 +210,15 @@ class _DocumentTileState extends State<_DocumentTile> {
   Future<void> _download() async {
     setState(() => _busy = true);
     try {
-      final bytes =
-          await widget.repository.downloadDocument(widget.document);
+      final bytes = await widget.repository.downloadDocument(widget.document);
       if (bytes == null) throw StateError('DOWNLOAD_DOCUMENT_FAILED');
-      final directory = await getTemporaryDirectory();
       final fileName = _safeFileName(
         widget.document.fileName ?? widget.document.title,
       );
-      final file = File('${directory.path}/$fileName');
-      await file.writeAsBytes(bytes, flush: true);
       await Share.shareXFiles(
         [
-          XFile(
-            file.path,
+          XFile.fromData(
+            bytes,
             name: fileName,
             mimeType: widget.document.fileType ?? 'application/octet-stream',
           ),
