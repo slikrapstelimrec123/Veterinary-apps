@@ -565,7 +565,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     final result = await Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (_) =>
-                            PetProfileScreen(petId: selectedPet!.id),
+                            PetProfileScreen(petId: selectedPet.id),
                       ),
                     );
                     if (result != null && mounted) refresh();
