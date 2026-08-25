@@ -1487,32 +1487,21 @@ class _BreedFilter extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 6, 16, 2),
-      child: DropdownButtonFormField<String>(
-        initialValue: selected ?? '',
-        isExpanded: true,
-        decoration: InputDecoration(
-          filled: true,
-          fillColor: AppTheme.surface,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: AppTheme.border),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          ChoiceChip(
+            label: Text(allLabel),
+            selected: selected == null,
+            onSelected: (_) => onChanged(null),
           ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: AppTheme.border),
-          ),
-        ),
-        items: [
-          DropdownMenuItem<String>(value: '', child: Text(allLabel)),
-          ...breeds.map((value) => DropdownMenuItem<String>(
-                value: value,
-                child: Text(value),
+          ...breeds.map((value) => ChoiceChip(
+                label: Text(value),
+                selected: selected == value,
+                onSelected: (_) => onChanged(value),
               )),
         ],
-        onChanged: (value) =>
-            onChanged(value == null || value.isEmpty ? null : value),
       ),
     );
   }

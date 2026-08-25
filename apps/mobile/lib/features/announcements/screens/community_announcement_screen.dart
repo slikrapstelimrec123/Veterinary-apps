@@ -138,54 +138,71 @@ class _CommunityAnnouncementTabState extends State<CommunityAnnouncementTab> {
     }
   }
 
+  Future<void> _pickCity() async {
+    final selection = await _showFilterPicker<String>(context,
+        title: 'Оберіть місто', allLabel: 'Всі міста',
+        values: _filterOptions.cities, labelFor: (city) => city,
+        selected: _selectedCity);
+    if (selection == null) return;
+    if (!mounted || selection.value == _selectedCity) return;
+    setState(() => _selectedCity = selection.value);
+    await _load(reset: true);
+  }
+
+  Future<void> _pickServiceCategory() async {
+    final selection = await _showFilterPicker<ServiceCategory>(context,
+        title: 'Оберіть тип послуги', allLabel: 'Всі послуги',
+        values: _filterOptions.serviceCategories,
+        labelFor: (category) => category.label,
+        selected: _selectedServiceCategory);
+    if (selection == null) return;
+    if (!mounted || selection.value == _selectedServiceCategory) return;
+    setState(() => _selectedServiceCategory = selection.value);
+    await _load(reset: true);
+  }
+
+  Future<void> _pickOfferCategory() async {
+    final selection = await _showFilterPicker<OfferCategory>(context,
+        title: 'Оберіть тип пропозиції', allLabel: 'Всі типи',
+        values: _filterOptions.offerCategories,
+        labelFor: (category) => category.label,
+        selected: _selectedOfferCategory);
+    if (selection == null) return;
+    if (!mounted || selection.value == _selectedOfferCategory) return;
+    setState(() => _selectedOfferCategory = selection.value);
+    await _load(reset: true);
+  }
+
   Widget _filters() {
-    return Column(
-      children: [
-        _AnnouncementDropdownFilter(
-          values: _filterOptions.cities,
-          selected: _selectedCity,
-          allLabel: 'Всі міста',
-          onChanged: (value) {
-            if (value == _selectedCity) return;
-            setState(() => _selectedCity = value);
-            _load(reset: true);
-          },
-        ),
-        if (widget.type == CommunityAnnouncementType.service)
-          _AnnouncementDropdownFilter(
-            values: _filterOptions.serviceCategories
-                .map((category) => category.label)
-                .toList(),
-            selected: _selectedServiceCategory?.label,
-            allLabel: 'Всі послуги',
-            onChanged: (value) {
-              final matches = _filterOptions.serviceCategories
-                  .where((item) => item.label == value)
-                  .toList();
-              final category = matches.isEmpty ? null : matches.first;
-              if (category == _selectedServiceCategory) return;
-              setState(() => _selectedServiceCategory = category);
-              _load(reset: true);
-            },
+    return SizedBox(
+      height: 52,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+        scrollDirection: Axis.horizontal,
+        children: [
+          _FilterButton(
+            label: _selectedCity ?? 'Всі міста',
+            selected: _selectedCity != null,
+            onTap: _pickCity,
           ),
-        if (widget.type == CommunityAnnouncementType.offer)
-          _AnnouncementDropdownFilter(
-            values: _filterOptions.offerCategories
-                .map((category) => category.label)
-                .toList(),
-            selected: _selectedOfferCategory?.label,
-            allLabel: 'Всі типи',
-            onChanged: (value) {
-              final matches = _filterOptions.offerCategories
-                  .where((item) => item.label == value)
-                  .toList();
-              final category = matches.isEmpty ? null : matches.first;
-              if (category == _selectedOfferCategory) return;
-              setState(() => _selectedOfferCategory = category);
-              _load(reset: true);
-            },
-          ),
-      ],
+          if (widget.type == CommunityAnnouncementType.service) ...[
+            const SizedBox(width: 8),
+            _FilterButton(
+              label: _selectedServiceCategory?.label ?? 'Всі послуги',
+              selected: _selectedServiceCategory != null,
+              onTap: _pickServiceCategory,
+            ),
+          ],
+          if (widget.type == CommunityAnnouncementType.offer) ...[
+            const SizedBox(width: 8),
+            _FilterButton(
+              label: _selectedOfferCategory?.label ?? 'Всі типи',
+              selected: _selectedOfferCategory != null,
+              onTap: _pickOfferCategory,
+            ),
+          ],
+        ],
+      ),
     );
   }
 
@@ -1149,51 +1166,70 @@ class _MessageState extends StatelessWidget {
   }
 }
 
-class _AnnouncementDropdownFilter extends StatelessWidget {
-  const _AnnouncementDropdownFilter({
-    required this.values,
+class _FilterSelection<T> {
+  const _FilterSelection(this.value);
+
+  final T? value;
+}
+
+Future<_FilterSelection<T>?> _showFilterPicker<T>(BuildContext context, {
+  required String title,
+  required String allLabel,
+  required List<T> values,
+  required String Function(T value) labelFor,
+  required T? selected,
+}) {
+  return showModalBottomSheet<_FilterSelection<T>>(
+    context: context,
+    showDragHandle: true,
+    builder: (context) => SafeArea(
+      child: ListView(
+        shrinkWrap: true,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+            child: Text(title,
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+          ),
+          ListTile(
+            title: Text(allLabel),
+            trailing: selected == null
+                ? const Icon(Icons.check, color: AppTheme.primary)
+                : null,
+            onTap: () => Navigator.pop(context, _FilterSelection<T>(null)),
+          ),
+          ...values.map((value) => ListTile(
+                title: Text(labelFor(value)),
+                trailing: value == selected
+                    ? const Icon(Icons.check, color: AppTheme.primary)
+                    : null,
+                onTap: () =>
+                    Navigator.pop(context, _FilterSelection<T>(value)),
+              )),
+        ],
+      ),
+    ),
+  );
+}
+
+class _FilterButton extends StatelessWidget {
+  const _FilterButton({
+    required this.label,
     required this.selected,
-    required this.allLabel,
-    required this.onChanged,
+    required this.onTap,
   });
 
-  final List<String> values;
-  final String? selected;
-  final String allLabel;
-  final ValueChanged<String?> onChanged;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 6, 16, 2),
-      child: DropdownButtonFormField<String>(
-        initialValue: selected ?? '',
-        isExpanded: true,
-        decoration: InputDecoration(
-          filled: true,
-          fillColor: AppTheme.surface,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: AppTheme.border),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: AppTheme.border),
-          ),
-        ),
-        items: [
-          DropdownMenuItem<String>(value: '', child: Text(allLabel)),
-          ...values.map((value) => DropdownMenuItem<String>(
-                value: value,
-                child: Text(value),
-              )),
-        ],
-        onChanged: (value) => onChanged(
-          value == null || value.isEmpty ? null : value,
-        ),
-      ),
+    return ChoiceChip(
+      label: Text(label),
+      selected: selected,
+      onSelected: (_) => onTap(),
     );
   }
 }

@@ -380,27 +380,11 @@ class VisitRecordRepository {
       return null;
     }
 
-    // Download through a short-lived signed URL. This keeps the bucket
-    // private while avoiding platform-specific failures from the storage
-    // download helper on iOS.
-    final signedUrl = await getSignedDocumentUrl(document);
-    if (signedUrl == null) return null;
-
-    final client = HttpClient();
-    try {
-      final request = await client.getUrl(Uri.parse(signedUrl));
-      final response = await request.close();
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        await response.drain();
-        throw StateError('DOCUMENT_DOWNLOAD_HTTP_${response.statusCode}');
-      }
-      final builder = await response.fold<BytesBuilder>(
-        BytesBuilder(),
-        (builder, chunk) => builder..add(chunk),
-      );
-      return builder.takeBytes();
-    } finally {
-      client.close(force: true);
-    }
+    // Download through Supabase's authenticated storage client. The bucket
+    // remains private and its storage RLS policy verifies the owner, while
+    // avoiding signed-URL/redirect failures observed on iOS.
+    return _client.storage
+        .from(document.storageBucket)
+        .download(document.storagePath!);
   }
 }
