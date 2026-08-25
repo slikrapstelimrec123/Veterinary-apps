@@ -10,11 +10,11 @@ import '../../features/notifications/screens/notifications_screen.dart';
 import '../../features/pets/data/pet_repository.dart';
 import '../../features/pets/domain/pet.dart';
 import '../../features/pets/screens/add_pet_screen.dart';
-import '../../features/pets/screens/pet_list_screen.dart';
 import '../../features/pets/screens/pet_profile_screen.dart';
 import '../../features/pet_transfer/screens/incoming_transfers_screen.dart';
 import '../../features/settings/screens/settings_screen.dart';
 import '../../features/visit_records/data/visit_record_repository.dart';
+import '../../features/visit_records/screens/add_visit_record_screen.dart';
 import '../../features/visit_records/screens/visit_record_details_screen.dart';
 import '../../shared/widgets/app_scaffold.dart';
 import '../../shared/widgets/empty_state.dart';
@@ -346,9 +346,9 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     final tabs = [
       HomeScreen(
           key: ValueKey('home-${_tabVersions[0]}'),
-          onOpenPets: () => _selectTab(1),
+          onOpenCalendar: () => _selectTab(1),
           onOpenAnnouncements: () => _selectTab(2)),
-      PetListScreen(key: ValueKey('pets-${_tabVersions[1]}')),
+      _EventsCalendarTab(key: ValueKey('calendar-${_tabVersions[1]}')),
       AnnouncementsScreen(key: ValueKey('announcements-${_tabVersions[2]}')),
       NotificationsScreen(key: ValueKey('notifications-${_tabVersions[3]}')),
       SettingsScreen(key: ValueKey('settings-${_tabVersions[4]}')),
@@ -372,9 +372,9 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
             onDestinationSelected: _selectTab,
             destinations: [
               const NavigationDestination(
-                  icon: Icon(Icons.home_outlined), label: 'Home'),
+                  icon: Icon(Icons.pets_outlined), label: 'Home'),
               const NavigationDestination(
-                  icon: Icon(Icons.pets_outlined), label: 'Pets'),
+                  icon: Icon(Icons.calendar_month_outlined), label: 'Calendar'),
               const NavigationDestination(
                   icon: Icon(Icons.campaign_outlined), label: 'Announcements'),
               NavigationDestination(
@@ -398,11 +398,11 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
-    required this.onOpenPets,
+    required this.onOpenCalendar,
     required this.onOpenAnnouncements,
   });
 
-  final VoidCallback onOpenPets;
+  final VoidCallback onOpenCalendar;
   final VoidCallback onOpenAnnouncements;
 
   @override
@@ -543,32 +543,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   focusDataComplete: data.focusDataComplete,
                   onPetSelected: (petId) =>
                       setState(() => _selectedPetId = petId),
-                  onOpenCalendar: () {
-                    Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => _PetCalendarScreen(
-                        pet: selectedPet,
-                        items: data.focusItems
-                            .where((item) => item.pet.id == selectedPet.id)
-                            .toList(growable: false),
-                        onOpenItem: (item) async {
-                          if (item.type == _HomeFocusType.medication) {
-                            await Navigator.of(context).push(MaterialPageRoute(
-                              builder: (_) => MedicationsScreen(
-                                petId: item.pet.id,
-                                petName: item.pet.name,
-                              ),
-                            ));
-                          } else if (item.visitRecordId != null) {
-                            await Navigator.of(context).push(MaterialPageRoute(
-                              builder: (_) => VisitRecordDetailsScreen(
-                                recordId: item.visitRecordId!,
-                              ),
-                            ));
-                          }
-                        },
-                      ),
-                    ));
-                  },
+                  onOpenCalendar: widget.onOpenCalendar,
                   onOpenItem: (item) async {
                     if (item.type == _HomeFocusType.medication) {
                       await Navigator.of(context).push(MaterialPageRoute(
@@ -595,27 +570,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     if (result != null && mounted) refresh();
                   },
                   onRefresh: refresh,
-                ),
-                const SizedBox(height: 18),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Flexible(
-                        child: Text('Ваші тварини',
-                            style: Theme.of(context).textTheme.titleLarge)),
-                    TextButton(
-                        onPressed: widget.onOpenPets,
-                        child: const Text('Переглянути всі')),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                ...pets.take(3).map(
-                    (pet) => _HomePetPreview(pet: pet, onChanged: refresh)),
-                const SizedBox(height: 8),
-                OutlinedButton.icon(
-                  onPressed: addPet,
-                  icon: const Icon(Icons.add),
-                  label: const Text('Додати тварину'),
                 ),
               ],
               const SizedBox(height: 12),
@@ -976,6 +930,194 @@ class _PetCalendarScreenState extends State<_PetCalendarScreen> {
             ),
           ),
       ],
+    );
+  }
+}
+
+class _EventsCalendarTab extends StatefulWidget {
+  const _EventsCalendarTab({super.key});
+
+  @override
+  State<_EventsCalendarTab> createState() => _EventsCalendarTabState();
+}
+
+class _EventsCalendarTabState extends State<_EventsCalendarTab> {
+  final _petRepository = PetRepository();
+  final _medicationRepository = MedicationRepository();
+  final _visitRepository = VisitRecordRepository();
+  late Future<List<_HomeFocusItem>> _events = _loadEvents();
+  List<Pet> _pets = const [];
+  DateTime _selectedDate = _day(DateTime.now());
+
+  DateTime _day(DateTime value) => DateTime(value.year, value.month, value.day);
+
+  Future<List<_HomeFocusItem>> _loadEvents() async {
+    final pets = await _petRepository.getPets();
+    _pets = pets;
+    final results = await Future.wait(pets.map((pet) async {
+      final items = <_HomeFocusItem>[];
+      try {
+        final medications = await _medicationRepository.getMedications(pet.id);
+        items.addAll(medications
+            .where((item) => item.reminderEnabled && item.nextDoseDate != null)
+            .map((item) => _HomeFocusItem(
+                  type: _HomeFocusType.medication,
+                  pet: pet,
+                  title: 'Препарат «${item.name}»',
+                  date: item.nextDoseDate!,
+                )));
+      } catch (_) {}
+      try {
+        final visits = await _visitRepository.getVisitRecordsForPet(pet.id);
+        items.addAll(visits
+            .where((item) =>
+                item.nextVisitRecommended && item.nextVisitDate != null)
+            .map((item) => _HomeFocusItem(
+                  type: _HomeFocusType.visit,
+                  pet: pet,
+                  title: 'Запланований повторний прийом',
+                  date: item.nextVisitDate!,
+                  visitRecordId: item.id,
+                )));
+      } catch (_) {}
+      return items;
+    }));
+    return results.expand((items) => items).toList()
+      ..sort((a, b) => a.date.compareTo(b.date));
+  }
+
+  Future<void> _openItem(_HomeFocusItem item) async {
+    if (item.type == _HomeFocusType.medication) {
+      await Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => MedicationsScreen(
+          petId: item.pet.id,
+          petName: item.pet.name,
+        ),
+      ));
+    } else if (item.visitRecordId != null) {
+      await Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => VisitRecordDetailsScreen(recordId: item.visitRecordId!),
+      ));
+    }
+  }
+
+  Future<void> _addEvent() async {
+    if (_pets.isEmpty) return;
+    Pet pet = _pets.first;
+    if (_pets.length > 1) {
+      final selected = await showModalBottomSheet<Pet>(
+        context: context,
+        showDragHandle: true,
+        builder: (context) => SafeArea(
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              const Padding(
+                padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
+                child: Text('Оберіть тварину',
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+              ),
+              ..._pets.map((item) => ListTile(
+                    leading: PetAvatar(
+                        name: item.name, avatarUrl: item.avatarUrl, size: 40),
+                    title: Text(item.name),
+                    subtitle: Text(item.speciesLabel),
+                    onTap: () => Navigator.pop(context, item),
+                  )),
+            ],
+          ),
+        ),
+      );
+      if (selected == null || !mounted) return;
+      pet = selected;
+    }
+    final result = await Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => AddVisitRecordScreen(
+        petId: pet.id,
+        petName: pet.name,
+      ),
+    ));
+    if (result != null && mounted) {
+      setState(() => _events = _loadEvents());
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<_HomeFocusItem>>(
+      future: _events,
+      builder: (context, snapshot) {
+        final events = snapshot.data ?? const <_HomeFocusItem>[];
+        final today = _day(DateTime.now());
+        final monthEnd = today.add(const Duration(days: 30));
+        final upcoming = events.where((item) {
+          final date = _day(item.date);
+          return !date.isBefore(today) && !date.isAfter(monthEnd);
+        }).toList(growable: false);
+        return AppScaffold(
+          title: 'Календар подій',
+          subtitle: 'Запланований догляд за вашими тваринами.',
+          children: [
+            if (snapshot.connectionState == ConnectionState.waiting)
+              const Center(child: CircularProgressIndicator())
+            else if (snapshot.hasError)
+              ErrorState(
+                message: 'Не вдалося завантажити події.',
+                onRetry: () => setState(() => _events = _loadEvents()),
+              )
+            else ...[
+              FilledButton.icon(
+                onPressed: _addEvent,
+                icon: const Icon(Icons.add),
+                label: const Text('Додати подію'),
+              ),
+              const SizedBox(height: 12),
+              Card(
+                child: CalendarDatePicker(
+                  initialDate: _selectedDate,
+                  firstDate: DateTime(2020),
+                  lastDate: DateTime(2100),
+                  onDateChanged: (date) =>
+                      setState(() => _selectedDate = _day(date)),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Найближчі події на 30 днів',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+              if (upcoming.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 28),
+                  child: Center(
+                    child: Text('На найближчі 30 днів подій немає.',
+                        style: TextStyle(color: AppTheme.textSecondary)),
+                  ),
+                )
+              else
+                ...upcoming.map(
+                  (item) => Card(
+                    child: ListTile(
+                      leading: Icon(
+                        item.type == _HomeFocusType.medication
+                            ? Icons.medication_outlined
+                            : Icons.medical_information_outlined,
+                        color: AppTheme.primary,
+                      ),
+                      title: Text(item.title),
+                      subtitle: Text(
+                          '${item.pet.name} · ${item.date.day.toString().padLeft(2, '0')}.${item.date.month.toString().padLeft(2, '0')}.${item.date.year}'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => _openItem(item),
+                    ),
+                  ),
+                ),
+            ],
+          ],
+        );
+      },
     );
   }
 }

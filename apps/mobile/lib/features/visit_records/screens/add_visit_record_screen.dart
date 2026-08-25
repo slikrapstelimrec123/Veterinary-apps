@@ -75,7 +75,10 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
       context: context,
       initialDate: _visitDate,
       firstDate: DateTime(2000),
-      lastDate: DateTime.now(),
+      // Owners may record a planned or already completed visit. Keep the
+      // appointment date open in both directions instead of limiting it to
+      // dates up to today.
+      lastDate: DateTime(2100),
     );
     if (picked != null) setState(() => _visitDate = picked);
   }
