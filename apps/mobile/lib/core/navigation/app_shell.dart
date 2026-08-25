@@ -538,7 +538,7 @@ class _HomeScreenState extends State<HomeScreen> {
               else ...[
                 _HomeFocusCard(
                   pets: pets,
-                  selectedPet: selectedPet!,
+                  selectedPet: selectedPet,
                   focusItems: data.focusItems,
                   focusDataComplete: data.focusDataComplete,
                   onPetSelected: (petId) =>
@@ -546,7 +546,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   onOpenCalendar: () {
                     Navigator.of(context).push(MaterialPageRoute(
                       builder: (_) => _PetCalendarScreen(
-                        pet: selectedPet!,
+                        pet: selectedPet,
                         items: data.focusItems
                             .where((item) => item.pet.id == selectedPet.id)
                             .toList(growable: false),
