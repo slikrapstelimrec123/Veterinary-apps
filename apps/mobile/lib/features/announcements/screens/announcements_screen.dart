@@ -1487,21 +1487,39 @@ class _BreedFilter extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 6, 16, 2),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: [
-          ChoiceChip(
-            label: Text(allLabel),
-            selected: selected == null,
-            onSelected: (_) => onChanged(null),
-          ),
-          ...breeds.map((value) => ChoiceChip(
-                label: Text(value),
-                selected: selected == value,
-                onSelected: (_) => onChanged(value),
-              )),
-        ],
+      child: ChoiceChip(
+        label: Text(selected ?? allLabel),
+        selected: selected != null,
+        onSelected: (_) async {
+          final value = await showModalBottomSheet<String?>(
+            context: context,
+            showDragHandle: true,
+            builder: (sheetContext) => SafeArea(
+              child: ListView(
+                shrinkWrap: true,
+                children: [
+                  ListTile(
+                    title: Text(allLabel),
+                    trailing: selected == null
+                        ? const Icon(Icons.check, color: AppTheme.primary)
+                        : null,
+                    onTap: () => Navigator.pop(sheetContext),
+                  ),
+                  ...breeds.map(
+                    (value) => ListTile(
+                      title: Text(value),
+                      trailing: selected == value
+                          ? const Icon(Icons.check, color: AppTheme.primary)
+                          : null,
+                      onTap: () => Navigator.pop(sheetContext, value),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+          onChanged(value);
+        },
       ),
     );
   }
