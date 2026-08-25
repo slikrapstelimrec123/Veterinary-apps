@@ -433,14 +433,6 @@ class _BreedingTabState extends State<_BreedingTab> {
         return Column(
           children: [
             _BreedFilter(
-              breeds: filters.breeds,
-              selected: _selectedBreed,
-              onChanged: (b) {
-                setState(() => _selectedBreed = b);
-                _load();
-              },
-            ),
-            _BreedFilter(
               breeds: filters.cities,
               selected: _selectedCity,
               onChanged: (c) {
@@ -526,14 +518,6 @@ class _SaleTabState extends State<_SaleTab> {
             const PetAnnouncementFilterOptions(breeds: [], cities: []);
         return Column(
           children: [
-            _BreedFilter(
-              breeds: filters.breeds,
-              selected: _selectedBreed,
-              onChanged: (b) {
-                setState(() => _selectedBreed = b);
-                _load();
-              },
-            ),
             _BreedFilter(
               breeds: filters.cities,
               selected: _selectedCity,

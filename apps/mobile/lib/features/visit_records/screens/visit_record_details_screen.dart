@@ -223,7 +223,13 @@ class _DocumentTileState extends State<_DocumentTile> {
       final file = File('${directory.path}/$fileName');
       await file.writeAsBytes(bytes, flush: true);
       await Share.shareXFiles(
-        [XFile(file.path)],
+        [
+          XFile(
+            file.path,
+            name: fileName,
+            mimeType: widget.document.fileType ?? 'application/octet-stream',
+          ),
+        ],
         text: widget.document.title,
       );
     } catch (_) {
