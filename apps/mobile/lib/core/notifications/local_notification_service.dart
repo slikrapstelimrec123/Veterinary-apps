@@ -157,7 +157,10 @@ class LocalNotificationService {
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
-      matchDateTimeComponents: DateTimeComponents.dayOfMonthAndMonth,
+      // The plugin has no month-and-day recurrence component. Schedule the
+      // next occurrence as a concrete date; it is rescheduled when reminders
+      // are registered again.
+      matchDateTimeComponents: DateTimeComponents.dateAndTime,
       payload: 'birthday:$petId',
     );
   }
