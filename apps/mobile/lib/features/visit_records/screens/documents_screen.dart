@@ -109,6 +109,7 @@ class _DocumentTileState extends State<_DocumentTile> {
     try {
       final bytes = await widget.repository.downloadDocument(widget.document);
       if (bytes == null) throw StateError('DOWNLOAD_DOCUMENT_FAILED');
+      if (!mounted) return;
       final fileName = _safeFileName(
         widget.document.fileName ?? widget.document.title,
       );
