@@ -30,11 +30,22 @@ class PetProfileScreen extends StatefulWidget {
 
 class _PetProfileScreenState extends State<PetProfileScreen> {
   final repository = PetRepository();
-  late Future<Pet?> petFuture = repository.getPet(widget.petId);
+  late String currentPetId = widget.petId;
+  late Future<Pet?> petFuture = repository.getPet(currentPetId);
+  late Future<List<Pet>> petsFuture = repository.getPets();
 
   void refresh() {
     setState(() {
-      petFuture = repository.getPet(widget.petId);
+      petFuture = repository.getPet(currentPetId);
+      petsFuture = repository.getPets();
+    });
+  }
+
+  void selectPet(String petId) {
+    if (petId == currentPetId) return;
+    setState(() {
+      currentPetId = petId;
+      petFuture = repository.getPet(currentPetId);
     });
   }
 
@@ -63,10 +74,78 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
                   message: 'Цей профіль тварини недоступний.',
                   icon: Icons.search_off_outlined)
             else
-              _PetProfileContent(pet: pet, onChanged: refresh),
+              FutureBuilder<List<Pet>>(
+                future: petsFuture,
+                builder: (context, petsSnapshot) => Column(
+                  children: [
+                    if (petsSnapshot.hasData && petsSnapshot.data!.length > 1)
+                      _PetSwitcher(
+                        pets: petsSnapshot.data!,
+                        selectedPetId: currentPetId,
+                        onSelected: selectPet,
+                      ),
+                    _PetProfileContent(pet: pet, onChanged: refresh),
+                  ],
+                ),
+              ),
           ],
         );
       },
+    );
+  }
+}
+
+class _PetSwitcher extends StatelessWidget {
+  const _PetSwitcher({
+    required this.pets,
+    required this.selectedPetId,
+    required this.onSelected,
+  });
+
+  final List<Pet> pets;
+  final String selectedPetId;
+  final ValueChanged<String> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          children: pets
+              .map(
+                (pet) => Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: Material(
+                    color: pet.id == selectedPetId
+                        ? AppTheme.primary.withValues(alpha: 0.12)
+                        : Colors.transparent,
+                    shape: const StadiumBorder(),
+                    child: InkWell(
+                      onTap: () => onSelected(pet.id),
+                      customBorder: const StadiumBorder(),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(6, 4, 12, 4),
+                        child: Row(
+                          children: [
+                            PetAvatar(
+                              name: pet.name,
+                              avatarUrl: pet.avatarUrl,
+                              size: 34,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(pet.name),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              )
+              .toList(growable: false),
+        ),
+      ),
     );
   }
 }

@@ -319,6 +319,7 @@ class _PetFormScreenState extends State<PetFormScreen> {
         // Breed — searchable dropdown for dogs/cats, plain text otherwise
         if (breeds.isNotEmpty)
           BreedAutocompleteField(
+            key: ValueKey(species),
             controller: breedController,
             species: species,
           )

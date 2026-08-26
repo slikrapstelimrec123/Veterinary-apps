@@ -112,6 +112,10 @@ class _DocumentTileState extends State<_DocumentTile> {
       final fileName = _safeFileName(
         widget.document.fileName ?? widget.document.title,
       );
+      final renderObject = context.findRenderObject();
+      final shareOrigin = renderObject is RenderBox
+          ? renderObject.localToGlobal(Offset.zero) & renderObject.size
+          : null;
       await Share.shareXFiles(
         [
           XFile.fromData(
@@ -121,6 +125,7 @@ class _DocumentTileState extends State<_DocumentTile> {
           ),
         ],
         text: widget.document.title,
+        sharePositionOrigin: shareOrigin,
       );
     } catch (_) {
       if (mounted) {

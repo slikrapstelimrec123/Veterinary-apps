@@ -664,7 +664,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                _RecentRecordsCard(items: data.recentItems),
+                _RecentRecordsCard(
+                  items: data.recentItems
+                      .where((item) => item.pet.id == selectedPet.id)
+                      .toList(growable: false),
+                ),
               ],
             ],
           ],
@@ -791,50 +795,40 @@ class _HomeFocusCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                InkWell(
-                  onTap: () async {
-                    if (pets.length < 2) return;
-                    final pet = await showModalBottomSheet<Pet>(
-                      context: context,
-                      showDragHandle: true,
-                      builder: (sheetContext) => SafeArea(
-                        child: ListView(
-                          shrinkWrap: true,
-                          children: pets
-                              .map((pet) => ListTile(
-                                    leading: PetAvatar(
-                                      name: pet.name,
-                                      avatarUrl: pet.avatarUrl,
-                                      size: 40,
-                                    ),
-                                    title: Text(pet.name),
-                                    selected: pet.id == selectedPet.id,
-                                    onTap: () =>
-                                        Navigator.pop(sheetContext, pet),
-                                  ))
-                              .toList(growable: false),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  for (final pet in pets)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: Material(
+                        color: pet.id == selectedPet.id
+                            ? AppTheme.primary.withValues(alpha: 0.12)
+                            : Colors.transparent,
+                        shape: const CircleBorder(),
+                        child: InkWell(
+                          onTap: () => onPetSelected(pet.id),
+                          customBorder: const CircleBorder(),
+                          child: Padding(
+                            padding: const EdgeInsets.all(2),
+                            child: PetAvatar(
+                              name: pet.name,
+                              avatarUrl: pet.avatarUrl,
+                              size: 40,
+                            ),
+                          ),
                         ),
                       ),
-                    );
-                    if (pet != null) onPetSelected(pet.id);
-                  },
-                  borderRadius: BorderRadius.circular(22),
-                  child: PetAvatar(
-                    name: selectedPet.name,
-                    avatarUrl: selectedPet.avatarUrl,
-                    size: 40,
+                    ),
+                  IconButton(
+                    onPressed: onAddPet,
+                    tooltip: 'Додати тварину',
+                    icon: const Icon(Icons.add_circle_outline),
+                    color: AppTheme.primary,
                   ),
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                  onPressed: onAddPet,
-                  tooltip: 'Додати тварину',
-                  icon: const Icon(Icons.add_circle_outline),
-                  color: AppTheme.primary,
-                ),
-              ],
+                ],
+              ),
             ),
             const SizedBox(height: 12),
             Row(
@@ -1168,7 +1162,9 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
       try {
         final feedings = await _feedingRepository.getFeedings(pet.id);
         items.addAll(feedings
-            .where((item) => item.startDate.isAfter(DateTime.now()))
+            // Keep events scheduled for today; the calendar view applies the
+            // inclusive 30-day window when it renders the list.
+            .where((item) => !_day(item.startDate).isBefore(_day(DateTime.now())))
             .map((item) => _HomeFocusItem(
                   type: _HomeFocusType.feeding,
                   pet: pet,
@@ -1180,7 +1176,7 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
         final achievements =
             await _achievementRepository.getAchievements(pet.id);
         items.addAll(achievements
-            .where((item) => item.eventDate.isAfter(DateTime.now()))
+            .where((item) => !_day(item.eventDate).isBefore(_day(DateTime.now())))
             .map((item) => _HomeFocusItem(
                   type: _HomeFocusType.achievement,
                   pet: pet,

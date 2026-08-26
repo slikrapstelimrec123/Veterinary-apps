@@ -107,18 +107,31 @@ class LocalNotificationService {
     required String petName,
     required DateTime dueDate,
   }) async {
-    await _scheduleReminder(
-      key: 'medication:$medicationId',
+    await initialize();
+    final twoDaysId = _stableId('medication:$medicationId:two-days');
+    final dayId = _stableId('medication:$medicationId:day');
+    await _plugin.cancel(twoDaysId);
+    await _plugin.cancel(dayId);
+    await _scheduleAt(
+      id: twoDaysId,
+      title: 'Нагадування про препарат',
+      body: 'Через 2 дні: $petName — $medicationName.',
+      scheduled: _atEight(dueDate, daysBefore: 2),
+      payload: 'medication:$medicationId:two-days',
+    );
+    await _scheduleAt(
+      id: dayId,
       title: 'Час прийняти препарат',
-      body: '$petName: $medicationName',
-      dueDate: dueDate,
-      payload: 'medication:$medicationId',
+      body: '$petName: $medicationName.',
+      scheduled: _atEight(dueDate),
+      payload: 'medication:$medicationId:day',
     );
   }
 
   Future<void> cancelMedicationReminder(String medicationId) async {
     await initialize();
-    await _plugin.cancel(_stableId('medication:$medicationId'));
+    await _plugin.cancel(_stableId('medication:$medicationId:two-days'));
+    await _plugin.cancel(_stableId('medication:$medicationId:day'));
   }
 
   Future<void> scheduleBirthdayReminder({
@@ -197,14 +210,14 @@ class LocalNotificationService {
       dueDate.year,
       dueDate.month,
       dueDate.day,
-      7,
+      8,
     );
     final twoDaysBefore = tz.TZDateTime(
       tz.local,
       dueDate.year,
       dueDate.month,
       dueDate.day - 2,
-      9,
+      8,
     );
 
     await _scheduleAt(
@@ -250,43 +263,9 @@ class LocalNotificationService {
     );
   }
 
-  Future<void> _scheduleReminder({
-    required String key,
-    required String title,
-    required String body,
-    required DateTime dueDate,
-    required String payload,
-  }) async {
-    await initialize();
-    final id = _stableId(key);
-    await _plugin.cancel(id);
-
-    final now = tz.TZDateTime.now(tz.local);
-    var scheduled = tz.TZDateTime(
-      tz.local,
-      dueDate.year,
-      dueDate.month,
-      dueDate.day,
-      9,
-    );
-    final dueDay = DateTime(dueDate.year, dueDate.month, dueDate.day);
-    final today = DateTime(now.year, now.month, now.day);
-    if (dueDay.isBefore(today)) return;
-    if (!scheduled.isAfter(now)) {
-      scheduled = now.add(const Duration(seconds: 5));
-    }
-
-    await _plugin.zonedSchedule(
-      id,
-      title,
-      body,
-      scheduled,
-      _details,
-      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-      payload: payload,
-    );
+  tz.TZDateTime _atEight(DateTime date, {int daysBefore = 0}) {
+    final target = date.subtract(Duration(days: daysBefore));
+    return tz.TZDateTime(tz.local, target.year, target.month, target.day, 8);
   }
 
   int _stableId(String value) {

@@ -710,6 +710,7 @@ class _PetBasicsStep extends StatelessWidget {
               ),
               const SizedBox(height: 14),
               BreedAutocompleteField(
+                key: ValueKey(species),
                 controller: breedController,
                 species: species,
               ),
