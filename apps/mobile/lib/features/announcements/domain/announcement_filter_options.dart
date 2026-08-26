@@ -4,10 +4,12 @@ class PetAnnouncementFilterOptions {
   const PetAnnouncementFilterOptions({
     required this.breeds,
     required this.cities,
+    this.species = const [],
   });
 
   final List<String> breeds;
   final List<String> cities;
+  final List<String> species;
 }
 
 class CommunityAnnouncementFilterOptions {

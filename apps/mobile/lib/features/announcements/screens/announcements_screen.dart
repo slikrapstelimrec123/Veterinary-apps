@@ -408,6 +408,7 @@ class _BreedingTabState extends State<_BreedingTab> {
   late Future<PetAnnouncementFilterOptions> _filterOptions;
   String? _selectedBreed;
   String? _selectedCity;
+  String? _selectedSpecies;
 
   @override
   void initState() {
@@ -419,7 +420,9 @@ class _BreedingTabState extends State<_BreedingTab> {
   void _load() {
     setState(() {
       _future = _repo.getBreedingAnnouncements(
-          breed: _selectedBreed, city: _selectedCity);
+          breed: _selectedBreed,
+          city: _selectedCity,
+          species: _selectedSpecies);
     });
   }
 
@@ -435,6 +438,8 @@ class _BreedingTabState extends State<_BreedingTab> {
             _PetAnnouncementFilters(
               cities: filters.cities,
               breeds: filters.breeds,
+              species: filters.species,
+              selectedSpecies: _selectedSpecies,
               selectedCity: _selectedCity,
               selectedBreed: _selectedBreed,
               onCityChanged: (city) {
@@ -443,6 +448,10 @@ class _BreedingTabState extends State<_BreedingTab> {
               },
               onBreedChanged: (breed) {
                 setState(() => _selectedBreed = breed);
+                _load();
+              },
+              onSpeciesChanged: (species) {
+                setState(() => _selectedSpecies = species);
                 _load();
               },
             ),
@@ -499,6 +508,7 @@ class _SaleTabState extends State<_SaleTab> {
   late Future<PetAnnouncementFilterOptions> _filterOptions;
   String? _selectedBreed;
   String? _selectedCity;
+  String? _selectedSpecies;
 
   @override
   void initState() {
@@ -510,7 +520,9 @@ class _SaleTabState extends State<_SaleTab> {
   void _load() {
     setState(() {
       _future = _repo.getSaleAnnouncements(
-          breed: _selectedBreed, city: _selectedCity);
+          breed: _selectedBreed,
+          city: _selectedCity,
+          species: _selectedSpecies);
     });
   }
 
@@ -526,6 +538,8 @@ class _SaleTabState extends State<_SaleTab> {
             _PetAnnouncementFilters(
               cities: filters.cities,
               breeds: filters.breeds,
+              species: filters.species,
+              selectedSpecies: _selectedSpecies,
               selectedCity: _selectedCity,
               selectedBreed: _selectedBreed,
               onCityChanged: (city) {
@@ -534,6 +548,10 @@ class _SaleTabState extends State<_SaleTab> {
               },
               onBreedChanged: (breed) {
                 setState(() => _selectedBreed = breed);
+                _load();
+              },
+              onSpeciesChanged: (species) {
+                setState(() => _selectedSpecies = species);
                 _load();
               },
             ),
@@ -1469,18 +1487,24 @@ class _PetAnnouncementFilters extends StatelessWidget {
   const _PetAnnouncementFilters({
     required this.cities,
     required this.breeds,
+    required this.species,
     required this.selectedCity,
     required this.selectedBreed,
+    required this.selectedSpecies,
     required this.onCityChanged,
     required this.onBreedChanged,
+    required this.onSpeciesChanged,
   });
 
   final List<String> cities;
   final List<String> breeds;
+  final List<String> species;
   final String? selectedCity;
   final String? selectedBreed;
+  final String? selectedSpecies;
   final ValueChanged<String?> onCityChanged;
   final ValueChanged<String?> onBreedChanged;
+  final ValueChanged<String?> onSpeciesChanged;
 
   Future<void> _pick(
     BuildContext context, {
@@ -1545,6 +1569,19 @@ class _PetAnnouncementFilters extends StatelessWidget {
                 selected: selectedCity,
                 onChanged: onCityChanged),
           ),
+          if (species.isNotEmpty) ...[
+            const SizedBox(width: 8),
+            ChoiceChip(
+              label: Text(selectedSpecies ?? 'Всі види'),
+              selected: selectedSpecies != null,
+              onSelected: (_) => _pick(context,
+                  title: 'Оберіть вид',
+                  allLabel: 'Всі види',
+                  values: species,
+                  selected: selectedSpecies,
+                  onChanged: onSpeciesChanged),
+            ),
+          ],
           const SizedBox(width: 8),
           ChoiceChip(
             label: Text(selectedBreed ?? 'Всі породи'),

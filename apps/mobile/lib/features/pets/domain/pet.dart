@@ -17,6 +17,13 @@ class Pet {
     this.passportStoragePath,
     this.createdAt,
     this.updatedAt,
+    this.emergencyAllergies,
+    this.emergencyConditions,
+    this.emergencySurgeries,
+    this.emergencyContraindications,
+    this.emergencyBehaviorNotes,
+    this.emergencyBloodType,
+    this.emergencyNotes,
   });
 
   final String id;
@@ -36,6 +43,13 @@ class Pet {
   final String? passportStoragePath;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final String? emergencyAllergies;
+  final String? emergencyConditions;
+  final String? emergencySurgeries;
+  final String? emergencyContraindications;
+  final String? emergencyBehaviorNotes;
+  final String? emergencyBloodType;
+  final String? emergencyNotes;
 
   String get speciesLabel {
     return switch (species.toLowerCase()) {
@@ -98,6 +112,13 @@ class Pet {
       'is_neutered': isNeutered,
       'passport_photo_url': passportPhotoUrl,
       'passport_storage_path': passportStoragePath,
+      'emergency_allergies': emergencyAllergies,
+      'emergency_conditions': emergencyConditions,
+      'emergency_surgeries': emergencySurgeries,
+      'emergency_contraindications': emergencyContraindications,
+      'emergency_behavior_notes': emergencyBehaviorNotes,
+      'emergency_blood_type': emergencyBloodType,
+      'emergency_notes': emergencyNotes,
     };
   }
 
@@ -120,6 +141,14 @@ class Pet {
       passportStoragePath: json['passport_storage_path'] as String?,
       createdAt: DateTime.tryParse(json['created_at'] as String? ?? ''),
       updatedAt: DateTime.tryParse(json['updated_at'] as String? ?? ''),
+      emergencyAllergies: json['emergency_allergies'] as String?,
+      emergencyConditions: json['emergency_conditions'] as String?,
+      emergencySurgeries: json['emergency_surgeries'] as String?,
+      emergencyContraindications:
+          json['emergency_contraindications'] as String?,
+      emergencyBehaviorNotes: json['emergency_behavior_notes'] as String?,
+      emergencyBloodType: json['emergency_blood_type'] as String?,
+      emergencyNotes: json['emergency_notes'] as String?,
     );
   }
 
@@ -139,6 +168,13 @@ class Pet {
     bool? isNeutered,
     String? passportPhotoUrl,
     String? passportStoragePath,
+    String? emergencyAllergies,
+    String? emergencyConditions,
+    String? emergencySurgeries,
+    String? emergencyContraindications,
+    String? emergencyBehaviorNotes,
+    String? emergencyBloodType,
+    String? emergencyNotes,
   }) {
     return Pet(
       id: id ?? this.id,
@@ -158,6 +194,15 @@ class Pet {
       passportStoragePath: passportStoragePath ?? this.passportStoragePath,
       createdAt: createdAt,
       updatedAt: updatedAt,
+      emergencyAllergies: emergencyAllergies ?? this.emergencyAllergies,
+      emergencyConditions: emergencyConditions ?? this.emergencyConditions,
+      emergencySurgeries: emergencySurgeries ?? this.emergencySurgeries,
+      emergencyContraindications:
+          emergencyContraindications ?? this.emergencyContraindications,
+      emergencyBehaviorNotes:
+          emergencyBehaviorNotes ?? this.emergencyBehaviorNotes,
+      emergencyBloodType: emergencyBloodType ?? this.emergencyBloodType,
+      emergencyNotes: emergencyNotes ?? this.emergencyNotes,
     );
   }
 }

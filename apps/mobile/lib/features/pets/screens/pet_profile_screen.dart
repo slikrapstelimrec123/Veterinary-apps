@@ -83,6 +83,8 @@ class _PetProfileContent extends StatelessWidget {
       children: [
         _PetCard(pet: pet),
         const SizedBox(height: 12),
+        _EmergencyInfoCard(pet: pet),
+        const SizedBox(height: 12),
         _ActionGrid(pet: pet, onChanged: onChanged),
         const SizedBox(height: 12),
         _DetailSection(pet: pet, onChanged: onChanged),
@@ -125,6 +127,46 @@ class _PetProfileContent extends StatelessWidget {
           label: const Text('Передати картку тварини'),
         ),
       ],
+    );
+  }
+}
+
+class _EmergencyInfoCard extends StatelessWidget {
+  const _EmergencyInfoCard({required this.pet});
+  final Pet pet;
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = <({String label, String? value})>[
+      (label: 'Алергії та реакції', value: pet.emergencyAllergies),
+      (label: 'Хронічні захворювання', value: pet.emergencyConditions),
+      (label: 'Перенесені операції', value: pet.emergencySurgeries),
+      (label: 'Протипоказання', value: pet.emergencyContraindications),
+      (label: 'Особливості поведінки', value: pet.emergencyBehaviorNotes),
+      (label: 'Група крові', value: pet.emergencyBloodType),
+      (label: 'Важливі примітки', value: pet.emergencyNotes),
+    ].where((row) => row.value?.trim().isNotEmpty == true).toList();
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            const Icon(Icons.emergency_outlined, color: AppTheme.danger),
+            const SizedBox(width: 8),
+            Text('Екстрена інформація',
+                style: Theme.of(context).textTheme.titleMedium),
+          ]),
+          const SizedBox(height: 8),
+          if (rows.isEmpty)
+            const Text('Додайте важливі дані для лікаря у редагуванні картки.',
+                style: TextStyle(color: AppTheme.textSecondary))
+          else
+            ...rows.map((row) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text('${row.label}: ${row.value}'),
+                )),
+        ]),
+      ),
     );
   }
 }

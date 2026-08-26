@@ -4,6 +4,7 @@ class BreedingAnnouncement {
     required this.ownerName,
     required this.phone,
     required this.breed,
+    this.species,
     required this.myDogName,
     required this.myDogGender,
     required this.myDogAge,
@@ -27,6 +28,7 @@ class BreedingAnnouncement {
   final String ownerName;
   final String phone;
   final String breed;
+  final String? species;
   final String myDogName;
   final String myDogGender;
   final int myDogAge;
@@ -51,6 +53,7 @@ class BreedingAnnouncement {
       ownerName: json['contact_name'] as String,
       phone: json['contact_phone'] as String,
       breed: json['breed'] as String,
+      species: (json['pets'] as Map<String, dynamic>?)?['species'] as String?,
       myDogName: json['pet_name'] as String,
       myDogGender: _normalizedGender(json['gender']),
       myDogAge: (json['age_years'] as num?)?.toInt() ?? 0,

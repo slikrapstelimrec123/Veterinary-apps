@@ -23,7 +23,7 @@ class AnnouncementRepository {
     breed, pet_name, gender, birth_date, age_years, price_amount, photo_url,
     photo_storage_path, cover_photo_url, cover_photo_storage_path, color,
     has_vaccinations, has_pedigree, has_chip, desired_breed, conditions,
-    description, city, status, created_at, listing_credit_id
+    description, city, status, created_at, listing_credit_id, pets(species)
   ''';
   static const _communityProjection = '''
     id, owner_id, announcement_type, title, address, city, description,
@@ -37,7 +37,7 @@ class AnnouncementRepository {
       _useMockData ? 'mock_pet_owner' : _supabase.auth.currentUser?.id;
 
   Future<List<BreedingAnnouncement>> getBreedingAnnouncements(
-      {String? breed, String? city}) async {
+      {String? breed, String? city, String? species}) async {
     if (_useMockData) {
       return _filterBreeding(_breedingMock, breed: breed, city: city);
     }
@@ -51,6 +51,8 @@ class AnnouncementRepository {
       query = query.ilike('breed', '%$breed%');
     }
     if (city != null && city.isNotEmpty) query = query.ilike('city', '%$city%');
+    if (species != null && species.isNotEmpty)
+      query = query.eq('pets.species', species);
     final rows = await query
         .order('promoted_until', ascending: false, nullsFirst: false)
         .order('ranking_at', ascending: false)
@@ -60,7 +62,7 @@ class AnnouncementRepository {
   }
 
   Future<List<SaleAnnouncement>> getSaleAnnouncements(
-      {String? breed, String? city}) async {
+      {String? breed, String? city, String? species}) async {
     if (_useMockData) return _filterSales(_saleMock, breed: breed, city: city);
     var query = _supabase
         .from('announcements')
@@ -72,6 +74,8 @@ class AnnouncementRepository {
       query = query.ilike('breed', '%$breed%');
     }
     if (city != null && city.isNotEmpty) query = query.ilike('city', '%$city%');
+    if (species != null && species.isNotEmpty)
+      query = query.eq('pets.species', species);
     final rows = await query
         .order('promoted_until', ascending: false, nullsFirst: false)
         .order('ranking_at', ascending: false)
@@ -93,11 +97,12 @@ class AnnouncementRepository {
       return PetAnnouncementFilterOptions(
         breeds: distinctFilterValues(breeds),
         cities: distinctFilterValues(cities),
+        species: const [],
       );
     }
     final rows = await _supabase
         .from('announcements')
-        .select('breed, city')
+        .select('breed, city, pets(species)')
         .eq('announcement_type', announcementType)
         .eq('status', 'active')
         .eq('moderation_status', 'published')
@@ -106,6 +111,8 @@ class AnnouncementRepository {
     return PetAnnouncementFilterOptions(
       breeds: distinctFilterValues(maps.map((row) => row['breed'])),
       cities: distinctFilterValues(maps.map((row) => row['city'])),
+      species: distinctFilterValues(maps
+          .map((row) => (row['pets'] as Map<String, dynamic>?)?['species'])),
     );
   }
 

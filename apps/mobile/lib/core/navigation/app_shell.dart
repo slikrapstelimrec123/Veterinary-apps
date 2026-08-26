@@ -3,6 +3,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../features/announcements/screens/announcements_screen.dart';
 import '../../features/medications/data/medication_repository.dart';
+import '../../features/feeding/data/feeding_repository.dart';
+import '../../features/achievements/data/achievement_repository.dart';
 import '../../features/medications/screens/medications_screen.dart';
 import '../../features/notifications/data/notification_repository.dart';
 import '../../features/notifications/domain/app_notification.dart';
@@ -346,8 +348,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     final tabs = [
       HomeScreen(
           key: ValueKey('home-${_tabVersions[0]}'),
-          onOpenCalendar: () => _selectTab(1),
-          onOpenAnnouncements: () => _selectTab(2)),
+          onOpenCalendar: () => _selectTab(1)),
       _EventsCalendarTab(key: ValueKey('calendar-${_tabVersions[1]}')),
       AnnouncementsScreen(key: ValueKey('announcements-${_tabVersions[2]}')),
       NotificationsScreen(key: ValueKey('notifications-${_tabVersions[3]}')),
@@ -399,11 +400,9 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
     required this.onOpenCalendar,
-    required this.onOpenAnnouncements,
   });
 
   final VoidCallback onOpenCalendar;
-  final VoidCallback onOpenAnnouncements;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -413,6 +412,8 @@ class _HomeScreenState extends State<HomeScreen> {
   final repository = PetRepository();
   final visitRepository = VisitRecordRepository();
   final medicationRepository = MedicationRepository();
+  final feedingRepository = FeedingRepository();
+  final achievementRepository = AchievementRepository();
   late Future<_HomeData> homeFuture = _loadHomeData();
   String? _selectedPetId;
 
@@ -423,6 +424,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<_HomeData> _loadHomeData() async {
     final pets = await repository.getPets();
     final perPetFocus = await Future.wait(pets.map(_loadPetFocus));
+    final recentItems = await _loadRecentItems(pets);
     final focusItems = perPetFocus.expand((result) => result.items).toList();
 
     focusItems.sort((left, right) => left.date.compareTo(right.date));
@@ -430,13 +432,45 @@ class _HomeScreenState extends State<HomeScreen> {
       pets: pets,
       focusItems: focusItems,
       focusDataComplete: perPetFocus.every((result) => result.isComplete),
+      recentItems: recentItems,
     );
+  }
+
+  Future<List<_HomeRecentItem>> _loadRecentItems(List<Pet> pets) async {
+    final result = <_HomeRecentItem>[];
+    for (final pet in pets) {
+      try {
+        final visits = await visitRepository.getVisitRecordsForPet(pet.id);
+        result.addAll(visits.take(2).map((item) => _HomeRecentItem(
+              pet: pet,
+              title: item.reason ?? 'Медичний прийом',
+              subtitle: 'Прийом',
+              date: item.visitDate,
+              type: _HomeFocusType.visit,
+              visitRecordId: item.id,
+            )));
+      } catch (_) {}
+      try {
+        final medications = await medicationRepository.getMedications(pet.id);
+        result.addAll(medications.take(2).map((item) => _HomeRecentItem(
+              pet: pet,
+              title: 'Препарат «${item.name}»',
+              subtitle: 'Препарат',
+              date: item.givenDate,
+              type: _HomeFocusType.medication,
+            )));
+      } catch (_) {}
+    }
+    result.sort((a, b) => b.date.compareTo(a.date));
+    return result.take(3).toList(growable: false);
   }
 
   Future<_PetFocusData> _loadPetFocus(Pet pet) async {
     final results = await Future.wait([
       _loadMedicationFocus(pet),
       _loadVisitFocus(pet),
+      _loadFeedingFocus(pet),
+      _loadAchievementFocus(pet),
     ]);
     return _PetFocusData(
       items: results
@@ -492,6 +526,40 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<List<_HomeFocusItem>?> _loadFeedingFocus(Pet pet) async {
+    try {
+      final feedings = await feedingRepository.getFeedings(pet.id);
+      return feedings
+          .where((item) => item.startDate.isAfter(DateTime.now()))
+          .map((item) => _HomeFocusItem(
+                type: _HomeFocusType.feeding,
+                pet: pet,
+                title: 'Початок годування: ${item.foodName}',
+                date: item.startDate,
+              ))
+          .toList(growable: false);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<List<_HomeFocusItem>?> _loadAchievementFocus(Pet pet) async {
+    try {
+      final achievements = await achievementRepository.getAchievements(pet.id);
+      return achievements
+          .where((item) => item.eventDate.isAfter(DateTime.now()))
+          .map((item) => _HomeFocusItem(
+                type: _HomeFocusType.achievement,
+                pet: pet,
+                title: item.title,
+                date: item.eventDate,
+              ))
+          .toList(growable: false);
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> addPet() async {
     final result = await Navigator.of(context)
         .push(MaterialPageRoute(builder: (_) => const AddPetScreen()));
@@ -543,6 +611,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   focusDataComplete: data.focusDataComplete,
                   onPetSelected: (petId) =>
                       setState(() => _selectedPetId = petId),
+                  onAddPet: addPet,
                   onOpenCalendar: widget.onOpenCalendar,
                   onOpenItem: (item) async {
                     if (item.type == _HomeFocusType.medication) {
@@ -564,17 +633,39 @@ class _HomeScreenState extends State<HomeScreen> {
                   onOpenPet: () async {
                     final result = await Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) =>
-                            PetProfileScreen(petId: selectedPet.id),
+                        builder: (_) => PetProfileScreen(petId: selectedPet.id),
                       ),
                     );
                     if (result != null && mounted) refresh();
                   },
                   onRefresh: refresh,
                 ),
+                const SizedBox(height: 16),
+                _QuickActionsCard(
+                  onAddVisit: () async {
+                    final result = await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => AddVisitRecordScreen(
+                          petId: selectedPet.id,
+                          petName: selectedPet.name,
+                        ),
+                      ),
+                    );
+                    if (result != null && mounted) refresh();
+                  },
+                  onAddMedication: () async {
+                    await Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => MedicationsScreen(
+                        petId: selectedPet.id,
+                        petName: selectedPet.name,
+                      ),
+                    ));
+                    if (mounted) refresh();
+                  },
+                ),
+                const SizedBox(height: 16),
+                _RecentRecordsCard(items: data.recentItems),
               ],
-              const SizedBox(height: 12),
-              _AnnouncementsCard(onTap: widget.onOpenAnnouncements),
             ],
           ],
         );
@@ -588,11 +679,31 @@ class _HomeData {
     this.pets = const [],
     this.focusItems = const [],
     this.focusDataComplete = true,
+    this.recentItems = const [],
   });
 
   final List<Pet> pets;
   final List<_HomeFocusItem> focusItems;
   final bool focusDataComplete;
+  final List<_HomeRecentItem> recentItems;
+}
+
+class _HomeRecentItem {
+  const _HomeRecentItem({
+    required this.pet,
+    required this.title,
+    required this.subtitle,
+    required this.date,
+    required this.type,
+    this.visitRecordId,
+  });
+
+  final Pet pet;
+  final String title;
+  final String subtitle;
+  final DateTime date;
+  final _HomeFocusType type;
+  final String? visitRecordId;
 }
 
 class _PetFocusData {
@@ -605,7 +716,7 @@ class _PetFocusData {
   final bool isComplete;
 }
 
-enum _HomeFocusType { medication, visit }
+enum _HomeFocusType { medication, visit, feeding, achievement }
 
 class _HomeFocusItem {
   const _HomeFocusItem({
@@ -630,6 +741,7 @@ class _HomeFocusCard extends StatelessWidget {
     required this.focusItems,
     required this.focusDataComplete,
     required this.onPetSelected,
+    required this.onAddPet,
     required this.onOpenCalendar,
     required this.onOpenItem,
     required this.onOpenPet,
@@ -641,6 +753,7 @@ class _HomeFocusCard extends StatelessWidget {
   final List<_HomeFocusItem> focusItems;
   final bool focusDataComplete;
   final ValueChanged<String> onPetSelected;
+  final VoidCallback onAddPet;
   final VoidCallback onOpenCalendar;
   final ValueChanged<_HomeFocusItem> onOpenItem;
   final VoidCallback onOpenPet;
@@ -678,31 +791,52 @@ class _HomeFocusCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (pets.length > 1) ...[
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: pets
-                      .map(
-                        (pet) => Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: ChoiceChip(
-                            selected: pet.id == selectedPet.id,
-                            onSelected: (_) => onPetSelected(pet.id),
-                            avatar: PetAvatar(
-                              name: pet.name,
-                              avatarUrl: pet.avatarUrl,
-                              size: 24,
-                            ),
-                            label: Text(pet.name),
-                          ),
+            Row(
+              children: [
+                InkWell(
+                  onTap: () async {
+                    if (pets.length < 2) return;
+                    final pet = await showModalBottomSheet<Pet>(
+                      context: context,
+                      showDragHandle: true,
+                      builder: (sheetContext) => SafeArea(
+                        child: ListView(
+                          shrinkWrap: true,
+                          children: pets
+                              .map((pet) => ListTile(
+                                    leading: PetAvatar(
+                                      name: pet.name,
+                                      avatarUrl: pet.avatarUrl,
+                                      size: 40,
+                                    ),
+                                    title: Text(pet.name),
+                                    selected: pet.id == selectedPet.id,
+                                    onTap: () =>
+                                        Navigator.pop(sheetContext, pet),
+                                  ))
+                              .toList(growable: false),
                         ),
-                      )
-                      .toList(growable: false),
+                      ),
+                    );
+                    if (pet != null) onPetSelected(pet.id);
+                  },
+                  borderRadius: BorderRadius.circular(22),
+                  child: PetAvatar(
+                    name: selectedPet.name,
+                    avatarUrl: selectedPet.avatarUrl,
+                    size: 40,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-            ],
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: onAddPet,
+                  tooltip: 'Додати тварину',
+                  icon: const Icon(Icons.add_circle_outline),
+                  color: AppTheme.primary,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
             Row(
               children: [
                 PetAvatar(
@@ -856,6 +990,67 @@ class _HomeFocusCard extends StatelessWidget {
   }
 }
 
+class _QuickActionsCard extends StatelessWidget {
+  const _QuickActionsCard(
+      {required this.onAddVisit, required this.onAddMedication});
+  final VoidCallback onAddVisit;
+  final VoidCallback onAddMedication;
+
+  @override
+  Widget build(BuildContext context) => Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Швидкі дії', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Wrap(spacing: 8, children: [
+              OutlinedButton.icon(
+                  onPressed: onAddVisit,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Додати прийом')),
+              OutlinedButton.icon(
+                  onPressed: onAddMedication,
+                  icon: const Icon(Icons.medication_outlined),
+                  label: const Text('Додати препарат')),
+            ]),
+          ]),
+        ),
+      );
+}
+
+class _RecentRecordsCard extends StatelessWidget {
+  const _RecentRecordsCard({required this.items});
+  final List<_HomeRecentItem> items;
+
+  @override
+  Widget build(BuildContext context) => Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Останні записи',
+                style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            if (items.isEmpty)
+              const Text('Додайте перший запис у медичній картці.',
+                  style: TextStyle(color: AppTheme.textSecondary))
+            else
+              ...items.map((item) => ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(
+                        item.type == _HomeFocusType.medication
+                            ? Icons.medication_outlined
+                            : Icons.medical_information_outlined,
+                        color: AppTheme.primary),
+                    title: Text(item.title),
+                    subtitle: Text('${item.pet.name} · ${item.subtitle}'),
+                  )),
+          ]),
+        ),
+      );
+}
+
 class _PetCalendarScreen extends StatefulWidget {
   const _PetCalendarScreen({
     required this.pet,
@@ -945,6 +1140,8 @@ class _EventsCalendarTab extends StatefulWidget {
 class _EventsCalendarTabState extends State<_EventsCalendarTab> {
   final _petRepository = PetRepository();
   final _medicationRepository = MedicationRepository();
+  final _feedingRepository = FeedingRepository();
+  final _achievementRepository = AchievementRepository();
   final _visitRepository = VisitRecordRepository();
   late Future<List<_HomeFocusItem>> _events = _loadEvents();
   List<Pet> _pets = const [];
@@ -966,6 +1163,29 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
                   pet: pet,
                   title: 'Препарат «${item.name}»',
                   date: item.nextDoseDate!,
+                )));
+      } catch (_) {}
+      try {
+        final feedings = await _feedingRepository.getFeedings(pet.id);
+        items.addAll(feedings
+            .where((item) => item.startDate.isAfter(DateTime.now()))
+            .map((item) => _HomeFocusItem(
+                  type: _HomeFocusType.feeding,
+                  pet: pet,
+                  title: 'Початок годування: ${item.foodName}',
+                  date: item.startDate,
+                )));
+      } catch (_) {}
+      try {
+        final achievements =
+            await _achievementRepository.getAchievements(pet.id);
+        items.addAll(achievements
+            .where((item) => item.eventDate.isAfter(DateTime.now()))
+            .map((item) => _HomeFocusItem(
+                  type: _HomeFocusType.achievement,
+                  pet: pet,
+                  title: item.title,
+                  date: item.eventDate,
                 )));
       } catch (_) {}
       try {
@@ -1068,10 +1288,17 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
                 onRetry: () => setState(() => _events = _loadEvents()),
               )
             else ...[
+              const Padding(
+                padding: EdgeInsets.only(bottom: 10),
+                child: Text(
+                  'Додайте власне нагадування про догляд за твариною — корм, грумінг або кігті.',
+                  style: TextStyle(color: AppTheme.textSecondary),
+                ),
+              ),
               FilledButton.icon(
                 onPressed: _addEvent,
                 icon: const Icon(Icons.add),
-                label: const Text('Додати подію'),
+                label: const Text('Додати нагадування'),
               ),
               const SizedBox(height: 12),
               Card(
@@ -1119,44 +1346,6 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
           ],
         );
       },
-    );
-  }
-}
-
-class _AnnouncementsCard extends StatelessWidget {
-  const _AnnouncementsCard({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.campaign_outlined,
-                      size: 18, color: AppTheme.primary),
-                  const SizedBox(width: 6),
-                  Text('Оголошення',
-                      style: Theme.of(context).textTheme.titleMedium),
-                ],
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                'Знайдіть партнера для в\'язки або цуценят улюбленої породи у розділі оголошень.',
-                style: TextStyle(color: AppTheme.textSecondary),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

@@ -4,6 +4,7 @@ class SaleAnnouncement {
     required this.ownerName,
     required this.phone,
     required this.breed,
+    this.species,
     required this.puppyName,
     required this.gender,
     required this.birthDate,
@@ -30,6 +31,7 @@ class SaleAnnouncement {
   final String ownerName;
   final String phone;
   final String breed;
+  final String? species;
   final String puppyName;
   final String gender;
   final DateTime birthDate;
@@ -57,6 +59,7 @@ class SaleAnnouncement {
       ownerName: json['contact_name'] as String,
       phone: json['contact_phone'] as String,
       breed: json['breed'] as String,
+      species: (json['pets'] as Map<String, dynamic>?)?['species'] as String?,
       puppyName: json['pet_name'] as String,
       gender: _normalizedGender(json['gender']),
       birthDate: DateTime.tryParse(json['birth_date'] as String? ?? '') ??

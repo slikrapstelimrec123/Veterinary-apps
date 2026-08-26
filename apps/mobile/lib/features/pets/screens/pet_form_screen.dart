@@ -27,6 +27,13 @@ class _PetFormScreenState extends State<PetFormScreen> {
   final colorController = TextEditingController();
   final microchipController = TextEditingController();
   final notesController = TextEditingController();
+  final emergencyAllergiesController = TextEditingController();
+  final emergencyConditionsController = TextEditingController();
+  final emergencySurgeriesController = TextEditingController();
+  final emergencyContraindicationsController = TextEditingController();
+  final emergencyBehaviorController = TextEditingController();
+  final emergencyBloodTypeController = TextEditingController();
+  final emergencyNotesController = TextEditingController();
 
   String species = 'dog';
   String sex = 'unknown';
@@ -71,6 +78,11 @@ class _PetFormScreenState extends State<PetFormScreen> {
         _ => value,
       };
 
+  String? _nullable(String value) {
+    final normalized = value.trim();
+    return normalized.isEmpty ? null : normalized;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -88,6 +100,14 @@ class _PetFormScreenState extends State<PetFormScreen> {
       colorController.text = pet.color ?? '';
       microchipController.text = pet.microchipNumber ?? '';
       notesController.text = pet.notes ?? '';
+      emergencyAllergiesController.text = pet.emergencyAllergies ?? '';
+      emergencyConditionsController.text = pet.emergencyConditions ?? '';
+      emergencySurgeriesController.text = pet.emergencySurgeries ?? '';
+      emergencyContraindicationsController.text =
+          pet.emergencyContraindications ?? '';
+      emergencyBehaviorController.text = pet.emergencyBehaviorNotes ?? '';
+      emergencyBloodTypeController.text = pet.emergencyBloodType ?? '';
+      emergencyNotesController.text = pet.emergencyNotes ?? '';
     }
   }
 
@@ -99,6 +119,13 @@ class _PetFormScreenState extends State<PetFormScreen> {
     colorController.dispose();
     microchipController.dispose();
     notesController.dispose();
+    emergencyAllergiesController.dispose();
+    emergencyConditionsController.dispose();
+    emergencySurgeriesController.dispose();
+    emergencyContraindicationsController.dispose();
+    emergencyBehaviorController.dispose();
+    emergencyBloodTypeController.dispose();
+    emergencyNotesController.dispose();
     super.dispose();
   }
 
@@ -208,6 +235,14 @@ class _PetFormScreenState extends State<PetFormScreen> {
         notes: notesController.text.trim().isEmpty
             ? null
             : notesController.text.trim(),
+        emergencyAllergies: _nullable(emergencyAllergiesController.text),
+        emergencyConditions: _nullable(emergencyConditionsController.text),
+        emergencySurgeries: _nullable(emergencySurgeriesController.text),
+        emergencyContraindications:
+            _nullable(emergencyContraindicationsController.text),
+        emergencyBehaviorNotes: _nullable(emergencyBehaviorController.text),
+        emergencyBloodType: _nullable(emergencyBloodTypeController.text),
+        emergencyNotes: _nullable(emergencyNotesController.text),
         passportPhotoUrl: widget.pet?.passportStoragePath == null
             ? widget.pet?.passportPhotoUrl
             : null,
@@ -353,6 +388,51 @@ class _PetFormScreenState extends State<PetFormScreen> {
         TextField(
           controller: microchipController,
           decoration: const InputDecoration(labelText: 'Номер мікрочипа'),
+        ),
+        const SizedBox(height: 12),
+
+        const Text('Екстрена інформація',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+        const SizedBox(height: 8),
+        TextField(
+          controller: emergencyAllergiesController,
+          maxLines: 2,
+          decoration: const InputDecoration(labelText: 'Алергії та реакції'),
+        ),
+        const SizedBox(height: 10),
+        TextField(
+          controller: emergencyConditionsController,
+          maxLines: 2,
+          decoration: const InputDecoration(labelText: 'Хронічні захворювання'),
+        ),
+        const SizedBox(height: 10),
+        TextField(
+          controller: emergencySurgeriesController,
+          maxLines: 2,
+          decoration: const InputDecoration(labelText: 'Перенесені операції'),
+        ),
+        const SizedBox(height: 10),
+        TextField(
+          controller: emergencyContraindicationsController,
+          maxLines: 2,
+          decoration: const InputDecoration(labelText: 'Протипоказання'),
+        ),
+        const SizedBox(height: 10),
+        TextField(
+          controller: emergencyBehaviorController,
+          maxLines: 2,
+          decoration: const InputDecoration(labelText: 'Особливості поведінки'),
+        ),
+        const SizedBox(height: 10),
+        TextField(
+          controller: emergencyBloodTypeController,
+          decoration: const InputDecoration(labelText: 'Група крові'),
+        ),
+        const SizedBox(height: 10),
+        TextField(
+          controller: emergencyNotesController,
+          maxLines: 3,
+          decoration: const InputDecoration(labelText: 'Важливі примітки'),
         ),
         const SizedBox(height: 12),
 
