@@ -50,9 +50,12 @@ class AnnouncementRepository {
     if (breed != null && breed.isNotEmpty) {
       query = query.ilike('breed', '%$breed%');
     }
-    if (city != null && city.isNotEmpty) query = query.ilike('city', '%$city%');
-    if (species != null && species.isNotEmpty)
+    if (city != null && city.isNotEmpty) {
+      query = query.ilike('city', '%$city%');
+    }
+    if (species != null && species.isNotEmpty) {
       query = query.eq('pets.species', species);
+    }
     final rows = await query
         .order('promoted_until', ascending: false, nullsFirst: false)
         .order('ranking_at', ascending: false)
@@ -73,9 +76,12 @@ class AnnouncementRepository {
     if (breed != null && breed.isNotEmpty) {
       query = query.ilike('breed', '%$breed%');
     }
-    if (city != null && city.isNotEmpty) query = query.ilike('city', '%$city%');
-    if (species != null && species.isNotEmpty)
+    if (city != null && city.isNotEmpty) {
+      query = query.ilike('city', '%$city%');
+    }
+    if (species != null && species.isNotEmpty) {
       query = query.eq('pets.species', species);
+    }
     final rows = await query
         .order('promoted_until', ascending: false, nullsFirst: false)
         .order('ranking_at', ascending: false)
