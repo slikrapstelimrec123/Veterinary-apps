@@ -17,6 +17,7 @@ import '../domain/pet.dart';
 import '../../announcements/screens/add_sale_announcement_screen.dart';
 import '../../announcements/screens/add_breeding_announcement_screen.dart';
 import 'edit_pet_screen.dart';
+import 'add_pet_screen.dart';
 import 'transfer_pet_screen.dart';
 
 class PetProfileScreen extends StatefulWidget {
@@ -79,10 +80,21 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
                 builder: (context, petsSnapshot) => Column(
                   children: [
                     if (petsSnapshot.hasData && petsSnapshot.data!.length > 1)
-                      _PetSwitcher(
-                        pets: petsSnapshot.data!,
-                        selectedPetId: currentPetId,
-                        onSelected: selectPet,
+                      SizedBox(
+                        width: double.infinity,
+                        child: _PetSwitcher(
+                          pets: petsSnapshot.data!,
+                          selectedPetId: currentPetId,
+                          onSelected: selectPet,
+                          onAddPet: () async {
+                            final result = await Navigator.of(context).push(
+                              InstantPageRoute(
+                                builder: (_) => const AddPetScreen(),
+                              ),
+                            );
+                            if (result != null && context.mounted) refresh();
+                          },
+                        ),
                       ),
                     _PetProfileContent(pet: pet, onChanged: refresh),
                   ],
@@ -100,11 +112,13 @@ class _PetSwitcher extends StatelessWidget {
     required this.pets,
     required this.selectedPetId,
     required this.onSelected,
+    required this.onAddPet,
   });
 
   final List<Pet> pets;
   final String selectedPetId;
   final ValueChanged<String> onSelected;
+  final VoidCallback onAddPet;
 
   @override
   Widget build(BuildContext context) {
@@ -113,8 +127,8 @@ class _PetSwitcher extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Row(
-          children: pets
-              .map(
+          children: [
+            ...pets.map(
                 (pet) => Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: Material(
@@ -142,8 +156,14 @@ class _PetSwitcher extends StatelessWidget {
                     ),
                   ),
                 ),
-              )
-              .toList(growable: false),
+              ),
+            IconButton(
+              onPressed: onAddPet,
+              tooltip: 'Додати тварину',
+              icon: const Icon(Icons.add_circle_outline),
+              color: AppTheme.primary,
+            ),
+          ],
         ),
       ),
     );
@@ -349,7 +369,7 @@ class _ActionGrid extends StatelessWidget {
             Expanded(
               child: _ActionCard(
                 icon: Icons.qr_code_outlined,
-                title: 'Паспорт',
+                title: 'Ветпаспорт',
                 onTap: () => Navigator.of(context).push(InstantPageRoute(
                   builder: (_) =>
                       PetPassportScreen(petId: pet.id, petName: pet.name),

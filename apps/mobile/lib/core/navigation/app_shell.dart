@@ -642,6 +642,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 16),
                 _QuickActionsCard(
+                  onAddReminder: widget.onOpenCalendar,
                   onAddVisit: () async {
                     final result = await Navigator.of(context).push(
                       MaterialPageRoute(
@@ -720,7 +721,7 @@ class _PetFocusData {
   final bool isComplete;
 }
 
-enum _HomeFocusType { medication, visit, feeding, achievement }
+enum _HomeFocusType { medication, visit, feeding, achievement, reminder }
 
 class _HomeFocusItem {
   const _HomeFocusItem({
@@ -972,7 +973,7 @@ class _HomeFocusCard extends StatelessWidget {
                   TextButton.icon(
                     onPressed: onOpenPet,
                     icon: const Icon(Icons.pets_outlined, size: 18),
-                    label: const Text('Медична картка'),
+                    label: const Text('Повна інформація'),
                   ),
                 ],
               ),
@@ -986,9 +987,12 @@ class _HomeFocusCard extends StatelessWidget {
 
 class _QuickActionsCard extends StatelessWidget {
   const _QuickActionsCard(
-      {required this.onAddVisit, required this.onAddMedication});
+      {required this.onAddVisit,
+      required this.onAddMedication,
+      required this.onAddReminder});
   final VoidCallback onAddVisit;
   final VoidCallback onAddMedication;
+  final VoidCallback onAddReminder;
 
   @override
   Widget build(BuildContext context) => Card(
@@ -1007,6 +1011,10 @@ class _QuickActionsCard extends StatelessWidget {
                   onPressed: onAddMedication,
                   icon: const Icon(Icons.medication_outlined),
                   label: const Text('Додати препарат')),
+              OutlinedButton.icon(
+                  onPressed: onAddReminder,
+                  icon: const Icon(Icons.notifications_none_outlined),
+                  label: const Text('Додати нагадування')),
             ]),
           ]),
         ),
@@ -1139,6 +1147,7 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
   final _visitRepository = VisitRecordRepository();
   late Future<List<_HomeFocusItem>> _events = _loadEvents();
   List<Pet> _pets = const [];
+  String? _selectedPetId;
   DateTime _selectedDate = DateTime.now();
 
   DateTime _day(DateTime value) => DateTime(value.year, value.month, value.day);
@@ -1146,6 +1155,7 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
   Future<List<_HomeFocusItem>> _loadEvents() async {
     final pets = await _petRepository.getPets();
     _pets = pets;
+    _selectedPetId ??= pets.isEmpty ? null : pets.first.id;
     final results = await Future.wait(pets.map((pet) async {
       final items = <_HomeFocusItem>[];
       try {
@@ -1220,44 +1230,55 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
 
   Future<void> _addEvent() async {
     if (_pets.isEmpty) return;
-    Pet pet = _pets.first;
-    if (_pets.length > 1) {
-      final selected = await showModalBottomSheet<Pet>(
-        context: context,
-        showDragHandle: true,
-        builder: (context) => SafeArea(
-          child: ListView(
-            shrinkWrap: true,
+    final pet = _pets.firstWhere(
+      (item) => item.id == _selectedPetId,
+      orElse: () => _pets.first,
+    );
+    final titleController = TextEditingController();
+    var date = _day(DateTime.now());
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Додати нагадування'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              const Padding(
-                padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
-                child: Text('Оберіть тварину',
-                    style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+              TextField(
+                controller: titleController,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: const InputDecoration(labelText: 'Назва'),
               ),
-              ..._pets.map((item) => ListTile(
-                    leading: PetAvatar(
-                        name: item.name, avatarUrl: item.avatarUrl, size: 40),
-                    title: Text(item.name),
-                    subtitle: Text(item.speciesLabel),
-                    onTap: () => Navigator.pop(context, item),
-                  )),
+              const SizedBox(height: 12),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.calendar_today_outlined),
+                title: const Text('Дата нагадування'),
+                subtitle: Text('${date.day.toString().padLeft(2, '0')}.${date.month.toString().padLeft(2, '0')}.${date.year}'),
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: date,
+                    firstDate: _day(DateTime.now()),
+                    lastDate: DateTime(2100),
+                  );
+                  if (picked != null) setDialogState(() => date = _day(picked));
+                },
+              ),
             ],
           ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Скасувати')),
+            FilledButton(onPressed: () => Navigator.pop(dialogContext, titleController.text.trim().isNotEmpty), child: const Text('Зберегти')),
+          ],
         ),
-      );
-      if (selected == null || !mounted) return;
-      pet = selected;
-    }
-    final result = await Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => AddVisitRecordScreen(
-        petId: pet.id,
-        petName: pet.name,
       ),
-    ));
-    if (result != null && mounted) {
-      setState(() => _events = _loadEvents());
-    }
+    );
+    final title = titleController.text.trim();
+    titleController.dispose();
+    if (saved != true || title.isEmpty || !mounted) return;
+    final reminder = _HomeFocusItem(type: _HomeFocusType.reminder, pet: pet, title: title, date: date);
+    setState(() => _events = _events.then((items) => [...items, reminder]..sort((a, b) => a.date.compareTo(b.date))));
   }
 
   @override
@@ -1284,6 +1305,14 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
                 onRetry: () => setState(() => _events = _loadEvents()),
               )
             else ...[
+              if (_pets.length > 1) ...[
+                _CalendarPetSwitcher(
+                  pets: _pets,
+                  selectedPetId: _selectedPetId,
+                  onSelected: (id) => setState(() => _selectedPetId = id),
+                ),
+                const SizedBox(height: 12),
+              ],
               const Padding(
                 padding: EdgeInsets.only(bottom: 10),
                 child: Text(
@@ -1344,4 +1373,43 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
       },
     );
   }
+}
+
+class _CalendarPetSwitcher extends StatelessWidget {
+  const _CalendarPetSwitcher({
+    required this.pets,
+    required this.selectedPetId,
+    required this.onSelected,
+  });
+
+  final List<Pet> pets;
+  final String? selectedPetId;
+  final ValueChanged<String> onSelected;
+
+  @override
+  Widget build(BuildContext context) => Card(
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            children: pets
+                .map(
+                  (pet) => Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      selected: pet.id == selectedPetId,
+                      avatar: PetAvatar(
+                        name: pet.name,
+                        avatarUrl: pet.avatarUrl,
+                        size: 30,
+                      ),
+                      label: Text(pet.name),
+                      onSelected: (_) => onSelected(pet.id),
+                    ),
+                  ),
+                )
+                .toList(growable: false),
+          ),
+        ),
+      );
 }
