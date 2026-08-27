@@ -135,21 +135,19 @@ class _PetSwitcher extends StatelessWidget {
                     color: pet.id == selectedPetId
                         ? AppTheme.primary.withValues(alpha: 0.12)
                         : Colors.transparent,
-                    shape: const StadiumBorder(),
+                    shape: const CircleBorder(),
                     child: InkWell(
                       onTap: () => onSelected(pet.id),
-                      customBorder: const StadiumBorder(),
+                      customBorder: const CircleBorder(),
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(6, 4, 12, 4),
+                        padding: const EdgeInsets.all(2),
                         child: Row(
                           children: [
                             PetAvatar(
                               name: pet.name,
                               avatarUrl: pet.avatarUrl,
-                              size: 34,
+                              size: 40,
                             ),
-                            const SizedBox(width: 6),
-                            Text(pet.name),
                           ],
                         ),
                       ),

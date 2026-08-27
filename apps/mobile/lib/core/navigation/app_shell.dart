@@ -1291,7 +1291,11 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
         final monthEnd = today.add(const Duration(days: 30));
         final upcoming = events.where((item) {
           final date = _day(item.date);
-          return !date.isBefore(today) && !date.isAfter(monthEnd);
+          final belongsToSelectedPet = _selectedPetId == null ||
+              item.pet.id == _selectedPetId;
+          return belongsToSelectedPet &&
+              !date.isBefore(today) &&
+              !date.isAfter(monthEnd);
         }).toList(growable: false);
         return AppScaffold(
           title: 'Календар подій',
@@ -1396,15 +1400,23 @@ class _CalendarPetSwitcher extends StatelessWidget {
                 .map(
                   (pet) => Padding(
                     padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      selected: pet.id == selectedPetId,
-                      avatar: PetAvatar(
-                        name: pet.name,
-                        avatarUrl: pet.avatarUrl,
-                        size: 30,
+                    child: Material(
+                      color: pet.id == selectedPetId
+                          ? AppTheme.primary.withValues(alpha: 0.12)
+                          : Colors.transparent,
+                      shape: const CircleBorder(),
+                      child: InkWell(
+                        onTap: () => onSelected(pet.id),
+                        customBorder: const CircleBorder(),
+                        child: Padding(
+                          padding: const EdgeInsets.all(2),
+                          child: PetAvatar(
+                            name: pet.name,
+                            avatarUrl: pet.avatarUrl,
+                            size: 40,
+                          ),
+                        ),
                       ),
-                      label: Text(pet.name),
-                      onSelected: (_) => onSelected(pet.id),
                     ),
                   ),
                 )

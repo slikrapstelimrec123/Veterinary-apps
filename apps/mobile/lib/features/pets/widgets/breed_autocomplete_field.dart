@@ -206,6 +206,7 @@ class _BreedAutocompleteFieldState extends State<BreedAutocompleteField> {
                     icon: const Icon(Icons.arrow_drop_down),
                   ),
           ),
+          onTap: focusNode.requestFocus,
           onSubmitted: (_) => onSubmitted(),
         );
       },
