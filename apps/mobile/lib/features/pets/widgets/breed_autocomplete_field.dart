@@ -166,8 +166,7 @@ class _BreedAutocompleteFieldState extends State<BreedAutocompleteField> {
   final _focusNode = FocusNode();
 
   void _openOptions(FocusNode node) {
-    node.unfocus();
-    Future<void>.delayed(Duration.zero, node.requestFocus);
+    node.requestFocus();
   }
 
   @override

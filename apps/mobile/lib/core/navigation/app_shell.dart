@@ -417,41 +417,39 @@ class _HomeScreenState extends State<HomeScreen> {
   late Future<_HomeData> homeFuture = _loadHomeData();
   String? _selectedPetId;
 
+  DateTime _day(DateTime value) => DateTime(value.year, value.month, value.day);
+
   void refresh() {
     setState(() => homeFuture = _loadHomeData());
   }
 
   Future<void> _addReminder(Pet pet) async {
     final titleController = TextEditingController();
-    var date = DateTime.now();
-    await showDialog<void>(
+    var date = _day(DateTime.now());
+    final saved = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Додати нагадування'),
-        content: TextField(
-          controller: titleController,
-          textCapitalization: TextCapitalization.sentences,
-          decoration: const InputDecoration(labelText: 'Назва'),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Скасувати')),
-          FilledButton(
-            onPressed: () async {
-              if (titleController.text.trim().isEmpty) return;
-              final picked = await showDatePicker(
-                context: dialogContext,
-                initialDate: date,
-                firstDate: DateTime.now(),
-                lastDate: DateTime(2100),
-              );
-              if (picked != null) date = picked;
-              if (dialogContext.mounted) Navigator.pop(dialogContext);
-            },
-            child: const Text('Зберегти'),
-          ),
-        ],
-      ),
+      builder: (dialogContext) => StatefulBuilder(builder: (context, setState) {
+        return AlertDialog(
+          title: const Text('Додати нагадування'),
+          content: Column(mainAxisSize: MainAxisSize.min, children: [
+            TextField(controller: titleController, textCapitalization: TextCapitalization.sentences, decoration: const InputDecoration(labelText: 'Назва')),
+            const SizedBox(height: 12),
+            ListTile(contentPadding: EdgeInsets.zero, leading: const Icon(Icons.calendar_today_outlined), title: const Text('Дата нагадування'), subtitle: Text('${date.day.toString().padLeft(2, '0')}.${date.month.toString().padLeft(2, '0')}.${date.year}'), onTap: () async {
+              final picked = await showDatePicker(context: context, initialDate: date, firstDate: _day(DateTime.now()), lastDate: DateTime(2100));
+              if (picked != null) setState(() => date = _day(picked));
+            }),
+          ]),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Скасувати')),
+            FilledButton(onPressed: () => Navigator.pop(dialogContext, titleController.text.trim().isNotEmpty), child: const Text('Зберегти')),
+          ],
+        );
+      }),
     );
+    if (saved == true && !SupabaseConfig.useMockData) {
+      await Supabase.instance.client.from('pet_reminders').insert({'pet_id': pet.id, 'title': titleController.text.trim(), 'reminder_date': date.toIso8601String().split('T').first});
+    }
+    if (saved == true) AppDataEvents.notifyChanged();
     titleController.dispose();
   }
 
@@ -839,7 +837,7 @@ class _HomeFocusCard extends StatelessWidget {
                       padding: const EdgeInsets.only(right: 8),
                       child: Material(
                         color: pet.id == selectedPet.id
-                            ? AppTheme.primary.withValues(alpha: 0.26)
+                            ? AppTheme.primary.withValues(alpha: 0.42)
                             : Colors.transparent,
                         shape: const CircleBorder(),
                         child: InkWell(
@@ -1360,6 +1358,7 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
         'reminder_date': date.toIso8601String().split('T').first,
       });
     }
+    AppDataEvents.notifyChanged();
     setState(() => _events = _events.then((items) => [...items, reminder]..sort((a, b) => a.date.compareTo(b.date))));
   }
 
@@ -1506,7 +1505,7 @@ class _CalendarPetSwitcher extends StatelessWidget {
                     padding: const EdgeInsets.only(right: 8),
                     child: Material(
                       color: pet.id == selectedPetId
-                          ? AppTheme.primary.withValues(alpha: 0.26)
+                          ? AppTheme.primary.withValues(alpha: 0.42)
                           : Colors.transparent,
                       shape: const CircleBorder(),
                       child: InkWell(

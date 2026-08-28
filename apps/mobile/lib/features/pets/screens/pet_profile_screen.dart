@@ -133,7 +133,7 @@ class _PetSwitcher extends StatelessWidget {
                   padding: const EdgeInsets.only(right: 8),
                   child: Material(
                     color: pet.id == selectedPetId
-                        ? AppTheme.primary.withValues(alpha: 0.26)
+                        ? AppTheme.primary.withValues(alpha: 0.42)
                         : Colors.transparent,
                     shape: const CircleBorder(),
                     child: InkWell(
@@ -276,6 +276,13 @@ class _EmergencyInfoCard extends StatelessWidget {
   }
 
   Future<void> _edit(BuildContext context) async {
+    await Navigator.of(context).push(
+      InstantPageRoute(
+        builder: (_) => EmergencyInfoScreen(pet: pet, onSaved: onSaved),
+      ),
+    );
+    return;
+    /*
     final fields = <String, TextEditingController>{
       'Алергії та реакції': TextEditingController(text: pet.emergencyAllergies ?? ''),
       'Хронічні захворювання': TextEditingController(text: pet.emergencyConditions ?? ''),
@@ -329,6 +336,55 @@ class _EmergencyInfoCard extends StatelessWidget {
     for (final controller in fields.values) {
       controller.dispose();
     }
+    */
+  }
+}
+
+class EmergencyInfoScreen extends StatefulWidget {
+  const EmergencyInfoScreen({super.key, required this.pet, required this.onSaved});
+  final Pet pet;
+  final VoidCallback onSaved;
+  @override
+  State<EmergencyInfoScreen> createState() => _EmergencyInfoScreenState();
+}
+
+class _EmergencyInfoScreenState extends State<EmergencyInfoScreen> {
+  late final controllers = <String, TextEditingController>{
+    'Алергії та реакції': TextEditingController(text: widget.pet.emergencyAllergies ?? ''),
+    'Хронічні захворювання': TextEditingController(text: widget.pet.emergencyConditions ?? ''),
+    'Перенесені операції': TextEditingController(text: widget.pet.emergencySurgeries ?? ''),
+    'Протипоказання': TextEditingController(text: widget.pet.emergencyContraindications ?? ''),
+    'Особливості поведінки': TextEditingController(text: widget.pet.emergencyBehaviorNotes ?? ''),
+    'Група крові': TextEditingController(text: widget.pet.emergencyBloodType ?? ''),
+    'Важливі примітки': TextEditingController(text: widget.pet.emergencyNotes ?? ''),
+  };
+  bool editing = false;
+  @override
+  void dispose() { for (final c in controllers.values) c.dispose(); super.dispose(); }
+  @override
+  Widget build(BuildContext context) => AppScaffold(
+        title: 'Екстрена інформація',
+        children: [
+          Text('Дані для швидкого ознайомлення лікаря.', style: Theme.of(context).textTheme.bodyLarge),
+          const SizedBox(height: 16),
+          ...controllers.entries.map((e) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: TextField(controller: e.value, enabled: editing, maxLines: e.key == 'Група крові' ? 1 : 3, decoration: InputDecoration(labelText: e.key)),
+              )),
+          FilledButton.icon(
+            onPressed: editing ? _save : () => setState(() => editing = true),
+            icon: Icon(editing ? Icons.save_outlined : Icons.edit_outlined),
+            label: Text(editing ? 'Зберегти' : 'Редагувати'),
+          ),
+        ],
+      );
+  Future<void> _save() async {
+    String? value(String key) { final text = controllers[key]!.text.trim(); return text.isEmpty ? null : text; }
+    await PetRepository().updatePet(widget.pet.copyWith(
+      emergencyAllergies: value('Алергії та реакції'), emergencyConditions: value('Хронічні захворювання'), emergencySurgeries: value('Перенесені операції'), emergencyContraindications: value('Протипоказання'), emergencyBehaviorNotes: value('Особливості поведінки'), emergencyBloodType: value('Група крові'), emergencyNotes: value('Важливі примітки'),
+    ));
+    widget.onSaved();
+    if (mounted) Navigator.pop(context);
   }
 }
 
