@@ -165,6 +165,11 @@ class BreedAutocompleteField extends StatefulWidget {
 class _BreedAutocompleteFieldState extends State<BreedAutocompleteField> {
   final _focusNode = FocusNode();
 
+  void _openOptions(FocusNode node) {
+    node.unfocus();
+    Future<void>.delayed(Duration.zero, node.requestFocus);
+  }
+
   @override
   void dispose() {
     _focusNode.dispose();
@@ -202,11 +207,11 @@ class _BreedAutocompleteFieldState extends State<BreedAutocompleteField> {
                 ? null
                 : IconButton(
                     tooltip: 'Показати породи',
-                    onPressed: focusNode.requestFocus,
+                    onPressed: () => _openOptions(focusNode),
                     icon: const Icon(Icons.arrow_drop_down),
                   ),
           ),
-          onTap: focusNode.requestFocus,
+          onTap: () => _openOptions(focusNode),
           onSubmitted: (_) => onSubmitted(),
         );
       },
