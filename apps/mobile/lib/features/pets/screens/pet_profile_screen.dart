@@ -360,7 +360,12 @@ class _EmergencyInfoScreenState extends State<EmergencyInfoScreen> {
   };
   bool editing = false;
   @override
-  void dispose() { for (final c in controllers.values) c.dispose(); super.dispose(); }
+  void dispose() {
+    for (final c in controllers.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
   @override
   Widget build(BuildContext context) => AppScaffold(
         title: 'Екстрена інформація',

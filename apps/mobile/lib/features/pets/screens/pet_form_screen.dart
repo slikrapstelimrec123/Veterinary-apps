@@ -71,11 +71,6 @@ class _PetFormScreenState extends State<PetFormScreen> {
         _ => value,
       };
 
-  String? _nullable(String value) {
-    final normalized = value.trim();
-    return normalized.isEmpty ? null : normalized;
-  }
-
   @override
   void initState() {
     super.initState();
