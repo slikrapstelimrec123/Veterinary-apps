@@ -133,7 +133,7 @@ class _PetSwitcher extends StatelessWidget {
                   padding: const EdgeInsets.only(right: 8),
                   child: Material(
                     color: pet.id == selectedPetId
-                        ? AppTheme.primary.withValues(alpha: 0.12)
+                        ? AppTheme.primary.withValues(alpha: 0.26)
                         : Colors.transparent,
                     shape: const CircleBorder(),
                     child: InkWell(
@@ -180,7 +180,7 @@ class _PetProfileContent extends StatelessWidget {
       children: [
         _PetCard(pet: pet),
         const SizedBox(height: 12),
-        _EmergencyInfoCard(pet: pet),
+        _EmergencyInfoCard(pet: pet, onSaved: onChanged),
         const SizedBox(height: 12),
         _ActionGrid(pet: pet, onChanged: onChanged),
         const SizedBox(height: 12),
@@ -229,8 +229,9 @@ class _PetProfileContent extends StatelessWidget {
 }
 
 class _EmergencyInfoCard extends StatelessWidget {
-  const _EmergencyInfoCard({required this.pet});
+  const _EmergencyInfoCard({required this.pet, required this.onSaved});
   final Pet pet;
+  final VoidCallback onSaved;
 
   @override
   Widget build(BuildContext context) {
@@ -243,15 +244,21 @@ class _EmergencyInfoCard extends StatelessWidget {
       (label: 'Група крові', value: pet.emergencyBloodType),
       (label: 'Важливі примітки', value: pet.emergencyNotes),
     ].where((row) => row.value?.trim().isNotEmpty == true).toList();
-    return Card(
-      child: Padding(
+    return InkWell(
+      onTap: () => _edit(context),
+      borderRadius: BorderRadius.circular(20),
+      child: Card(
+        color: AppTheme.danger.withValues(alpha: 0.12),
+        child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
             const Icon(Icons.emergency_outlined, color: AppTheme.danger),
             const SizedBox(width: 8),
-            Text('Екстрена інформація',
+            Expanded(child: Text('Екстрена інформація',
                 style: Theme.of(context).textTheme.titleMedium),
+            ),
+            const Icon(Icons.chevron_right, color: AppTheme.danger),
           ]),
           const SizedBox(height: 8),
           if (rows.isEmpty)
@@ -264,7 +271,61 @@ class _EmergencyInfoCard extends StatelessWidget {
                 )),
         ]),
       ),
+      ),
     );
+  }
+
+  Future<void> _edit(BuildContext context) async {
+    final fields = <String, TextEditingController>{
+      'Алергії та реакції': TextEditingController(text: pet.emergencyAllergies ?? ''),
+      'Хронічні захворювання': TextEditingController(text: pet.emergencyConditions ?? ''),
+      'Перенесені операції': TextEditingController(text: pet.emergencySurgeries ?? ''),
+      'Протипоказання': TextEditingController(text: pet.emergencyContraindications ?? ''),
+      'Особливості поведінки': TextEditingController(text: pet.emergencyBehaviorNotes ?? ''),
+      'Група крові': TextEditingController(text: pet.emergencyBloodType ?? ''),
+      'Важливі примітки': TextEditingController(text: pet.emergencyNotes ?? ''),
+    };
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Екстрена інформація'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: fields.entries
+                .map((entry) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: TextField(
+                        controller: entry.value,
+                        maxLines: entry.key == 'Група крові' ? 1 : 2,
+                        decoration: InputDecoration(labelText: entry.key),
+                      ),
+                    ))
+                .toList(growable: false),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Скасувати')),
+          FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Зберегти')),
+        ],
+      ),
+    );
+    if (saved == true && context.mounted) {
+      final value = (String key) => fields[key]!.text.trim().isEmpty ? null : fields[key]!.text.trim();
+      await PetRepository().updatePet(pet.copyWith(
+        emergencyAllergies: value('Алергії та реакції'),
+        emergencyConditions: value('Хронічні захворювання'),
+        emergencySurgeries: value('Перенесені операції'),
+        emergencyContraindications: value('Протипоказання'),
+        emergencyBehaviorNotes: value('Особливості поведінки'),
+        emergencyBloodType: value('Група крові'),
+        emergencyNotes: value('Важливі примітки'),
+      ));
+      onSaved();
+    }
+    for (final controller in fields.values) {
+      controller.dispose();
+    }
   }
 }
 

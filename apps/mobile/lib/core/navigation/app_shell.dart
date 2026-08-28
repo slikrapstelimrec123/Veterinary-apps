@@ -421,6 +421,40 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => homeFuture = _loadHomeData());
   }
 
+  Future<void> _addReminder(Pet pet) async {
+    final titleController = TextEditingController();
+    var date = DateTime.now();
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Додати нагадування'),
+        content: TextField(
+          controller: titleController,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: const InputDecoration(labelText: 'Назва'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Скасувати')),
+          FilledButton(
+            onPressed: () async {
+              if (titleController.text.trim().isEmpty) return;
+              final picked = await showDatePicker(
+                context: dialogContext,
+                initialDate: date,
+                firstDate: DateTime.now(),
+                lastDate: DateTime(2100),
+              );
+              if (picked != null) date = picked;
+              if (dialogContext.mounted) Navigator.pop(dialogContext);
+            },
+            child: const Text('Зберегти'),
+          ),
+        ],
+      ),
+    );
+    titleController.dispose();
+  }
+
   Future<_HomeData> _loadHomeData() async {
     final pets = await repository.getPets();
     final perPetFocus = await Future.wait(pets.map(_loadPetFocus));
@@ -642,7 +676,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 16),
                 _QuickActionsCard(
-                  onAddReminder: widget.onOpenCalendar,
+                  onAddReminder: () => _addReminder(selectedPet),
                   onAddVisit: () async {
                     final result = await Navigator.of(context).push(
                       MaterialPageRoute(
@@ -655,13 +689,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     if (result != null && mounted) refresh();
                   },
                   onAddMedication: () async {
-                    await Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => MedicationsScreen(
+                    final result = await Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => AddMedicationScreen(
                         petId: selectedPet.id,
                         petName: selectedPet.name,
                       ),
                     ));
-                    if (mounted) refresh();
+                    if (result != null && mounted) refresh();
                   },
                 ),
                 const SizedBox(height: 16),
@@ -805,7 +839,7 @@ class _HomeFocusCard extends StatelessWidget {
                       padding: const EdgeInsets.only(right: 8),
                       child: Material(
                         color: pet.id == selectedPet.id
-                            ? AppTheme.primary.withValues(alpha: 0.12)
+                            ? AppTheme.primary.withValues(alpha: 0.26)
                             : Colors.transparent,
                         shape: const CircleBorder(),
                         child: InkWell(
@@ -821,6 +855,30 @@ class _HomeFocusCard extends StatelessWidget {
                           ),
                         ),
                       ),
+                    ),
+                  if (pets.length > 5)
+                    IconButton(
+                      onPressed: () async {
+                        final picked = await showModalBottomSheet<Pet>(
+                          context: context,
+                          showDragHandle: true,
+                          builder: (sheetContext) => ListView(
+                            shrinkWrap: true,
+                            children: pets
+                                .map((pet) => ListTile(
+                                      leading: PetAvatar(name: pet.name, avatarUrl: pet.avatarUrl, size: 40),
+                                      title: Text(pet.name),
+                                      selected: pet.id == selectedPet.id,
+                                      onTap: () => Navigator.pop(sheetContext, pet),
+                                    ))
+                                .toList(growable: false),
+                          ),
+                        );
+                        if (picked != null) onPetSelected(picked.id);
+                      },
+                      tooltip: 'Усі тварини',
+                      icon: const Icon(Icons.more_horiz),
+                      color: AppTheme.primary,
                     ),
                   IconButton(
                     onPressed: onAddPet,
@@ -1069,7 +1127,7 @@ class _PetCalendarScreen extends StatefulWidget {
 }
 
 class _PetCalendarScreenState extends State<_PetCalendarScreen> {
-  DateTime _selectedDate = DateTime.now();
+  DateTime _selectedDate = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
 
   DateTime _day(DateTime value) => DateTime(value.year, value.month, value.day);
 
@@ -1207,6 +1265,23 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
                   visitRecordId: item.id,
                 )));
       } catch (_) {}
+      if (!SupabaseConfig.useMockData) {
+        try {
+          final reminders = await Supabase.instance.client
+              .from('pet_reminders')
+              .select('id, title, reminder_date')
+              .eq('pet_id', pet.id);
+          items.addAll((reminders as List<dynamic>).map((row) {
+            final data = Map<String, dynamic>.from(row as Map);
+            return _HomeFocusItem(
+              type: _HomeFocusType.reminder,
+              pet: pet,
+              title: data['title'] as String,
+              date: DateTime.parse(data['reminder_date'] as String),
+            );
+          }));
+        } catch (_) {}
+      }
       return items;
     }));
     return results.expand((items) => items).toList()
@@ -1278,6 +1353,13 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
     titleController.dispose();
     if (saved != true || title.isEmpty || !mounted) return;
     final reminder = _HomeFocusItem(type: _HomeFocusType.reminder, pet: pet, title: title, date: date);
+    if (!SupabaseConfig.useMockData) {
+      await Supabase.instance.client.from('pet_reminders').insert({
+        'pet_id': pet.id,
+        'title': title,
+        'reminder_date': date.toIso8601String().split('T').first,
+      });
+    }
     setState(() => _events = _events.then((items) => [...items, reminder]..sort((a, b) => a.date.compareTo(b.date))));
   }
 
@@ -1338,6 +1420,28 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
                   onDateChanged: (date) =>
                       setState(() => _selectedDate = _day(date)),
                 ),
+              ),
+              Builder(
+                builder: (context) {
+                  final selectedEvents = upcoming
+                      .where((item) => _day(item.date) == _selectedDate)
+                      .toList(growable: false);
+                  if (selectedEvents.isEmpty) return const SizedBox.shrink();
+                  return Card(
+                    color: AppTheme.primary.withValues(alpha: 0.08),
+                    child: Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Події на ${_selectedDate.day.toString().padLeft(2, '0')}.${_selectedDate.month.toString().padLeft(2, '0')}.${_selectedDate.year}', style: Theme.of(context).textTheme.titleSmall),
+                          const SizedBox(height: 6),
+                          ...selectedEvents.map((item) => Text('• ${item.title} — ${item.pet.name}')),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 12),
               Text(
@@ -1402,7 +1506,7 @@ class _CalendarPetSwitcher extends StatelessWidget {
                     padding: const EdgeInsets.only(right: 8),
                     child: Material(
                       color: pet.id == selectedPetId
-                          ? AppTheme.primary.withValues(alpha: 0.12)
+                          ? AppTheme.primary.withValues(alpha: 0.26)
                           : Colors.transparent,
                       shape: const CircleBorder(),
                       child: InkWell(
