@@ -311,7 +311,10 @@ class _EmergencyInfoCard extends StatelessWidget {
       ),
     );
     if (saved == true && context.mounted) {
-      final value = (String key) => fields[key]!.text.trim().isEmpty ? null : fields[key]!.text.trim();
+      String? value(String key) {
+        final text = fields[key]!.text.trim();
+        return text.isEmpty ? null : text;
+      }
       await PetRepository().updatePet(pet.copyWith(
         emergencyAllergies: value('Алергії та реакції'),
         emergencyConditions: value('Хронічні захворювання'),
