@@ -167,6 +167,10 @@ class _BreedAutocompleteFieldState extends State<BreedAutocompleteField> {
 
   void _openOptions(FocusNode node) {
     node.requestFocus();
+    // Nudge RawAutocomplete after focus so an empty query immediately opens
+    // the complete species-specific list instead of waiting for typing.
+    final value = widget.controller.value;
+    widget.controller.value = value.copyWith();
   }
 
   @override
