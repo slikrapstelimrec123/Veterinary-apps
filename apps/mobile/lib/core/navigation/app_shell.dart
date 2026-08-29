@@ -1352,11 +1352,19 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
     if (saved != true || title.isEmpty || !mounted) return;
     final reminder = _HomeFocusItem(type: _HomeFocusType.reminder, pet: pet, title: title, date: date);
     if (!SupabaseConfig.useMockData) {
-      await Supabase.instance.client.from('pet_reminders').insert({
-        'pet_id': pet.id,
-        'title': title,
-        'reminder_date': date.toIso8601String().split('T').first,
-      });
+      try {
+        await Supabase.instance.client.from('pet_reminders').insert({
+          'pet_id': pet.id,
+          'title': title,
+          'reminder_date': date.toIso8601String().split('T').first,
+        });
+      } catch (_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Не вдалося зберегти нагадування. Застосуйте міграцію pet_reminders у Supabase.'),
+          ));
+        }
+      }
     }
     AppDataEvents.notifyChanged();
     setState(() => _events = _events.then((items) => [...items, reminder]..sort((a, b) => a.date.compareTo(b.date))));

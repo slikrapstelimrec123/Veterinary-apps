@@ -372,10 +372,15 @@ class _EmergencyInfoScreenState extends State<EmergencyInfoScreen> {
         children: [
           Text('Дані для швидкого ознайомлення лікаря.', style: Theme.of(context).textTheme.bodyLarge),
           const SizedBox(height: 16),
-          ...controllers.entries.map((e) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: TextField(controller: e.value, enabled: editing, maxLines: e.key == 'Група крові' ? 1 : 3, decoration: InputDecoration(labelText: e.key)),
-              )),
+          if (!editing && controllers.values.every((c) => c.text.trim().isEmpty))
+            const Text('Екстрені дані ще не додані.', style: TextStyle(color: AppTheme.textSecondary))
+          else
+            ...controllers.entries.where((e) => editing || e.value.text.trim().isNotEmpty).map((e) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: editing
+                      ? TextField(controller: e.value, maxLines: e.key == 'Група крові' ? 1 : 3, decoration: InputDecoration(labelText: e.key))
+                      : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(e.key, style: const TextStyle(color: AppTheme.textSecondary)), const SizedBox(height: 2), Text(e.value.text)]),
+                )),
           FilledButton.icon(
             onPressed: editing ? _save : () => setState(() => editing = true),
             icon: Icon(editing ? Icons.save_outlined : Icons.edit_outlined),
