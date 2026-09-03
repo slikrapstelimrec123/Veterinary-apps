@@ -158,6 +158,7 @@ class _PetFormScreenState extends State<PetFormScreen> {
 
   Future<void> save() async {
     final name = nameController.text.trim();
+    final breedText = breedController.text.replaceAll('\u200B', '').trim();
     final weightText = weightController.text.trim();
     final parsedWeight = weightText.isEmpty
         ? null
@@ -188,9 +189,9 @@ class _PetFormScreenState extends State<PetFormScreen> {
         id: widget.pet?.id ?? '',
         name: name,
         species: species,
-        breed: breedController.text.trim().isEmpty
+        breed: breedText.isEmpty
             ? null
-            : breedController.text.trim(),
+            : breedText,
         sex: sex,
         isNeutered: isNeutered,
         birthDate: birthDate,
