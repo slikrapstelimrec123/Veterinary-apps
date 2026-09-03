@@ -359,6 +359,8 @@ class _EmergencyInfoScreenState extends State<EmergencyInfoScreen> {
     'Важливі примітки': TextEditingController(text: widget.pet.emergencyNotes ?? ''),
   };
   bool editing = false;
+  bool saving = false;
+  String? saveError;
   @override
   void dispose() {
     for (final c in controllers.values) {
@@ -381,20 +383,27 @@ class _EmergencyInfoScreenState extends State<EmergencyInfoScreen> {
                       ? TextField(controller: e.value, maxLines: e.key == 'Група крові' ? 1 : 3, decoration: InputDecoration(labelText: e.key))
                       : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(e.key, style: const TextStyle(color: AppTheme.textSecondary)), const SizedBox(height: 2), Text(e.value.text)]),
                 )),
+          if (saveError != null)
+            Text(saveError!, style: const TextStyle(color: AppTheme.danger)),
           FilledButton.icon(
-            onPressed: editing ? _save : () => setState(() => editing = true),
+            onPressed: saving ? null : (editing ? _save : () => setState(() => editing = true)),
             icon: Icon(editing ? Icons.save_outlined : Icons.edit_outlined),
-            label: Text(editing ? 'Зберегти' : 'Редагувати'),
+            label: Text(saving ? 'Збереження…' : (editing ? 'Зберегти' : 'Редагувати')),
           ),
         ],
       );
   Future<void> _save() async {
+    setState(() { saving = true; saveError = null; });
     String? value(String key) { final text = controllers[key]!.text.trim(); return text.isEmpty ? null : text; }
-    await PetRepository().updatePet(widget.pet.copyWith(
+    try {
+      await PetRepository().updatePet(widget.pet.copyWith(
       emergencyAllergies: value('Алергії та реакції'), emergencyConditions: value('Хронічні захворювання'), emergencySurgeries: value('Перенесені операції'), emergencyContraindications: value('Протипоказання'), emergencyBehaviorNotes: value('Особливості поведінки'), emergencyBloodType: value('Група крові'), emergencyNotes: value('Важливі примітки'),
-    ));
-    widget.onSaved();
-    if (mounted) Navigator.pop(context);
+      ));
+      widget.onSaved();
+      if (mounted) Navigator.pop(context);
+    } catch (_) {
+      if (mounted) setState(() { saving = false; saveError = 'Не вдалося зберегти дані. Перевірте підключення до Supabase.'; });
+    }
   }
 }
 

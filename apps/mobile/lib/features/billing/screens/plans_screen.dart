@@ -481,14 +481,14 @@ class _PlanCard extends StatelessWidget {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: onMonthly,
-                      child: Text(monthlyLabel!),
+                      child: Text('${monthlyLabel!} / місяць'),
                     ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: FilledButton(
                       onPressed: onYearly,
-                      child: Text(yearlyLabel!),
+                      child: Text('${yearlyLabel!} / рік'),
                     ),
                   ),
                 ],

@@ -167,10 +167,12 @@ class _BreedAutocompleteFieldState extends State<BreedAutocompleteField> {
 
   void _openOptions(FocusNode node) {
     node.requestFocus();
-    // Nudge RawAutocomplete after focus so an empty query immediately opens
-    // the complete species-specific list instead of waiting for typing.
+    // Trigger RawAutocomplete's options listener even when the query is empty.
     final value = widget.controller.value;
-    widget.controller.value = value.copyWith();
+    if (value.text.isEmpty) {
+      widget.controller.value = const TextEditingValue(text: '\u200B');
+      widget.controller.selection = const TextSelection.collapsed(offset: 1);
+    }
   }
 
   @override
@@ -186,7 +188,7 @@ class _BreedAutocompleteFieldState extends State<BreedAutocompleteField> {
       textEditingController: widget.controller,
       focusNode: _focusNode,
       optionsBuilder: (value) {
-        final query = value.text.trim().toLowerCase();
+        final query = value.text.replaceAll('\u200B', '').trim().toLowerCase();
         if (query.isEmpty) return breeds;
         return breeds.where((breed) => breed.toLowerCase().contains(query));
       },
