@@ -492,6 +492,26 @@ class _HomeScreenState extends State<HomeScreen> {
               type: _HomeFocusType.medication,
             )));
       } catch (_) {}
+      if (!SupabaseConfig.useMockData) {
+        try {
+          final reminders = await Supabase.instance.client
+              .from('pet_reminders')
+              .select('title, reminder_date')
+              .eq('pet_id', pet.id)
+              .order('reminder_date', ascending: false)
+              .limit(2);
+          result.addAll((reminders as List<dynamic>).map((row) {
+            final data = Map<String, dynamic>.from(row as Map);
+            return _HomeRecentItem(
+              pet: pet,
+              title: data['title'] as String,
+              subtitle: 'Нагадування',
+              date: DateTime.parse(data['reminder_date'] as String),
+              type: _HomeFocusType.reminder,
+            );
+          }));
+        } catch (_) {}
+      }
     }
     result.sort((a, b) => b.date.compareTo(a.date));
     return result.take(3).toList(growable: false);
@@ -1253,6 +1273,15 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
       try {
         final visits = await _visitRepository.getVisitRecordsForPet(pet.id);
         items.addAll(visits
+            .where((item) => !_day(item.visitDate).isBefore(_day(DateTime.now())))
+            .map((item) => _HomeFocusItem(
+                  type: _HomeFocusType.visit,
+                  pet: pet,
+                  title: item.reason ?? 'Запланований прийом',
+                  date: item.visitDate,
+                  visitRecordId: item.id,
+                )));
+        items.addAll(visits
             .where((item) =>
                 item.nextVisitRecommended && item.nextVisitDate != null)
             .map((item) => _HomeFocusItem(
@@ -1287,7 +1316,18 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
   }
 
   Future<void> _openItem(_HomeFocusItem item) async {
-    if (item.type == _HomeFocusType.medication) {
+    if (item.type == _HomeFocusType.reminder) {
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(item.title),
+          content: Text('${item.pet.name}\nДата: ${item.date.day.toString().padLeft(2, '0')}.${item.date.month.toString().padLeft(2, '0')}.${item.date.year}'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Закрити')),
+          ],
+        ),
+      );
+    } else if (item.type == _HomeFocusType.medication) {
       await Navigator.of(context).push(MaterialPageRoute(
         builder: (_) => MedicationsScreen(
           petId: item.pet.id,
