@@ -242,6 +242,16 @@ class LocalNotificationService {
     await _plugin.cancel(_stableId('visit:$visitRecordId:day'));
   }
 
+  Future<void> schedulePetReminder({required String reminderId, required String title, required String petName, required DateTime dueDate}) async {
+    await initialize();
+    final twoDays = _stableId('pet-reminder:$reminderId:two-days');
+    final day = _stableId('pet-reminder:$reminderId:day');
+    await _plugin.cancel(twoDays);
+    await _plugin.cancel(day);
+    await _scheduleAt(id: twoDays, title: 'Нагадування', body: 'Через 2 дні: $petName — $title.', scheduled: _atEight(dueDate, daysBefore: 2), payload: 'pet-reminder:$reminderId:two-days');
+    await _scheduleAt(id: day, title: 'Нагадування на сьогодні', body: '$petName: $title.', scheduled: _atEight(dueDate), payload: 'pet-reminder:$reminderId:day');
+  }
+
   Future<void> _scheduleAt({
     required int id,
     required String title,

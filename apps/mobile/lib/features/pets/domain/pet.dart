@@ -205,4 +205,29 @@ class Pet {
       emergencyNotes: emergencyNotes ?? this.emergencyNotes,
     );
   }
+
+  /// Copy while allowing emergency fields to be explicitly cleared.
+  Pet copyWithEmergency({
+    String? allergies,
+    String? conditions,
+    String? surgeries,
+    String? contraindications,
+    String? behaviorNotes,
+    String? bloodType,
+    String? notes,
+  }) {
+    return Pet(
+      id: id, name: name, species: species, breed: breed, sex: sex,
+      birthDate: birthDate, weightKg: weightKg, color: color,
+      microchipNumber: microchipNumber, avatarUrl: avatarUrl,
+      avatarStoragePath: avatarStoragePath, notes: this.notes,
+      isNeutered: isNeutered, passportPhotoUrl: passportPhotoUrl,
+      passportStoragePath: passportStoragePath, createdAt: createdAt,
+      updatedAt: updatedAt, emergencyAllergies: allergies,
+      emergencyConditions: conditions, emergencySurgeries: surgeries,
+      emergencyContraindications: contraindications,
+      emergencyBehaviorNotes: behaviorNotes, emergencyBloodType: bloodType,
+      emergencyNotes: notes,
+    );
+  }
 }

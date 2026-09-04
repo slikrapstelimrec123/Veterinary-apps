@@ -313,6 +313,21 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
             );
           }
         }
+        if (!SupabaseConfig.useMockData) {
+          final reminders = await client
+              .from('pet_reminders')
+              .select('id,title,reminder_date')
+              .eq('pet_id', pet.id);
+          for (final row in (reminders as List<dynamic>)) {
+            final data = Map<String, dynamic>.from(row as Map);
+            await LocalNotificationService.instance.schedulePetReminder(
+              reminderId: data['id'] as String,
+              title: data['title'] as String,
+              petName: pet.name,
+              dueDate: DateTime.parse(data['reminder_date'] as String),
+            );
+          }
+        }
       }
     } catch (_) {
       // Reminder synchronization must never prevent the app from opening.
@@ -446,11 +461,17 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       }),
     );
-    if (saved == true && !SupabaseConfig.useMockData) {
-      await Supabase.instance.client.from('pet_reminders').insert({'pet_id': pet.id, 'title': titleController.text.trim(), 'reminder_date': date.toIso8601String().split('T').first});
+    try {
+      if (saved == true && !SupabaseConfig.useMockData) {
+        final row = await Supabase.instance.client.from('pet_reminders').insert({'pet_id': pet.id, 'title': titleController.text.trim(), 'reminder_date': date.toIso8601String().split('T').first}).select('id').single();
+        await LocalNotificationService.instance.schedulePetReminder(reminderId: row['id'] as String, title: titleController.text.trim(), petName: pet.name, dueDate: date);
+      }
+      if (saved == true) AppDataEvents.notifyChanged();
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Не вдалося зберегти нагадування. Перевірте підключення.')));
+    } finally {
+      titleController.dispose();
     }
-    if (saved == true) AppDataEvents.notifyChanged();
-    titleController.dispose();
   }
 
   Future<_HomeData> _loadHomeData() async {
@@ -1338,6 +1359,15 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
       await Navigator.of(context).push(MaterialPageRoute(
         builder: (_) => VisitRecordDetailsScreen(recordId: item.visitRecordId!),
       ));
+    } else {
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(item.title),
+          content: Text('${item.pet.name}\nДата: ${item.date.day.toString().padLeft(2, '0')}.${item.date.month.toString().padLeft(2, '0')}.${item.date.year}'),
+          actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Закрити'))],
+        ),
+      );
     }
   }
 

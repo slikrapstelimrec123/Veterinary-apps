@@ -396,8 +396,14 @@ class _EmergencyInfoScreenState extends State<EmergencyInfoScreen> {
     setState(() { saving = true; saveError = null; });
     String? value(String key) { final text = controllers[key]!.text.trim(); return text.isEmpty ? null : text; }
     try {
-      await PetRepository().updatePet(widget.pet.copyWith(
-      emergencyAllergies: value('Алергії та реакції'), emergencyConditions: value('Хронічні захворювання'), emergencySurgeries: value('Перенесені операції'), emergencyContraindications: value('Протипоказання'), emergencyBehaviorNotes: value('Особливості поведінки'), emergencyBloodType: value('Група крові'), emergencyNotes: value('Важливі примітки'),
+      await PetRepository().updatePet(widget.pet.copyWithEmergency(
+        allergies: value('Алергії та реакції'),
+        conditions: value('Хронічні захворювання'),
+        surgeries: value('Перенесені операції'),
+        contraindications: value('Протипоказання'),
+        behaviorNotes: value('Особливості поведінки'),
+        bloodType: value('Група крові'),
+        notes: value('Важливі примітки'),
       ));
       widget.onSaved();
       if (mounted) Navigator.pop(context);
