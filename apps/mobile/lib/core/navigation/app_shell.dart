@@ -314,7 +314,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
           }
         }
         if (!SupabaseConfig.useMockData) {
-          final reminders = await client
+          final reminders = await Supabase.instance.client
               .from('pet_reminders')
               .select('id,title,reminder_date')
               .eq('pet_id', pet.id);
