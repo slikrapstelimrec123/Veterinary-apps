@@ -240,7 +240,7 @@ class AnnouncementRepository {
       serviceCategory: serviceCategory,
       offerCategory: offerCategory,
     );
-    final hydrated = await _hydrateCommunityPhotos(rows as List);
+    final hydrated = await _hydrateCommunityPhotos(rows);
     if (mine) await _attachOwnerMetrics(hydrated);
     return hydrated.map(CommunityAnnouncement.fromJson).toList();
   }
