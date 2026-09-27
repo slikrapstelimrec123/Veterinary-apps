@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/config/supabase_config.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/input/auto_capitalize_first_letter_formatter.dart';
 import '../data/visit_record_repository.dart';
 import '../domain/visit_record.dart';
 
@@ -226,6 +227,10 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
                     const Divider(),
                     TextFormField(
                       controller: _providerNameController,
+                      textCapitalization: TextCapitalization.sentences,
+                      inputFormatters: const [
+                        AutoCapitalizeFirstLetterFormatter(),
+                      ],
                       decoration: const InputDecoration(
                         labelText: 'Місце або фахівець (необов\'язково)',
                         border: InputBorder.none,
@@ -247,6 +252,10 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
                   children: [
                     TextFormField(
                       controller: _reasonController,
+                      textCapitalization: TextCapitalization.sentences,
+                      inputFormatters: const [
+                        AutoCapitalizeFirstLetterFormatter(),
+                      ],
                       decoration: const InputDecoration(
                         labelText: 'Причина звернення *',
                         border: InputBorder.none,
@@ -259,6 +268,10 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
                     const Divider(),
                     TextFormField(
                       controller: _symptomsController,
+                      textCapitalization: TextCapitalization.sentences,
+                      inputFormatters: const [
+                        AutoCapitalizeFirstLetterFormatter(),
+                      ],
                       decoration: const InputDecoration(
                         labelText: 'Симптоми (необов\'язково)',
                         border: InputBorder.none,
@@ -280,6 +293,10 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
                   children: [
                     TextFormField(
                       controller: _diagnosisController,
+                      textCapitalization: TextCapitalization.sentences,
+                      inputFormatters: const [
+                        AutoCapitalizeFirstLetterFormatter(),
+                      ],
                       decoration: const InputDecoration(
                         labelText: 'Діагноз (необов\'язково)',
                         border: InputBorder.none,
@@ -289,6 +306,10 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
                     const Divider(),
                     TextFormField(
                       controller: _treatmentController,
+                      textCapitalization: TextCapitalization.sentences,
+                      inputFormatters: const [
+                        AutoCapitalizeFirstLetterFormatter(),
+                      ],
                       decoration: const InputDecoration(
                         labelText: 'Лікування та процедури (необов\'язково)',
                         border: InputBorder.none,
@@ -298,6 +319,10 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
                     const Divider(),
                     TextFormField(
                       controller: _medicationsController,
+                      textCapitalization: TextCapitalization.sentences,
+                      inputFormatters: const [
+                        AutoCapitalizeFirstLetterFormatter(),
+                      ],
                       decoration: const InputDecoration(
                         labelText: 'Призначені препарати (необов\'язково)',
                         border: InputBorder.none,
@@ -319,6 +344,10 @@ class _AddVisitRecordScreenState extends State<AddVisitRecordScreen> {
                   children: [
                     TextFormField(
                       controller: _recommendationsController,
+                      textCapitalization: TextCapitalization.sentences,
+                      inputFormatters: const [
+                        AutoCapitalizeFirstLetterFormatter(),
+                      ],
                       decoration: const InputDecoration(
                         labelText: 'Рекомендації (необов\'язково)',
                         border: InputBorder.none,

@@ -18,6 +18,7 @@ import '../../features/settings/screens/settings_screen.dart';
 import '../../features/visit_records/data/visit_record_repository.dart';
 import '../../features/visit_records/screens/add_visit_record_screen.dart';
 import '../../features/visit_records/screens/visit_record_details_screen.dart';
+import '../../shared/input/auto_capitalize_first_letter_formatter.dart';
 import '../../shared/widgets/app_scaffold.dart';
 import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/error_state.dart';
@@ -450,6 +451,9 @@ class _HomeScreenState extends State<HomeScreen> {
             TextField(
                 controller: titleController,
                 textCapitalization: TextCapitalization.sentences,
+                inputFormatters: const [
+                  AutoCapitalizeFirstLetterFormatter(),
+                ],
                 decoration: const InputDecoration(labelText: 'Назва')),
             const SizedBox(height: 12),
             ListTile(
@@ -1535,6 +1539,9 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
               TextField(
                 controller: titleController,
                 textCapitalization: TextCapitalization.sentences,
+                inputFormatters: const [
+                  AutoCapitalizeFirstLetterFormatter(),
+                ],
                 decoration: const InputDecoration(labelText: 'Назва'),
               ),
               const SizedBox(height: 12),
@@ -1654,6 +1661,9 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
               TextField(
                 controller: titleController,
                 textCapitalization: TextCapitalization.sentences,
+                inputFormatters: const [
+                  AutoCapitalizeFirstLetterFormatter(),
+                ],
                 decoration: const InputDecoration(labelText: 'Назва'),
               ),
               const SizedBox(height: 12),

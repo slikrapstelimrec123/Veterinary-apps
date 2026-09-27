@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../shared/input/auto_capitalize_first_letter_formatter.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/error_state.dart';
@@ -391,7 +392,15 @@ class _EmergencyInfoScreenState extends State<EmergencyInfoScreen> {
             ...controllers.entries.where((e) => editing || e.value.text.trim().isNotEmpty).map((e) => Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: editing
-                      ? TextField(controller: e.value, maxLines: e.key == 'Група крові' ? 1 : 3, decoration: InputDecoration(labelText: e.key))
+                      ? TextField(
+                          controller: e.value,
+                          textCapitalization: TextCapitalization.sentences,
+                          inputFormatters: const [
+                            AutoCapitalizeFirstLetterFormatter(),
+                          ],
+                          maxLines: e.key == 'Група крові' ? 1 : 3,
+                          decoration: InputDecoration(labelText: e.key),
+                        )
                       : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(e.key, style: const TextStyle(color: AppTheme.textSecondary)), const SizedBox(height: 2), Text(e.value.text)]),
                 )),
           if (saveError != null)

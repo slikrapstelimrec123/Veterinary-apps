@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../shared/input/auto_capitalize_first_letter_formatter.dart';
+
 const dogBreeds = [
   'Лабрадор ретрівер',
   'Німецька вівчарка',
@@ -203,6 +205,9 @@ class _BreedAutocompleteFieldState extends State<BreedAutocompleteField> {
           controller: controller,
           focusNode: focusNode,
           textCapitalization: TextCapitalization.words,
+          inputFormatters: const [
+            AutoCapitalizeFirstLetterFormatter(),
+          ],
           decoration: InputDecoration(
             labelText: 'Порода',
             hintText: breeds.isEmpty

@@ -7,6 +7,7 @@ import '../../../core/auth/auth_state.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/input/auto_capitalize_first_letter_formatter.dart';
 import '../../../shared/services/private_pet_storage.dart';
 import '../../../shared/widgets/city_autocomplete_field.dart';
 import '../../pets/data/pet_repository.dart';
@@ -607,6 +608,9 @@ class _ProfileStep extends StatelessWidget {
                 TextField(
                   controller: fullNameController,
                   textCapitalization: TextCapitalization.words,
+                  inputFormatters: const [
+                    AutoCapitalizeFirstLetterFormatter(),
+                  ],
                   decoration: const InputDecoration(labelText: "Ваше ім'я *"),
                 ),
                 if (showPhone || showCity) const SizedBox(height: 14),
@@ -690,6 +694,9 @@ class _PetBasicsStep extends StatelessWidget {
               TextField(
                 controller: nameController,
                 textCapitalization: TextCapitalization.words,
+                inputFormatters: const [
+                  AutoCapitalizeFirstLetterFormatter(),
+                ],
                 decoration: const InputDecoration(
                   labelText: "Ім'я тварини *",
                 ),
@@ -853,6 +860,9 @@ class _PetDetailsStep extends StatelessWidget {
               TextField(
                 controller: colorController,
                 textCapitalization: TextCapitalization.sentences,
+                inputFormatters: const [
+                  AutoCapitalizeFirstLetterFormatter(),
+                ],
                 decoration: const InputDecoration(labelText: 'Колір'),
               ),
               const SizedBox(height: 14),
@@ -879,6 +889,9 @@ class _PetDetailsStep extends StatelessWidget {
                 minLines: 3,
                 maxLines: 5,
                 textCapitalization: TextCapitalization.sentences,
+                inputFormatters: const [
+                  AutoCapitalizeFirstLetterFormatter(),
+                ],
                 decoration: const InputDecoration(
                   labelText: 'Важливі нотатки про здоров’я',
                   hintText: 'Алергії, хронічні стани або інші особливості',

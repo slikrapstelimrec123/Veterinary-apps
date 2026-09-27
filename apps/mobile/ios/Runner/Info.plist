@@ -3,7 +3,11 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
-	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<string>uk</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>uk</string>
+	</array>
 	<key>CFBundleDisplayName</key>
 	<string>Lappo</string>
 	<key>CFBundleExecutable</key>

@@ -264,12 +264,38 @@ class AnnouncementRepository {
       if (mine) {
         query = query.eq('owner_id', _requireUserId());
       } else {
-        query = query.eq('moderation_status', 'published');
+        // Published announcements are public. The owner must also be able to
+        // see every one of their active records in the public list while a
+        // moderation review is pending; this does not expose another user's
+        // unpublished content.
+        final ownerId = currentUserId;
+        if (ownerId == null) {
+          query = query.eq('moderation_status', 'published');
+        }
         final today = DateTime.now().toUtc().toIso8601String();
         if (type == CommunityAnnouncementType.event) {
-          query = query.gte('event_date', today);
+          if (ownerId == null) {
+            query = query.gte('event_date', today);
+          } else {
+            query = query.or(
+              'and(moderation_status.eq.published,event_date.gte.$today),'
+              'owner_id.eq.$ownerId',
+            );
+          }
         } else if (type == CommunityAnnouncementType.offer) {
-          query = query.gte('valid_until', today.split('T').first);
+          final validUntil = today.split('T').first;
+          if (ownerId == null) {
+            query = query.gte('valid_until', validUntil);
+          } else {
+            query = query.or(
+              'and(moderation_status.eq.published,valid_until.gte.$validUntil),'
+              'owner_id.eq.$ownerId',
+            );
+          }
+        } else if (ownerId != null) {
+          query = query.or(
+            'moderation_status.eq.published,owner_id.eq.$ownerId',
+          );
         }
       }
       if (city != null && city.isNotEmpty) {
@@ -333,13 +359,35 @@ class AnnouncementRepository {
         .from('announcements')
         .select('city, service_category, offer_category')
         .eq('announcement_type', type.databaseValue)
-        .eq('status', 'active')
-        .eq('moderation_status', 'published');
+        .eq('status', 'active');
+    final ownerId = currentUserId;
+    if (ownerId == null) {
+      query = query.eq('moderation_status', 'published');
+    }
     final today = DateTime.now().toUtc().toIso8601String();
     if (type == CommunityAnnouncementType.event) {
-      query = query.gte('event_date', today);
+      if (ownerId == null) {
+        query = query.gte('event_date', today);
+      } else {
+        query = query.or(
+          'and(moderation_status.eq.published,event_date.gte.$today),'
+          'owner_id.eq.$ownerId',
+        );
+      }
     } else if (type == CommunityAnnouncementType.offer) {
-      query = query.gte('valid_until', today.split('T').first);
+      final validUntil = today.split('T').first;
+      if (ownerId == null) {
+        query = query.gte('valid_until', validUntil);
+      } else {
+        query = query.or(
+          'and(moderation_status.eq.published,valid_until.gte.$validUntil),'
+          'owner_id.eq.$ownerId',
+        );
+      }
+    } else if (ownerId != null) {
+      query = query.or(
+        'moderation_status.eq.published,owner_id.eq.$ownerId',
+      );
     }
     final rows = await query.limit(1000);
     final maps = (rows as List).cast<Map<String, dynamic>>();

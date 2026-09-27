@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/input/auto_capitalize_first_letter_formatter.dart';
 import '../../../shared/widgets/pet_avatar.dart';
 import '../../../shared/widgets/city_autocomplete_field.dart';
 import '../../../shared/services/private_pet_storage.dart';
@@ -205,6 +206,10 @@ class _AddSaleAnnouncementScreenState extends State<AddSaleAnnouncementScreen> {
             const SizedBox(height: 10),
             TextFormField(
               controller: _ownerNameController,
+              textCapitalization: TextCapitalization.words,
+              inputFormatters: const [
+                AutoCapitalizeFirstLetterFormatter(),
+              ],
               decoration: const InputDecoration(
                   labelText: "Ваше ім'я *",
                   prefixIcon: Icon(Icons.person_outline)),
@@ -294,6 +299,10 @@ class _AddSaleAnnouncementScreenState extends State<AddSaleAnnouncementScreen> {
             const SizedBox(height: 10),
             TextFormField(
               controller: _notesController,
+              textCapitalization: TextCapitalization.sentences,
+              inputFormatters: const [
+                AutoCapitalizeFirstLetterFormatter(),
+              ],
               decoration: const InputDecoration(
                 labelText: 'Опис',
                 alignLabelWithHint: true,

@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/auth/auth_state.dart';
 import '../../../core/config/supabase_config.dart';
+import '../../../shared/input/auto_capitalize_first_letter_formatter.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 
 class BetaFeedbackScreen extends StatefulWidget {
@@ -102,6 +103,10 @@ class _BetaFeedbackScreenState extends State<BetaFeedbackScreen> {
         const SizedBox(height: 12),
         TextField(
           controller: messageController,
+          textCapitalization: TextCapitalization.sentences,
+          inputFormatters: const [
+            AutoCapitalizeFirstLetterFormatter(),
+          ],
           minLines: 4,
           maxLines: 7,
           maxLength: 2000,

@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/config/supabase_config.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/input/auto_capitalize_first_letter_formatter.dart';
 import '../../../shared/services/private_pet_storage.dart';
 import '../../../shared/widgets/city_autocomplete_field.dart';
 import '../../../shared/widgets/pet_avatar.dart';
@@ -1378,6 +1379,10 @@ class _EditField extends StatelessWidget {
       controller: controller,
       maxLines: maxLines,
       keyboardType: keyboardType,
+      textCapitalization: TextCapitalization.sentences,
+      inputFormatters: const [
+        AutoCapitalizeFirstLetterFormatter(),
+      ],
       decoration: InputDecoration(
         labelText: label,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),

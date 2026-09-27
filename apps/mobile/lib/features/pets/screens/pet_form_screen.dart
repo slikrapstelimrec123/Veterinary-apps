@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/config/supabase_config.dart';
+import '../../../shared/input/auto_capitalize_first_letter_formatter.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/services/private_pet_storage.dart';
 import '../data/pet_repository.dart';
@@ -270,6 +271,10 @@ class _PetFormScreenState extends State<PetFormScreen> {
         // Name
         TextField(
           controller: nameController,
+          textCapitalization: TextCapitalization.words,
+          inputFormatters: const [
+            AutoCapitalizeFirstLetterFormatter(),
+          ],
           decoration: const InputDecoration(labelText: "Ім'я тварини *"),
         ),
         const SizedBox(height: 12),
@@ -299,6 +304,10 @@ class _PetFormScreenState extends State<PetFormScreen> {
         else
           TextField(
             controller: breedController,
+            textCapitalization: TextCapitalization.words,
+            inputFormatters: const [
+              AutoCapitalizeFirstLetterFormatter(),
+            ],
             decoration: const InputDecoration(labelText: 'Порода'),
           ),
         const SizedBox(height: 12),
@@ -354,6 +363,10 @@ class _PetFormScreenState extends State<PetFormScreen> {
         // Color
         TextField(
           controller: colorController,
+          textCapitalization: TextCapitalization.sentences,
+          inputFormatters: const [
+            AutoCapitalizeFirstLetterFormatter(),
+          ],
           decoration: const InputDecoration(labelText: 'Колір'),
         ),
         const SizedBox(height: 12),
@@ -404,6 +417,10 @@ class _PetFormScreenState extends State<PetFormScreen> {
         // Notes
         TextField(
           controller: notesController,
+          textCapitalization: TextCapitalization.sentences,
+          inputFormatters: const [
+            AutoCapitalizeFirstLetterFormatter(),
+          ],
           minLines: 3,
           maxLines: 5,
           decoration: const InputDecoration(labelText: 'Нотатки'),

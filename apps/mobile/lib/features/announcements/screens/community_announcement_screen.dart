@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/input/auto_capitalize_first_letter_formatter.dart';
 import '../../../shared/services/announcement_media_storage.dart';
 import '../../../shared/widgets/city_autocomplete_field.dart';
 import '../data/announcement_repository.dart';
@@ -30,6 +31,12 @@ class CommunityAnnouncementTab extends StatefulWidget {
 }
 
 class _CommunityAnnouncementTabState extends State<CommunityAnnouncementTab> {
+  // Keep one successful location lookup for the current app session. The
+  // radius is only a client-side filter, so changing it must not ask for the
+  // permission or read the device location again.
+  static Position? _cachedNearbyPosition;
+  static String? _cachedNearbyCity;
+
   final _repository = AnnouncementRepository();
   final _scrollController = ScrollController();
   final List<CommunityAnnouncement> _items = [];
@@ -187,6 +194,21 @@ class _CommunityAnnouncementTabState extends State<CommunityAnnouncementTab> {
 
   Future<void> _enableNearby(int radiusKm) async {
     if (_locationLoading) return;
+
+    final cachedPosition = _cachedNearbyPosition;
+    if (cachedPosition != null) {
+      if (!mounted) return;
+      setState(() {
+        _nearbyOnly = true;
+        _nearbyRadiusKm = radiusKm;
+        _selectedCity = null;
+        _userPosition = cachedPosition;
+        _userCity = _cachedNearbyCity;
+      });
+      await _load(reset: true);
+      return;
+    }
+
     final proceed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -255,6 +277,8 @@ class _CommunityAnnouncementTabState extends State<CommunityAnnouncementTab> {
         // A failed reverse geocode must not prevent the 3 km filter itself.
       }
       if (!mounted) return;
+      _cachedNearbyPosition = position;
+      _cachedNearbyCity = city;
       setState(() {
         _nearbyOnly = true;
         _nearbyRadiusKm = radiusKm;
@@ -1015,6 +1039,10 @@ class _CommunityAnnouncementFormScreenState
             ],
             TextFormField(
               controller: _title,
+              textCapitalization: TextCapitalization.sentences,
+              inputFormatters: const [
+                AutoCapitalizeFirstLetterFormatter(),
+              ],
               decoration: InputDecoration(
                 labelText: 'Назва *',
                 helperText: switch (widget.type) {
@@ -1038,6 +1066,10 @@ class _CommunityAnnouncementFormScreenState
             const SizedBox(height: 10),
             TextFormField(
               controller: _address,
+              textCapitalization: TextCapitalization.sentences,
+              inputFormatters: const [
+                AutoCapitalizeFirstLetterFormatter(),
+              ],
               decoration: const InputDecoration(
                 labelText: 'Адреса *',
                 prefixIcon: Icon(Icons.location_on_outlined),
@@ -1047,6 +1079,10 @@ class _CommunityAnnouncementFormScreenState
             const SizedBox(height: 10),
             TextFormField(
               controller: _description,
+              textCapitalization: TextCapitalization.sentences,
+              inputFormatters: const [
+                AutoCapitalizeFirstLetterFormatter(),
+              ],
               decoration: InputDecoration(
                 labelText: widget.type == CommunityAnnouncementType.offer
                     ? 'Короткий опис *'
@@ -1149,6 +1185,10 @@ class _CommunityAnnouncementFormScreenState
               const SizedBox(height: 10),
               TextFormField(
                 controller: _offer,
+                textCapitalization: TextCapitalization.sentences,
+                inputFormatters: const [
+                  AutoCapitalizeFirstLetterFormatter(),
+                ],
                 decoration: const InputDecoration(
                   labelText: 'Знижка або спеціальна вигода *',
                   helperText:

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/config/supabase_config.dart';
+import '../../../shared/input/auto_capitalize_first_letter_formatter.dart';
 import '../../../shared/services/private_pet_storage.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/app_scaffold.dart';
@@ -521,6 +522,10 @@ class _AchievementFormState extends State<_AchievementForm> {
                   children: [
                     TextFormField(
                       controller: _titleCtrl,
+                      textCapitalization: TextCapitalization.sentences,
+                      inputFormatters: const [
+                        AutoCapitalizeFirstLetterFormatter(),
+                      ],
                       decoration: const InputDecoration(
                         labelText: 'Назва події *',
                         border: InputBorder.none,
@@ -595,6 +600,10 @@ class _AchievementFormState extends State<_AchievementForm> {
                   children: [
                     TextFormField(
                       controller: _locationCtrl,
+                      textCapitalization: TextCapitalization.sentences,
+                      inputFormatters: const [
+                        AutoCapitalizeFirstLetterFormatter(),
+                      ],
                       decoration: const InputDecoration(
                         labelText: 'Місце проведення (необов\'язково)',
                         border: InputBorder.none,
@@ -604,6 +613,10 @@ class _AchievementFormState extends State<_AchievementForm> {
                     const Divider(),
                     TextFormField(
                       controller: _resultCtrl,
+                      textCapitalization: TextCapitalization.sentences,
+                      inputFormatters: const [
+                        AutoCapitalizeFirstLetterFormatter(),
+                      ],
                       decoration: const InputDecoration(
                         labelText: 'Результат / місце (необов\'язково)',
                         border: InputBorder.none,
@@ -613,6 +626,10 @@ class _AchievementFormState extends State<_AchievementForm> {
                     const Divider(),
                     TextFormField(
                       controller: _awardCtrl,
+                      textCapitalization: TextCapitalization.sentences,
+                      inputFormatters: const [
+                        AutoCapitalizeFirstLetterFormatter(),
+                      ],
                       decoration: const InputDecoration(
                         labelText: 'Нагорода / титул (необов\'язково)',
                         border: InputBorder.none,
@@ -664,6 +681,10 @@ class _AchievementFormState extends State<_AchievementForm> {
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: TextFormField(
                   controller: _notesCtrl,
+                  textCapitalization: TextCapitalization.sentences,
+                  inputFormatters: const [
+                    AutoCapitalizeFirstLetterFormatter(),
+                  ],
                   decoration: const InputDecoration(
                     labelText: 'Нотатки (необов\'язково)',
                     border: InputBorder.none,

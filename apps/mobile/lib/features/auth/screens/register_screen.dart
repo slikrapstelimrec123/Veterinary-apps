@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/auth/auth_state.dart';
+import '../../../shared/input/auto_capitalize_first_letter_formatter.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/city_autocomplete_field.dart';
 
@@ -111,6 +112,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ],
         TextField(
           controller: fullNameController,
+          textCapitalization: TextCapitalization.words,
+          inputFormatters: const [
+            AutoCapitalizeFirstLetterFormatter(),
+          ],
           decoration: const InputDecoration(labelText: "Повне ім'я"),
         ),
         const SizedBox(height: 12),

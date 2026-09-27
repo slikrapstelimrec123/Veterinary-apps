@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/auth/auth_state.dart';
+import '../../../shared/input/auto_capitalize_first_letter_formatter.dart';
 import '../../../shared/widgets/city_autocomplete_field.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -147,6 +148,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           ? "Введіть ім'я"
                           : null,
                       textCapitalization: TextCapitalization.words,
+                      inputFormatters: const [
+                        AutoCapitalizeFirstLetterFormatter(),
+                      ],
                     ),
                     const Divider(),
                     TextFormField(

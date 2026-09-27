@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../input/auto_capitalize_first_letter_formatter.dart';
 
 const supportedUkrainianCities = [
   'Київ',
@@ -73,6 +74,10 @@ Future<String?> _showCityPicker(BuildContext context, String current) {
                   child: TextField(
                     controller: search,
                     autofocus: true,
+                    textCapitalization: TextCapitalization.words,
+                    inputFormatters: const [
+                      AutoCapitalizeFirstLetterFormatter(),
+                    ],
                     decoration: InputDecoration(
                       hintText: 'Пошук міста...',
                       prefixIcon: const Icon(Icons.search),
@@ -129,6 +134,10 @@ class CityAutocompleteField extends StatelessWidget {
       child: AbsorbPointer(
         child: TextFormField(
           controller: controller,
+          textCapitalization: TextCapitalization.words,
+          inputFormatters: const [
+            AutoCapitalizeFirstLetterFormatter(),
+          ],
           validator: validator,
           decoration: filled
               ? InputDecoration(

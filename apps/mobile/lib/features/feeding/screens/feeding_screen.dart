@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/input/auto_capitalize_first_letter_formatter.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/error_state.dart';
@@ -622,6 +623,10 @@ class _FeedingForm extends StatelessWidget {
                   children: [
                     TextFormField(
                       controller: nameController,
+                      textCapitalization: TextCapitalization.words,
+                      inputFormatters: const [
+                        AutoCapitalizeFirstLetterFormatter(),
+                      ],
                       decoration: const InputDecoration(
                         labelText: 'Назва корму *',
                         border: InputBorder.none,
@@ -634,6 +639,10 @@ class _FeedingForm extends StatelessWidget {
                     const Divider(),
                     TextFormField(
                       controller: brandController,
+                      textCapitalization: TextCapitalization.words,
+                      inputFormatters: const [
+                        AutoCapitalizeFirstLetterFormatter(),
+                      ],
                       decoration: const InputDecoration(
                         labelText: 'Виробник (необов\'язково)',
                         border: InputBorder.none,
@@ -733,6 +742,10 @@ class _FeedingForm extends StatelessWidget {
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: TextFormField(
                   controller: notesController,
+                  textCapitalization: TextCapitalization.sentences,
+                  inputFormatters: const [
+                    AutoCapitalizeFirstLetterFormatter(),
+                  ],
                   decoration: const InputDecoration(
                     labelText: 'Як впливає на тварину (необов\'язково)',
                     border: InputBorder.none,

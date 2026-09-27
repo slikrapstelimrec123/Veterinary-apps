@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/input/auto_capitalize_first_letter_formatter.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/error_state.dart';
@@ -583,6 +584,10 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                   children: [
                     TextFormField(
                       controller: _nameController,
+                      textCapitalization: TextCapitalization.words,
+                      inputFormatters: const [
+                        AutoCapitalizeFirstLetterFormatter(),
+                      ],
                       decoration: const InputDecoration(
                         labelText: 'Назва препарату *',
                         border: InputBorder.none,
@@ -672,6 +677,10 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: TextFormField(
                   controller: _notesController,
+                  textCapitalization: TextCapitalization.sentences,
+                  inputFormatters: const [
+                    AutoCapitalizeFirstLetterFormatter(),
+                  ],
                   decoration: const InputDecoration(
                     labelText: 'Нотатки (необов\'язково)',
                     border: InputBorder.none,
@@ -833,6 +842,10 @@ class _EditMedicationScreenState extends State<EditMedicationScreen> {
                   children: [
                     TextFormField(
                       controller: _nameController,
+                      textCapitalization: TextCapitalization.words,
+                      inputFormatters: const [
+                        AutoCapitalizeFirstLetterFormatter(),
+                      ],
                       decoration: const InputDecoration(
                           labelText: 'Назва препарату *',
                           border: InputBorder.none),
@@ -925,6 +938,10 @@ class _EditMedicationScreenState extends State<EditMedicationScreen> {
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: TextFormField(
                   controller: _notesController,
+                  textCapitalization: TextCapitalization.sentences,
+                  inputFormatters: const [
+                    AutoCapitalizeFirstLetterFormatter(),
+                  ],
                   decoration: const InputDecoration(
                       labelText: 'Нотатки (необов\'язково)',
                       border: InputBorder.none),
