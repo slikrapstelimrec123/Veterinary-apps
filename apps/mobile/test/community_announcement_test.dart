@@ -59,4 +59,18 @@ void main() {
     expect(offer.validUntil, DateTime(2026, 8, 19));
     expect(offer.promoCode, 'LAPPO15');
   });
+
+  test('expired active offer is treated as inactive', () {
+    final offer = CommunityAnnouncement.fromJson({
+      'id': '00000000-0000-4000-8000-000000000004',
+      'announcement_type': 'offer',
+      'title': 'Стара пропозиція',
+      'address': 'Онлайн',
+      'valid_until': '2020-01-01',
+      'status': 'active',
+    });
+
+    expect(offer.isActive, isTrue);
+    expect(offer.isEffectivelyActive, isFalse);
+  });
 }

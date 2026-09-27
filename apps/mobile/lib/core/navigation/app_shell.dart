@@ -134,9 +134,10 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   void _refreshAllData() {
     if (!mounted) return;
     setState(() {
-      // The inbox refreshes its own list after read actions. Replacing that
-      // tab here would dispose it before it can open the tapped destination.
-      if (_index != 3) {
+      // The inbox and announcements refresh their own lists after actions.
+      // Replacing either active tab here would dispose its local tab
+      // controller and reset the user to its first sub-tab.
+      if (_index != 2 && _index != 3) {
         _tabVersions[_index]++;
       }
       _staleTabs

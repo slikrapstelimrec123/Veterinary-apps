@@ -733,7 +733,7 @@ class _MyAnnouncementsList extends StatelessWidget {
                     subtitle: '${item.type.label} · ${item.subtitle}',
                     location: item.address,
                     createdAt: item.createdAt,
-                    active: item.isActive,
+                    active: item.isEffectivelyActive,
                     viewCount: item.viewCount,
                     icon: switch (item.type) {
                       CommunityAnnouncementType.event => Icons.event_outlined,

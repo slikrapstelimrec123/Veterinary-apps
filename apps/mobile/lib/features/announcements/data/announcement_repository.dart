@@ -219,7 +219,7 @@ class AnnouncementRepository {
       return _communityMock
           .where((item) =>
               item.type == type &&
-              item.isActive == active &&
+              item.isEffectivelyActive == active &&
               (!mine || item.ownerId == userId) &&
               (city == null || city.isEmpty || item.city == city) &&
               (serviceCategory == null ||
@@ -259,15 +259,29 @@ class AnnouncementRepository {
       var query = _supabase
           .from('announcements')
           .select(projection)
-          .eq('announcement_type', type.databaseValue)
-          .eq('status', active ? 'active' : 'inactive');
+          .eq('announcement_type', type.databaseValue);
+      if (mine && type == CommunityAnnouncementType.offer) {
+        final today =
+            DateTime.now().toUtc().toIso8601String().split('T').first;
+        if (active) {
+          query = query
+              .eq('status', 'active')
+              .or('valid_until.is.null,valid_until.gte.$today');
+        } else {
+          query = query.or(
+            'status.eq.inactive,and(status.eq.active,valid_until.lt.$today)',
+          );
+        }
+      } else {
+        query = query.eq('status', active ? 'active' : 'inactive');
+      }
       if (mine) {
         query = query.eq('owner_id', _requireUserId());
       } else {
         // Published announcements are public. The owner must also be able to
-        // see every one of their active records in the public list while a
+        // see their own still-valid records in the public list while a
         // moderation review is pending; this does not expose another user's
-        // unpublished content.
+        // unpublished content or an expired offer.
         final ownerId = currentUserId;
         if (ownerId == null) {
           query = query.eq('moderation_status', 'published');
@@ -289,7 +303,7 @@ class AnnouncementRepository {
           } else {
             query = query.or(
               'and(moderation_status.eq.published,valid_until.gte.$validUntil),'
-              'owner_id.eq.$ownerId',
+              'and(owner_id.eq.$ownerId,valid_until.gte.$validUntil)',
             );
           }
         } else if (ownerId != null) {
@@ -338,7 +352,7 @@ class AnnouncementRepository {
   ) async {
     if (_useMockData) {
       final items = _communityMock.where(
-        (item) => item.type == type && item.isActive,
+        (item) => item.type == type && item.isEffectivelyActive,
       );
       return CommunityAnnouncementFilterOptions(
         cities: distinctFilterValues(items.map((item) => item.city)),
@@ -381,7 +395,7 @@ class AnnouncementRepository {
       } else {
         query = query.or(
           'and(moderation_status.eq.published,valid_until.gte.$validUntil),'
-          'owner_id.eq.$ownerId',
+          'and(owner_id.eq.$ownerId,valid_until.gte.$validUntil)',
         );
       }
     } else if (ownerId != null) {

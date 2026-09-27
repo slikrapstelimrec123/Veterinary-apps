@@ -112,6 +112,19 @@ class CommunityAnnouncement {
 
   bool get hasCoordinates => latitude != null && longitude != null;
 
+  /// An offer remains active through its selected end date. Once that
+  /// calendar date has passed, it is treated as inactive even if the
+  /// scheduled database lifecycle job has not run yet.
+  bool get isEffectivelyActive {
+    if (!isActive || type != CommunityAnnouncementType.offer) return isActive;
+    final expiry = validUntil;
+    if (expiry == null) return true;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final expiryDate = DateTime(expiry.year, expiry.month, expiry.day);
+    return !expiryDate.isBefore(today);
+  }
+
   bool get isMobileService {
     if (type != CommunityAnnouncementType.service) return false;
     final text = '${address.toLowerCase()} ${description.toLowerCase()}';
