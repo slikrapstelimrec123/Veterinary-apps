@@ -160,7 +160,7 @@ class _CommunityAnnouncementTabState extends State<CommunityAnnouncementTab> {
       nearbySelected: _nearbyOnly,
       nearbyRadiusKm: _nearbyRadiusKm,
     );
-    if (selection == null) return;
+    if (selection == null || !mounted) return;
     if (selection.nearby) {
       final radius = await _showNearbyRadiusPicker(
         context,
@@ -1505,9 +1505,9 @@ Future<int?> _showNearbyRadiusPicker(
                   onChanged: (value) =>
                       setModalState(() => radiusKm = value.roundToDouble()),
                 ),
-                Row(
+                const Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: const [
+                  children: [
                     Text('1 км'),
                     Text('10 км'),
                   ],
