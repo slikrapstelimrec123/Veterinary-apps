@@ -16,6 +16,19 @@ class BillingRepository {
   }
 
   Future<PublicationAccess> getPublicationAccess(String type) async {
+    if (type == 'service' || type == 'offer') {
+      final remaining = await getAvailableListingCreditCount();
+      final planCode = SupabaseConfig.useMockData
+          ? 'free'
+          : (await getCurrentPlan()).code.name;
+      return PublicationAccess(
+        allowed: remaining > 0,
+        free: false,
+        requiresPurchase: remaining == 0,
+        planCode: planCode,
+        remaining: remaining,
+      );
+    }
     if (SupabaseConfig.useMockData) {
       return const PublicationAccess(
         allowed: true,
@@ -77,6 +90,11 @@ class BillingRepository {
       }
     }
     return credits;
+  }
+
+  Future<int> getAvailableListingCreditCount() async {
+    final credits = await getAvailableListingCreditsByTier();
+    return credits.values.fold<int>(0, (total, items) => total + items.length);
   }
 
   Future<void> track(

@@ -673,7 +673,7 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final reminders = await Supabase.instance.client
           .from('pet_reminders')
-          .select('title,reminder_date')
+          .select('id,title,reminder_date')
           .eq('pet_id', pet.id);
       return (reminders as List<dynamic>).map((row) {
         final data = Map<String, dynamic>.from(row as Map);
@@ -682,6 +682,7 @@ class _HomeScreenState extends State<HomeScreen> {
           pet: pet,
           title: data['title'] as String,
           date: DateTime.parse(data['reminder_date'] as String),
+          reminderId: data['id'] as String,
         );
       }).toList(growable: false);
     } catch (_) {
@@ -743,7 +744,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   onAddPet: addPet,
                   onOpenCalendar: widget.onOpenCalendar,
                   onOpenItem: (item) async {
-                    if (item.type == _HomeFocusType.medication) {
+                    if (item.type == _HomeFocusType.reminder) {
+                      widget.onOpenCalendar();
+                    } else if (item.type == _HomeFocusType.medication) {
                       await Navigator.of(context).push(MaterialPageRoute(
                         builder: (_) => MedicationsScreen(
                           petId: item.pet.id,
@@ -876,6 +879,7 @@ class _HomeFocusItem {
     required this.title,
     required this.date,
     this.visitRecordId,
+    this.reminderId,
   });
 
   final _HomeFocusType type;
@@ -883,6 +887,7 @@ class _HomeFocusItem {
   final String title;
   final DateTime date;
   final String? visitRecordId;
+  final String? reminderId;
 }
 
 class _HomeFocusCard extends StatelessWidget {
@@ -951,14 +956,25 @@ class _HomeFocusCard extends StatelessWidget {
                       padding: const EdgeInsets.only(right: 8),
                       child: Material(
                         color: pet.id == selectedPet.id
-                            ? AppTheme.primary.withValues(alpha: 0.42)
+                            ? AppTheme.primary.withValues(alpha: 0.16)
                             : Colors.transparent,
-                        shape: const CircleBorder(),
+                        elevation: pet.id == selectedPet.id ? 3 : 0,
+                        shadowColor: AppTheme.primary.withValues(alpha: 0.35),
+                        shape: CircleBorder(
+                          side: pet.id == selectedPet.id
+                              ? const BorderSide(
+                                  color: AppTheme.primary,
+                                  width: 3,
+                                )
+                              : BorderSide.none,
+                        ),
                         child: InkWell(
                           onTap: () => onPetSelected(pet.id),
                           customBorder: const CircleBorder(),
                           child: Padding(
-                            padding: const EdgeInsets.all(2),
+                            padding: EdgeInsets.all(
+                              pet.id == selectedPet.id ? 3 : 2,
+                            ),
                             child: PetAvatar(
                               name: pet.name,
                               avatarUrl: pet.avatarUrl,
@@ -1408,6 +1424,7 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
               pet: pet,
               title: data['title'] as String,
               date: DateTime.parse(data['reminder_date'] as String),
+              reminderId: data['id'] as String,
             );
           }));
         } catch (_) {}
@@ -1420,7 +1437,7 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
 
   Future<void> _openItem(_HomeFocusItem item) async {
     if (item.type == _HomeFocusType.reminder) {
-      await showDialog<void>(
+      final action = await showDialog<_ReminderAction>(
         context: context,
         builder: (context) => AlertDialog(
           title: Text(item.title),
@@ -1430,9 +1447,17 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
             TextButton(
                 onPressed: () => Navigator.pop(context),
                 child: const Text('Закрити')),
+            TextButton(
+                onPressed: () => Navigator.pop(context, _ReminderAction.edit),
+                child: const Text('Редагувати')),
+            TextButton(
+                onPressed: () => Navigator.pop(context, _ReminderAction.delete),
+                child: const Text('Видалити')),
           ],
         ),
       );
+      if (action == _ReminderAction.edit) await _editReminder(item);
+      if (action == _ReminderAction.delete) await _deleteReminder(item);
     } else if (item.type == _HomeFocusType.medication) {
       await Navigator.of(context).push(MaterialPageRoute(
         builder: (_) => MedicationsScreen(
@@ -1458,6 +1483,121 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
           ],
         ),
       );
+    }
+  }
+
+  Future<void> _editReminder(_HomeFocusItem item) async {
+    if (item.reminderId == null) return;
+    final titleController = TextEditingController(text: item.title);
+    var date = _day(item.date);
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Редагувати нагадування'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleController,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: const InputDecoration(labelText: 'Назва'),
+              ),
+              const SizedBox(height: 12),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.calendar_today_outlined),
+                title: const Text('Дата нагадування'),
+                subtitle: Text(
+                    '${date.day.toString().padLeft(2, '0')}.${date.month.toString().padLeft(2, '0')}.${date.year}'),
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: date,
+                    firstDate: _day(DateTime.now()),
+                    lastDate: DateTime(2100),
+                  );
+                  if (picked != null) setDialogState(() => date = _day(picked));
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text('Скасувати')),
+            FilledButton(
+                onPressed: () => Navigator.pop(
+                    dialogContext, titleController.text.trim().isNotEmpty),
+                child: const Text('Зберегти')),
+          ],
+        ),
+      ),
+    );
+    final title = titleController.text.trim();
+    titleController.dispose();
+    if (saved != true || title.isEmpty || !mounted) return;
+    try {
+      await Supabase.instance.client
+          .from('pet_reminders')
+          .update({
+            'title': title,
+            'reminder_date': date.toIso8601String().split('T').first
+          })
+          .eq('id', item.reminderId!)
+          .eq('pet_id', item.pet.id);
+      await LocalNotificationService.instance.schedulePetReminder(
+        reminderId: item.reminderId!,
+        title: title,
+        petName: item.pet.name,
+        dueDate: date,
+      );
+      AppDataEvents.notifyChanged();
+      setState(() => _events = _loadEvents());
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text(
+                'Не вдалося змінити нагадування. Перевірте підключення.')));
+      }
+    }
+  }
+
+  Future<void> _deleteReminder(_HomeFocusItem item) async {
+    if (item.reminderId == null) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Видалити нагадування?'),
+        content: Text(
+            'Нагадування «${item.title}» буде видалено без можливості відновлення.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Скасувати')),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Видалити')),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    try {
+      await Supabase.instance.client
+          .from('pet_reminders')
+          .delete()
+          .eq('id', item.reminderId!)
+          .eq('pet_id', item.pet.id);
+      await LocalNotificationService.instance
+          .cancelPetReminder(item.reminderId!);
+      AppDataEvents.notifyChanged();
+      setState(() => _events = _loadEvents());
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text(
+                'Не вдалося видалити нагадування. Перевірте підключення.')));
+      }
     }
   }
 
@@ -1516,8 +1656,7 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
     final title = titleController.text.trim();
     titleController.dispose();
     if (saved != true || title.isEmpty || !mounted) return;
-    final reminder = _HomeFocusItem(
-        type: _HomeFocusType.reminder, pet: pet, title: title, date: date);
+    String? reminderId;
     var persisted = SupabaseConfig.useMockData;
     if (!SupabaseConfig.useMockData) {
       try {
@@ -1530,8 +1669,9 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
             })
             .select('id')
             .single();
+        reminderId = row['id'] as String;
         await LocalNotificationService.instance.schedulePetReminder(
-          reminderId: row['id'] as String,
+          reminderId: reminderId,
           title: title,
           petName: pet.name,
           dueDate: date,
@@ -1547,6 +1687,13 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
       }
     }
     if (!persisted) return;
+    final reminder = _HomeFocusItem(
+      type: _HomeFocusType.reminder,
+      pet: pet,
+      title: title,
+      date: date,
+      reminderId: reminderId,
+    );
     AppDataEvents.notifyChanged();
     setState(() => _events = _events.then((items) =>
         [...items, reminder]..sort((a, b) => a.date.compareTo(b.date))));
@@ -1828,6 +1975,8 @@ class _EventsMonthCalendar extends StatelessWidget {
   }
 }
 
+enum _ReminderAction { edit, delete }
+
 class _CalendarPetSwitcher extends StatelessWidget {
   const _CalendarPetSwitcher({
     required this.pets,
@@ -1851,14 +2000,25 @@ class _CalendarPetSwitcher extends StatelessWidget {
                     padding: const EdgeInsets.only(right: 8),
                     child: Material(
                       color: pet.id == selectedPetId
-                          ? AppTheme.primary.withValues(alpha: 0.42)
+                          ? AppTheme.primary.withValues(alpha: 0.16)
                           : Colors.transparent,
-                      shape: const CircleBorder(),
+                      elevation: pet.id == selectedPetId ? 3 : 0,
+                      shadowColor: AppTheme.primary.withValues(alpha: 0.35),
+                      shape: CircleBorder(
+                        side: pet.id == selectedPetId
+                            ? const BorderSide(
+                                color: AppTheme.primary,
+                                width: 3,
+                              )
+                            : BorderSide.none,
+                      ),
                       child: InkWell(
                         onTap: () => onSelected(pet.id),
                         customBorder: const CircleBorder(),
                         child: Padding(
-                          padding: const EdgeInsets.all(2),
+                          padding: EdgeInsets.all(
+                            pet.id == selectedPetId ? 3 : 2,
+                          ),
                           child: PetAvatar(
                             name: pet.name,
                             avatarUrl: pet.avatarUrl,

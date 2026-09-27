@@ -129,32 +129,43 @@ class _PetSwitcher extends StatelessWidget {
         child: Row(
           children: [
             ...pets.map(
-                (pet) => Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: Material(
-                    color: pet.id == selectedPetId
-                        ? AppTheme.primary.withValues(alpha: 0.42)
-                        : Colors.transparent,
-                    shape: const CircleBorder(),
-                    child: InkWell(
-                      onTap: () => onSelected(pet.id),
-                      customBorder: const CircleBorder(),
-                      child: Padding(
-                        padding: const EdgeInsets.all(2),
-                        child: Row(
-                          children: [
-                            PetAvatar(
-                              name: pet.name,
-                              avatarUrl: pet.avatarUrl,
-                              size: 40,
-                            ),
-                          ],
-                        ),
+              (pet) => Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Material(
+                  color: pet.id == selectedPetId
+                      ? AppTheme.primary.withValues(alpha: 0.16)
+                      : Colors.transparent,
+                  elevation: pet.id == selectedPetId ? 3 : 0,
+                  shadowColor: AppTheme.primary.withValues(alpha: 0.35),
+                  shape: CircleBorder(
+                    side: pet.id == selectedPetId
+                        ? const BorderSide(
+                            color: AppTheme.primary,
+                            width: 3,
+                          )
+                        : BorderSide.none,
+                  ),
+                  child: InkWell(
+                    onTap: () => onSelected(pet.id),
+                    customBorder: const CircleBorder(),
+                    child: Padding(
+                      padding: EdgeInsets.all(
+                        pet.id == selectedPetId ? 3 : 2,
+                      ),
+                      child: Row(
+                        children: [
+                          PetAvatar(
+                            name: pet.name,
+                            avatarUrl: pet.avatarUrl,
+                            size: 40,
+                          ),
+                        ],
                       ),
                     ),
                   ),
                 ),
               ),
+            ),
             IconButton(
               onPressed: onAddPet,
               tooltip: 'Додати тварину',
