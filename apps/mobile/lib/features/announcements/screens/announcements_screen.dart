@@ -177,12 +177,14 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen>
       final accesses = await Future.wait([
         _billingRepository.getPublicationAccess('breeding'),
         _billingRepository.getPublicationAccess('sale'),
+        _billingRepository.getPublicationAccess('service'),
       ]);
       if (!mounted) return;
       setState(() {
         _publicationAccess = {
           'breeding': accesses[0],
           'sale': accesses[1],
+          'service': accesses[2],
         };
         _publicationUsageLoading = false;
       });
@@ -351,6 +353,7 @@ class _PublicationUsageBanner extends StatelessWidget {
 
     final breeding = access?['breeding']?.remaining;
     final sale = access?['sale']?.remaining;
+    final service = access?['service']?.remaining;
     String remaining(int? value) =>
         value == null ? 'Без обмежень' : value.toString();
 
@@ -370,20 +373,21 @@ class _PublicationUsageBanner extends StatelessWidget {
             style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
           ),
           const SizedBox(height: 7),
-          Row(
+          Wrap(
+            spacing: 18,
+            runSpacing: 6,
             children: [
-              Expanded(
-                child: Text(
-                  'Пошук партнера: ${remaining(breeding)}',
-                  style: const TextStyle(fontSize: 12),
-                ),
+              Text(
+                'Пошук партнера: ${remaining(breeding)}',
+                style: const TextStyle(fontSize: 12),
               ),
-              Expanded(
-                child: Text(
-                  'Продаж: ${remaining(sale)}',
-                  textAlign: TextAlign.end,
-                  style: const TextStyle(fontSize: 12),
-                ),
+              Text(
+                'Продаж: ${remaining(sale)}',
+                style: const TextStyle(fontSize: 12),
+              ),
+              Text(
+                'Послуги: ${remaining(service)}',
+                style: const TextStyle(fontSize: 12),
               ),
             ],
           ),

@@ -447,28 +447,61 @@ class _HomeScreenState extends State<HomeScreen> {
         return AlertDialog(
           title: const Text('Додати нагадування'),
           content: Column(mainAxisSize: MainAxisSize.min, children: [
-            TextField(controller: titleController, textCapitalization: TextCapitalization.sentences, decoration: const InputDecoration(labelText: 'Назва')),
+            TextField(
+                controller: titleController,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: const InputDecoration(labelText: 'Назва')),
             const SizedBox(height: 12),
-            ListTile(contentPadding: EdgeInsets.zero, leading: const Icon(Icons.calendar_today_outlined), title: const Text('Дата нагадування'), subtitle: Text('${date.day.toString().padLeft(2, '0')}.${date.month.toString().padLeft(2, '0')}.${date.year}'), onTap: () async {
-              final picked = await showDatePicker(context: context, initialDate: date, firstDate: _day(DateTime.now()), lastDate: DateTime(2100));
-              if (picked != null) setState(() => date = _day(picked));
-            }),
+            ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.calendar_today_outlined),
+                title: const Text('Дата нагадування'),
+                subtitle: Text(
+                    '${date.day.toString().padLeft(2, '0')}.${date.month.toString().padLeft(2, '0')}.${date.year}'),
+                onTap: () async {
+                  final picked = await showDatePicker(
+                      context: context,
+                      initialDate: date,
+                      firstDate: _day(DateTime.now()),
+                      lastDate: DateTime(2100));
+                  if (picked != null) setState(() => date = _day(picked));
+                }),
           ]),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Скасувати')),
-            FilledButton(onPressed: () => Navigator.pop(dialogContext, titleController.text.trim().isNotEmpty), child: const Text('Зберегти')),
+            TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text('Скасувати')),
+            FilledButton(
+                onPressed: () => Navigator.pop(
+                    dialogContext, titleController.text.trim().isNotEmpty),
+                child: const Text('Зберегти')),
           ],
         );
       }),
     );
     try {
       if (saved == true && !SupabaseConfig.useMockData) {
-        final row = await Supabase.instance.client.from('pet_reminders').insert({'pet_id': pet.id, 'title': titleController.text.trim(), 'reminder_date': date.toIso8601String().split('T').first}).select('id').single();
-        await LocalNotificationService.instance.schedulePetReminder(reminderId: row['id'] as String, title: titleController.text.trim(), petName: pet.name, dueDate: date);
+        final row = await Supabase.instance.client
+            .from('pet_reminders')
+            .insert({
+              'pet_id': pet.id,
+              'title': titleController.text.trim(),
+              'reminder_date': date.toIso8601String().split('T').first
+            })
+            .select('id')
+            .single();
+        await LocalNotificationService.instance.schedulePetReminder(
+            reminderId: row['id'] as String,
+            title: titleController.text.trim(),
+            petName: pet.name,
+            dueDate: date);
       }
       if (saved == true) AppDataEvents.notifyChanged();
     } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Не вдалося зберегти нагадування. Перевірте підключення.')));
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text(
+                'Не вдалося зберегти нагадування. Перевірте підключення.')));
     } finally {
       titleController.dispose();
     }
@@ -728,7 +761,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     if (result != null && mounted) refresh();
                   },
                   onAddMedication: () async {
-                    final result = await Navigator.of(context).push(MaterialPageRoute(
+                    final result =
+                        await Navigator.of(context).push(MaterialPageRoute(
                       builder: (_) => AddMedicationScreen(
                         petId: selectedPet.id,
                         petName: selectedPet.name,
@@ -905,10 +939,14 @@ class _HomeFocusCard extends StatelessWidget {
                             shrinkWrap: true,
                             children: pets
                                 .map((pet) => ListTile(
-                                      leading: PetAvatar(name: pet.name, avatarUrl: pet.avatarUrl, size: 40),
+                                      leading: PetAvatar(
+                                          name: pet.name,
+                                          avatarUrl: pet.avatarUrl,
+                                          size: 40),
                                       title: Text(pet.name),
                                       selected: pet.id == selectedPet.id,
-                                      onTap: () => Navigator.pop(sheetContext, pet),
+                                      onTap: () =>
+                                          Navigator.pop(sheetContext, pet),
                                     ))
                                 .toList(growable: false),
                           ),
@@ -1166,7 +1204,8 @@ class _PetCalendarScreen extends StatefulWidget {
 }
 
 class _PetCalendarScreenState extends State<_PetCalendarScreen> {
-  DateTime _selectedDate = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+  DateTime _selectedDate =
+      DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
 
   DateTime _day(DateTime value) => DateTime(value.year, value.month, value.day);
 
@@ -1246,6 +1285,7 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
   List<Pet> _pets = const [];
   String? _selectedPetId;
   DateTime _selectedDate = DateTime.now();
+  DateTime _visibleMonth = DateTime(DateTime.now().year, DateTime.now().month);
 
   DateTime _day(DateTime value) => DateTime(value.year, value.month, value.day);
 
@@ -1271,7 +1311,8 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
         items.addAll(feedings
             // Keep events scheduled for today; the calendar view applies the
             // inclusive 30-day window when it renders the list.
-            .where((item) => !_day(item.startDate).isBefore(_day(DateTime.now())))
+            .where(
+                (item) => !_day(item.startDate).isBefore(_day(DateTime.now())))
             .map((item) => _HomeFocusItem(
                   type: _HomeFocusType.feeding,
                   pet: pet,
@@ -1283,7 +1324,8 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
         final achievements =
             await _achievementRepository.getAchievements(pet.id);
         items.addAll(achievements
-            .where((item) => !_day(item.eventDate).isBefore(_day(DateTime.now())))
+            .where(
+                (item) => !_day(item.eventDate).isBefore(_day(DateTime.now())))
             .map((item) => _HomeFocusItem(
                   type: _HomeFocusType.achievement,
                   pet: pet,
@@ -1294,7 +1336,8 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
       try {
         final visits = await _visitRepository.getVisitRecordsForPet(pet.id);
         items.addAll(visits
-            .where((item) => !_day(item.visitDate).isBefore(_day(DateTime.now())))
+            .where(
+                (item) => !_day(item.visitDate).isBefore(_day(DateTime.now())))
             .map((item) => _HomeFocusItem(
                   type: _HomeFocusType.visit,
                   pet: pet,
@@ -1342,9 +1385,12 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
         context: context,
         builder: (context) => AlertDialog(
           title: Text(item.title),
-          content: Text('${item.pet.name}\nДата: ${item.date.day.toString().padLeft(2, '0')}.${item.date.month.toString().padLeft(2, '0')}.${item.date.year}'),
+          content: Text(
+              '${item.pet.name}\nДата: ${item.date.day.toString().padLeft(2, '0')}.${item.date.month.toString().padLeft(2, '0')}.${item.date.year}'),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Закрити')),
+            TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Закрити')),
           ],
         ),
       );
@@ -1364,8 +1410,13 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
         context: context,
         builder: (context) => AlertDialog(
           title: Text(item.title),
-          content: Text('${item.pet.name}\nДата: ${item.date.day.toString().padLeft(2, '0')}.${item.date.month.toString().padLeft(2, '0')}.${item.date.year}'),
-          actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Закрити'))],
+          content: Text(
+              '${item.pet.name}\nДата: ${item.date.day.toString().padLeft(2, '0')}.${item.date.month.toString().padLeft(2, '0')}.${item.date.year}'),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Закрити'))
+          ],
         ),
       );
     }
@@ -1397,7 +1448,8 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.calendar_today_outlined),
                 title: const Text('Дата нагадування'),
-                subtitle: Text('${date.day.toString().padLeft(2, '0')}.${date.month.toString().padLeft(2, '0')}.${date.year}'),
+                subtitle: Text(
+                    '${date.day.toString().padLeft(2, '0')}.${date.month.toString().padLeft(2, '0')}.${date.year}'),
                 onTap: () async {
                   final picked = await showDatePicker(
                     context: context,
@@ -1411,8 +1463,13 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Скасувати')),
-            FilledButton(onPressed: () => Navigator.pop(dialogContext, titleController.text.trim().isNotEmpty), child: const Text('Зберегти')),
+            TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text('Скасувати')),
+            FilledButton(
+                onPressed: () => Navigator.pop(
+                    dialogContext, titleController.text.trim().isNotEmpty),
+                child: const Text('Зберегти')),
           ],
         ),
       ),
@@ -1420,24 +1477,40 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
     final title = titleController.text.trim();
     titleController.dispose();
     if (saved != true || title.isEmpty || !mounted) return;
-    final reminder = _HomeFocusItem(type: _HomeFocusType.reminder, pet: pet, title: title, date: date);
+    final reminder = _HomeFocusItem(
+        type: _HomeFocusType.reminder, pet: pet, title: title, date: date);
+    var persisted = SupabaseConfig.useMockData;
     if (!SupabaseConfig.useMockData) {
       try {
-        await Supabase.instance.client.from('pet_reminders').insert({
-          'pet_id': pet.id,
-          'title': title,
-          'reminder_date': date.toIso8601String().split('T').first,
-        });
+        final row = await Supabase.instance.client
+            .from('pet_reminders')
+            .insert({
+              'pet_id': pet.id,
+              'title': title,
+              'reminder_date': date.toIso8601String().split('T').first,
+            })
+            .select('id')
+            .single();
+        await LocalNotificationService.instance.schedulePetReminder(
+          reminderId: row['id'] as String,
+          title: title,
+          petName: pet.name,
+          dueDate: date,
+        );
+        persisted = true;
       } catch (_) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Не вдалося зберегти нагадування. Застосуйте міграцію pet_reminders у Supabase.'),
+            content: Text(
+                'Не вдалося зберегти нагадування. Застосуйте міграцію pet_reminders у Supabase.'),
           ));
         }
       }
     }
+    if (!persisted) return;
     AppDataEvents.notifyChanged();
-    setState(() => _events = _events.then((items) => [...items, reminder]..sort((a, b) => a.date.compareTo(b.date))));
+    setState(() => _events = _events.then((items) =>
+        [...items, reminder]..sort((a, b) => a.date.compareTo(b.date))));
   }
 
   @override
@@ -1450,8 +1523,8 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
         final monthEnd = today.add(const Duration(days: 30));
         final upcoming = events.where((item) {
           final date = _day(item.date);
-          final belongsToSelectedPet = _selectedPetId == null ||
-              item.pet.id == _selectedPetId;
+          final belongsToSelectedPet =
+              _selectedPetId == null || item.pet.id == _selectedPetId;
           return belongsToSelectedPet &&
               !date.isBefore(today) &&
               !date.isAfter(monthEnd);
@@ -1490,12 +1563,21 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
               ),
               const SizedBox(height: 12),
               Card(
-                child: CalendarDatePicker(
-                  initialDate: _selectedDate,
-                  firstDate: DateTime(2020),
-                  lastDate: DateTime(2100),
-                  onDateChanged: (date) =>
-                      setState(() => _selectedDate = _day(date)),
+                child: _EventsMonthCalendar(
+                  month: _visibleMonth,
+                  selectedDate: _selectedDate,
+                  eventDates: events
+                      .where((item) =>
+                          _selectedPetId == null ||
+                          item.pet.id == _selectedPetId)
+                      .map((item) => _day(item.date))
+                      .toSet(),
+                  onDateSelected: (date) => setState(() {
+                    _selectedDate = _day(date);
+                    _visibleMonth = DateTime(date.year, date.month);
+                  }),
+                  onMonthChanged: (month) =>
+                      setState(() => _visibleMonth = month),
                 ),
               ),
               Builder(
@@ -1511,9 +1593,12 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Події на ${_selectedDate.day.toString().padLeft(2, '0')}.${_selectedDate.month.toString().padLeft(2, '0')}.${_selectedDate.year}', style: Theme.of(context).textTheme.titleSmall),
+                          Text(
+                              'Події на ${_selectedDate.day.toString().padLeft(2, '0')}.${_selectedDate.month.toString().padLeft(2, '0')}.${_selectedDate.year}',
+                              style: Theme.of(context).textTheme.titleSmall),
                           const SizedBox(height: 6),
-                          ...selectedEvents.map((item) => Text('• ${item.title} — ${item.pet.name}')),
+                          ...selectedEvents.map((item) =>
+                              Text('• ${item.title} — ${item.pet.name}')),
                         ],
                       ),
                     ),
@@ -1556,6 +1641,149 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
           ],
         );
       },
+    );
+  }
+}
+
+class _EventsMonthCalendar extends StatelessWidget {
+  const _EventsMonthCalendar({
+    required this.month,
+    required this.selectedDate,
+    required this.eventDates,
+    required this.onDateSelected,
+    required this.onMonthChanged,
+  });
+
+  final DateTime month;
+  final DateTime selectedDate;
+  final Set<DateTime> eventDates;
+  final ValueChanged<DateTime> onDateSelected;
+  final ValueChanged<DateTime> onMonthChanged;
+
+  static const _monthNames = <String>[
+    'січень',
+    'лютий',
+    'березень',
+    'квітень',
+    'травень',
+    'червень',
+    'липень',
+    'серпень',
+    'вересень',
+    'жовтень',
+    'листопад',
+    'грудень',
+  ];
+  static const _weekDays = <String>['П', 'В', 'С', 'Ч', 'П', 'С', 'Н'];
+
+  DateTime _day(DateTime date) => DateTime(date.year, date.month, date.day);
+
+  @override
+  Widget build(BuildContext context) {
+    final firstDay = DateTime(month.year, month.month, 1);
+    final leadingDays = firstDay.weekday - 1;
+    final daysInMonth = DateTime(month.year, month.month + 1, 0).day;
+    final cells = List<DateTime?>.filled(leadingDays, null)
+      ..addAll(List.generate(
+        daysInMonth,
+        (index) => DateTime(month.year, month.month, index + 1),
+      ));
+    while (cells.length % 7 != 0) {
+      cells.add(null);
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Text(
+                '${_monthNames[month.month - 1]} ${month.year} р.',
+                style: const TextStyle(
+                  color: AppTheme.textSecondary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const Spacer(),
+              IconButton(
+                tooltip: 'Попередній місяць',
+                onPressed: () => onMonthChanged(
+                  DateTime(month.year, month.month - 1),
+                ),
+                icon: const Icon(Icons.chevron_left),
+              ),
+              IconButton(
+                tooltip: 'Наступний місяць',
+                onPressed: () => onMonthChanged(
+                  DateTime(month.year, month.month + 1),
+                ),
+                icon: const Icon(Icons.chevron_right),
+              ),
+            ],
+          ),
+          Row(
+            children: _weekDays
+                .map((day) => Expanded(
+                      child: Center(
+                        child: Text(
+                          day,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ))
+                .toList(growable: false),
+          ),
+          const SizedBox(height: 6),
+          ...List.generate(cells.length ~/ 7, (row) {
+            return Row(
+              children: List.generate(7, (column) {
+                final date = cells[row * 7 + column];
+                if (date == null)
+                  return const Expanded(child: SizedBox(height: 44));
+                final day = _day(date);
+                final isSelected = _day(selectedDate) == day;
+                final hasEvent = eventDates.contains(day);
+                return Expanded(
+                  child: SizedBox(
+                    height: 44,
+                    child: Center(
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(22),
+                        onTap: () => onDateSelected(date),
+                        child: Container(
+                          width: 38,
+                          height: 38,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: isSelected ? AppTheme.primary : null,
+                            border: hasEvent && !isSelected
+                                ? Border.all(
+                                    color: AppTheme.primary, width: 1.5)
+                                : null,
+                          ),
+                          child: Text(
+                            '${date.day}',
+                            style: TextStyle(
+                              color:
+                                  isSelected ? Colors.white : AppTheme.textMain,
+                              fontWeight: hasEvent || isSelected
+                                  ? FontWeight.w700
+                                  : FontWeight.w400,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            );
+          }),
+        ],
+      ),
     );
   }
 }
