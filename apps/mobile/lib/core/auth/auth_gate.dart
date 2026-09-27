@@ -34,7 +34,10 @@ class AuthGate extends StatelessWidget {
       if (!user.hasCompletedOnboarding) {
         return const OwnerOnboardingScreen();
       }
-      return const AppShell();
+      // Force a fresh shell when the authenticated account changes. Without
+      // an account-scoped key, Flutter may reuse the previous shell state and
+      // briefly expose the previous owner's cached tabs and futures.
+      return AppShell(key: ValueKey(user.id));
     }
 
     return RoleMessageScreen(user: user);

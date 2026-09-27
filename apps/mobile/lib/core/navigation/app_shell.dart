@@ -569,7 +569,7 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
     result.sort((a, b) => b.date.compareTo(a.date));
-    return result.take(3).toList(growable: false);
+    return result;
   }
 
   Future<_PetFocusData> _loadPetFocus(Pet pet) async {
@@ -578,6 +578,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _loadVisitFocus(pet),
       _loadFeedingFocus(pet),
       _loadAchievementFocus(pet),
+      _loadReminderFocus(pet),
     ]);
     return _PetFocusData(
       items: results
@@ -667,6 +668,27 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<List<_HomeFocusItem>?> _loadReminderFocus(Pet pet) async {
+    if (SupabaseConfig.useMockData) return const <_HomeFocusItem>[];
+    try {
+      final reminders = await Supabase.instance.client
+          .from('pet_reminders')
+          .select('title,reminder_date')
+          .eq('pet_id', pet.id);
+      return (reminders as List<dynamic>).map((row) {
+        final data = Map<String, dynamic>.from(row as Map);
+        return _HomeFocusItem(
+          type: _HomeFocusType.reminder,
+          pet: pet,
+          title: data['title'] as String,
+          date: DateTime.parse(data['reminder_date'] as String),
+        );
+      }).toList(growable: false);
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> addPet() async {
     final result = await Navigator.of(context)
         .push(MaterialPageRoute(builder: (_) => const AddPetScreen()));
@@ -734,6 +756,21 @@ class _HomeScreenState extends State<HomeScreen> {
                           recordId: item.visitRecordId!,
                         ),
                       ));
+                    } else {
+                      await showDialog<void>(
+                        context: context,
+                        builder: (dialogContext) => AlertDialog(
+                          title: Text(item.title),
+                          content: Text(
+                              '${item.pet.name}\nДата: ${item.date.day.toString().padLeft(2, '0')}.${item.date.month.toString().padLeft(2, '0')}.${item.date.year}'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(dialogContext),
+                              child: const Text('Закрити'),
+                            ),
+                          ],
+                        ),
+                      );
                     }
                     if (mounted) refresh();
                   },
@@ -776,6 +813,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 _RecentRecordsCard(
                   items: data.recentItems
                       .where((item) => item.pet.id == selectedPet.id)
+                      .take(3)
                       .toList(growable: false),
                 ),
               ],
@@ -1684,7 +1722,7 @@ class _EventsMonthCalendar extends StatelessWidget {
     final firstDay = DateTime(month.year, month.month, 1);
     final leadingDays = firstDay.weekday - 1;
     final daysInMonth = DateTime(month.year, month.month + 1, 0).day;
-    final cells = List<DateTime?>.filled(leadingDays, null)
+    final cells = List<DateTime?>.filled(leadingDays, null, growable: true)
       ..addAll(List.generate(
         daysInMonth,
         (index) => DateTime(month.year, month.month, index + 1),
