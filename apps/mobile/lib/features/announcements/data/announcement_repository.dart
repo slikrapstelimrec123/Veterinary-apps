@@ -32,6 +32,15 @@ class AnnouncementRepository {
     cover_photo_storage_path, status, created_at, listing_credit_id,
     latitude, longitude
   ''';
+  // Keep the catalogue usable while the location migration or PostgREST
+  // schema cache is still being applied. Coordinates are optional in the
+  // domain model and can be resolved from the address by the nearby filter.
+  static const _legacyCommunityProjection = '''
+    id, owner_id, announcement_type, title, address, city, description,
+    event_date, contact_info, service_category, offer_category, price_amount,
+    website, offer_text, valid_from, valid_until, promo_code, cover_photo_url,
+    cover_photo_storage_path, status, created_at, listing_credit_id
+  ''';
 
   bool get _useMockData => SupabaseConfig.useMockData;
   String? get currentUserId =>
@@ -221,43 +230,80 @@ class AnnouncementRepository {
           .toList();
     }
 
-    var query = _supabase
-        .from('announcements')
-        .select(_communityProjection)
-        .eq('announcement_type', type.databaseValue)
-        .eq('status', active ? 'active' : 'inactive');
-    if (mine) {
-      query = query.eq('owner_id', _requireUserId());
-    } else {
-      query = query.eq('moderation_status', 'published');
-      final today = DateTime.now().toUtc().toIso8601String();
-      if (type == CommunityAnnouncementType.event) {
-        query = query.gte('event_date', today);
-      } else if (type == CommunityAnnouncementType.offer) {
-        query = query.gte('valid_until', today.split('T').first);
-      }
-    }
-    if (city != null && city.isNotEmpty) {
-      query = query.eq('city', city);
-    }
-    if (serviceCategory != null) {
-      query = query.eq('service_category', serviceCategory.databaseValue);
-    }
-    if (offerCategory != null) {
-      query = query.eq('offer_category', offerCategory.databaseValue);
-    }
-    final from = page * size;
-    final rows = type == CommunityAnnouncementType.event
-        ? await query
-            .order('event_date', ascending: true)
-            .range(from, from + size - 1)
-        : await query
-            .order('promoted_until', ascending: false, nullsFirst: false)
-            .order('ranking_at', ascending: false)
-            .range(from, from + size - 1);
+    final rows = await _fetchCommunityRows(
+      type: type,
+      page: page,
+      size: size,
+      mine: mine,
+      active: active,
+      city: city,
+      serviceCategory: serviceCategory,
+      offerCategory: offerCategory,
+    );
     final hydrated = await _hydrateCommunityPhotos(rows as List);
     if (mine) await _attachOwnerMetrics(hydrated);
     return hydrated.map(CommunityAnnouncement.fromJson).toList();
+  }
+
+  Future<List<dynamic>> _fetchCommunityRows({
+    required CommunityAnnouncementType type,
+    required int page,
+    required int size,
+    required bool mine,
+    required bool active,
+    required String? city,
+    required ServiceCategory? serviceCategory,
+    required OfferCategory? offerCategory,
+  }) async {
+    Future<List<dynamic>> execute(String projection) async {
+      var query = _supabase
+          .from('announcements')
+          .select(projection)
+          .eq('announcement_type', type.databaseValue)
+          .eq('status', active ? 'active' : 'inactive');
+      if (mine) {
+        query = query.eq('owner_id', _requireUserId());
+      } else {
+        query = query.eq('moderation_status', 'published');
+        final today = DateTime.now().toUtc().toIso8601String();
+        if (type == CommunityAnnouncementType.event) {
+          query = query.gte('event_date', today);
+        } else if (type == CommunityAnnouncementType.offer) {
+          query = query.gte('valid_until', today.split('T').first);
+        }
+      }
+      if (city != null && city.isNotEmpty) {
+        query = query.eq('city', city);
+      }
+      if (serviceCategory != null) {
+        query = query.eq('service_category', serviceCategory.databaseValue);
+      }
+      if (offerCategory != null) {
+        query = query.eq('offer_category', offerCategory.databaseValue);
+      }
+      final from = page * size;
+      final result = type == CommunityAnnouncementType.event
+          ? await query
+              .order('event_date', ascending: true)
+              .range(from, from + size - 1)
+          : await query
+              .order('promoted_until', ascending: false, nullsFirst: false)
+              .order('ranking_at', ascending: false)
+              .range(from, from + size - 1);
+      return (result as List).cast<dynamic>();
+    }
+
+    try {
+      return await execute(_communityProjection);
+    } on PostgrestException catch (error) {
+      if (!_isMissingLocationColumns(error)) rethrow;
+      return execute(_legacyCommunityProjection);
+    }
+  }
+
+  bool _isMissingLocationColumns(PostgrestException error) {
+    final details = '${error.code} ${error.message}'.toLowerCase();
+    return details.contains('latitude') || details.contains('longitude');
   }
 
   Future<CommunityAnnouncementFilterOptions>
@@ -343,9 +389,16 @@ class AnnouncementRepository {
       AppDataEvents.notifyChanged();
       return;
     }
-    await _supabase.from('announcements').insert(
-          announcement.toJson(currentOwnerId: _requireUserId()),
-        );
+    final values = announcement.toJson(currentOwnerId: _requireUserId());
+    try {
+      await _supabase.from('announcements').insert(values);
+    } on PostgrestException catch (error) {
+      if (!_isMissingLocationColumns(error)) rethrow;
+      values
+        ..remove('latitude')
+        ..remove('longitude');
+      await _supabase.from('announcements').insert(values);
+    }
     AppDataEvents.notifyChanged();
   }
 
@@ -533,18 +586,33 @@ class AnnouncementRepository {
     Map<String, dynamic> values,
   ) async {
     final userId = _requireUserId();
-    var query = _supabase
-        .from('announcements')
-        .update({
-          ...values,
-          'updated_at': DateTime.now().toUtc().toIso8601String(),
-        })
-        .eq('id', id)
-        .eq('owner_id', userId);
-    if (petId != null) {
-      query = query.eq('pet_id', petId);
+    final payload = {
+      ...values,
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    };
+
+    Future<Map<String, dynamic>?> executeUpdate() async {
+      var query = _supabase
+          .from('announcements')
+          .update(payload)
+          .eq('id', id)
+          .eq('owner_id', userId);
+      if (petId != null) {
+        query = query.eq('pet_id', petId);
+      }
+      return query.select('id').maybeSingle();
     }
-    final updatedRow = await query.select('id').maybeSingle();
+
+    Map<String, dynamic>? updatedRow;
+    try {
+      updatedRow = await executeUpdate();
+    } on PostgrestException catch (error) {
+      if (!_isMissingLocationColumns(error)) rethrow;
+      payload
+        ..remove('latitude')
+        ..remove('longitude');
+      updatedRow = await executeUpdate();
+    }
 
     if (updatedRow == null) {
       throw StateError(
