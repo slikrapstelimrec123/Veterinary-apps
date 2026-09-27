@@ -498,10 +498,11 @@ class _HomeScreenState extends State<HomeScreen> {
       }
       if (saved == true) AppDataEvents.notifyChanged();
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text(
                 'Не вдалося зберегти нагадування. Перевірте підключення.')));
+      }
     } finally {
       titleController.dispose();
     }
@@ -1740,8 +1741,9 @@ class _EventsMonthCalendar extends StatelessWidget {
             return Row(
               children: List.generate(7, (column) {
                 final date = cells[row * 7 + column];
-                if (date == null)
+                if (date == null) {
                   return const Expanded(child: SizedBox(height: 44));
+                }
                 final day = _day(date);
                 final isSelected = _day(selectedDate) == day;
                 final hasEvent = eventDates.contains(day);
