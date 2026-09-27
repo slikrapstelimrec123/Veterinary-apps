@@ -2,7 +2,9 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:geocoding/geocoding.dart' as geo;
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -12,6 +14,7 @@ import '../../../shared/widgets/city_autocomplete_field.dart';
 import '../data/announcement_repository.dart';
 import '../domain/announcement_filter_options.dart';
 import '../domain/community_announcement.dart';
+import '../widgets/publication_remaining_card.dart';
 
 class CommunityAnnouncementTab extends StatefulWidget {
   const CommunityAnnouncementTab({
@@ -36,6 +39,11 @@ class _CommunityAnnouncementTabState extends State<CommunityAnnouncementTab> {
   String? _error;
   int _page = 0;
   String? _selectedCity;
+  bool _nearbyOnly = false;
+  int _nearbyRadiusKm = 3;
+  Position? _userPosition;
+  String? _userCity;
+  bool _locationLoading = false;
   ServiceCategory? _selectedServiceCategory;
   OfferCategory? _selectedOfferCategory;
   CommunityAnnouncementFilterOptions _filterOptions =
@@ -57,6 +65,10 @@ class _CommunityAnnouncementTabState extends State<CommunityAnnouncementTab> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.type != widget.type) {
       _selectedCity = null;
+      _nearbyOnly = false;
+      _nearbyRadiusKm = 3;
+      _userPosition = null;
+      _userCity = null;
       _selectedServiceCategory = null;
       _selectedOfferCategory = null;
       _load(reset: true);
@@ -108,13 +120,15 @@ class _CommunityAnnouncementTabState extends State<CommunityAnnouncementTab> {
         }
       }
       final page = reset ? 0 : _page;
-      final items = await _repository.getCommunityAnnouncements(
+      final rawItems = await _repository.getCommunityAnnouncements(
         widget.type,
         page: page,
-        city: _selectedCity,
+        city: _nearbyOnly ? null : _selectedCity,
         serviceCategory: _selectedServiceCategory,
         offerCategory: _selectedOfferCategory,
+        pageSize: _nearbyOnly ? 1000 : null,
       );
+      final items = _nearbyOnly ? await _filterNearby(rawItems) : rawItems;
       if (!mounted) return;
       setState(() {
         if (reset) _items.clear();
@@ -122,7 +136,7 @@ class _CommunityAnnouncementTabState extends State<CommunityAnnouncementTab> {
           (item) => !_items.any((existing) => existing.id == item.id),
         ));
         _page = page + 1;
-        _hasMore = items.length == 30;
+        _hasMore = !_nearbyOnly && rawItems.length == 30;
         _error = null;
       });
     } catch (_) {
@@ -139,19 +153,212 @@ class _CommunityAnnouncementTabState extends State<CommunityAnnouncementTab> {
   }
 
   Future<void> _pickCity() async {
-    final selection = await _showFilterPicker<String>(context,
-        title: 'Оберіть місто', allLabel: 'Всі міста',
-        values: _filterOptions.cities, labelFor: (city) => city,
-        selected: _selectedCity);
+    final selection = await _showCityFilterPicker(
+      context,
+      cities: _filterOptions.cities,
+      selectedCity: _selectedCity,
+      nearbySelected: _nearbyOnly,
+      nearbyRadiusKm: _nearbyRadiusKm,
+    );
     if (selection == null) return;
-    if (!mounted || selection.value == _selectedCity) return;
-    setState(() => _selectedCity = selection.value);
+    if (selection.nearby) {
+      final radius = await _showNearbyRadiusPicker(
+        context,
+        initialRadiusKm: _nearbyRadiusKm,
+      );
+      if (radius == null || !mounted) return;
+      if (_nearbyOnly && _userPosition != null) {
+        setState(() => _nearbyRadiusKm = radius);
+        await _load(reset: true);
+      } else {
+        await _enableNearby(radius);
+      }
+      return;
+    }
+    if (!mounted || (!_nearbyOnly && selection.city == _selectedCity)) return;
+    setState(() {
+      _selectedCity = selection.city;
+      _nearbyOnly = false;
+      _userPosition = null;
+      _userCity = null;
+    });
     await _load(reset: true);
+  }
+
+  Future<void> _enableNearby(int radiusKm) async {
+    if (_locationLoading) return;
+    final proceed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Оголошення поруч'),
+        content: Text(
+          'Дозвольте доступ до геолокації, щоб показати оголошення в радіусі '
+          '$radiusKm км. Місцезнаходження не зберігається.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Скасувати'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Дозволити'),
+          ),
+        ],
+      ),
+    );
+    if (proceed != true || !mounted) return;
+    setState(() => _locationLoading = true);
+    try {
+      if (!await Geolocator.isLocationServiceEnabled()) {
+        _showLocationMessage(
+          'Увімкніть геолокацію в налаштуваннях пристрою та спробуйте ще раз.',
+          actionLabel: 'Налаштування',
+          onAction: Geolocator.openLocationSettings,
+        );
+        return;
+      }
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied) {
+        _showLocationMessage('Доступ до геолокації відхилено.');
+        return;
+      }
+      if (permission == LocationPermission.deniedForever) {
+        _showLocationMessage(
+          'Доступ до геолокації вимкнено для Lappo. Увімкніть його в налаштуваннях.',
+          actionLabel: 'Налаштування',
+          onAction: Geolocator.openAppSettings,
+        );
+        return;
+      }
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 15),
+      );
+      String? city;
+      try {
+        await geo.setLocaleIdentifier('uk_UA');
+        final placemarks = await geo.placemarkFromCoordinates(
+          position.latitude,
+          position.longitude,
+        );
+        if (placemarks.isNotEmpty) {
+          final place = placemarks.first;
+          city = place.locality?.trim().isNotEmpty == true
+              ? place.locality!.trim()
+              : place.subAdministrativeArea?.trim();
+        }
+      } catch (_) {
+        // A failed reverse geocode must not prevent the 3 km filter itself.
+      }
+      if (!mounted) return;
+      setState(() {
+        _nearbyOnly = true;
+        _nearbyRadiusKm = radiusKm;
+        _selectedCity = null;
+        _userPosition = position;
+        _userCity = city;
+      });
+      await _load(reset: true);
+    } on TimeoutException {
+      _showLocationMessage('Не вдалося визначити місцезнаходження вчасно.');
+    } catch (_) {
+      _showLocationMessage(
+          'Не вдалося отримати місцезнаходження. Спробуйте ще раз.');
+    } finally {
+      if (mounted) setState(() => _locationLoading = false);
+    }
+  }
+
+  Future<List<CommunityAnnouncement>> _filterNearby(
+    List<CommunityAnnouncement> items,
+  ) async {
+    final position = _userPosition;
+    if (position == null) return const [];
+    final result = <CommunityAnnouncement>[];
+    for (final item in items) {
+      var candidate = item;
+      if (!candidate.hasCoordinates && candidate.address.trim().isNotEmpty) {
+        try {
+          await geo.setLocaleIdentifier('uk_UA');
+          final locations = await geo.locationFromAddress(
+            '${candidate.city}, ${candidate.address}',
+          );
+          if (locations.isNotEmpty) {
+            candidate = candidate.copyWithCoordinates(
+              latitude: locations.first.latitude,
+              longitude: locations.first.longitude,
+            );
+          }
+        } catch (_) {
+          // Older listings may not be geocodable; mobile services still use city.
+        }
+      }
+      final inRadius = candidate.hasCoordinates &&
+              Geolocator.distanceBetween(
+                position.latitude,
+                position.longitude,
+                candidate.latitude!,
+                candidate.longitude!,
+              ) <=
+              _nearbyRadiusKm * 1000;
+      if (inRadius ||
+          (candidate.isMobileService && _sameCity(candidate.city, _userCity))) {
+        result.add(candidate);
+      }
+    }
+    return result;
+  }
+
+  bool _sameCity(String first, String? second) {
+    if (second == null || second.trim().isEmpty) return false;
+    final a = _normalizeCity(first);
+    final b = _normalizeCity(second);
+    if (a == b || a.contains(b) || b.contains(a)) return true;
+    const aliases = <String, String>{
+      'kyiv': 'київ',
+      'kiev': 'київ',
+      'kharkiv': 'харків',
+      'kharkov': 'харків',
+      'odesa': 'одеса',
+      'odessa': 'одеса',
+      'dnipro': 'дніпро',
+      'lviv': 'львів',
+    };
+    return (aliases[a] ?? a) == (aliases[b] ?? b);
+  }
+
+  String _normalizeCity(String value) => value
+      .toLowerCase()
+      .replaceAll('’', "'")
+      .replaceAll(RegExp(r'[^a-zа-яіїєґ0-9]'), '');
+
+  void _showLocationMessage(
+    String message, {
+    String? actionLabel,
+    Future<bool> Function()? onAction,
+  }) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        action: actionLabel == null || onAction == null
+            ? null
+            : SnackBarAction(
+                label: actionLabel,
+                onPressed: () => onAction(),
+              ),
+      ),
+    );
   }
 
   Future<void> _pickServiceCategory() async {
     final selection = await _showFilterPicker<ServiceCategory>(context,
-        title: 'Оберіть тип послуги', allLabel: 'Всі послуги',
+        title: 'Оберіть тип послуги',
+        allLabel: 'Всі послуги',
         values: _filterOptions.serviceCategories,
         labelFor: (category) => category.label,
         selected: _selectedServiceCategory);
@@ -163,7 +370,8 @@ class _CommunityAnnouncementTabState extends State<CommunityAnnouncementTab> {
 
   Future<void> _pickOfferCategory() async {
     final selection = await _showFilterPicker<OfferCategory>(context,
-        title: 'Оберіть тип пропозиції', allLabel: 'Всі типи',
+        title: 'Оберіть тип пропозиції',
+        allLabel: 'Всі типи',
         values: _filterOptions.offerCategories,
         labelFor: (category) => category.label,
         selected: _selectedOfferCategory);
@@ -181,8 +389,10 @@ class _CommunityAnnouncementTabState extends State<CommunityAnnouncementTab> {
         scrollDirection: Axis.horizontal,
         children: [
           _FilterButton(
-            label: _selectedCity ?? 'Всі міста',
-            selected: _selectedCity != null,
+            label: _nearbyOnly
+                ? 'Поруч · $_nearbyRadiusKm км'
+                : (_selectedCity ?? 'Всі міста'),
+            selected: _nearbyOnly || _selectedCity != null,
             onTap: _pickCity,
           ),
           if (widget.type == CommunityAnnouncementType.service) ...[
@@ -222,7 +432,9 @@ class _CommunityAnnouncementTabState extends State<CommunityAnnouncementTab> {
     } else if (_items.isEmpty) {
       content = _MessageState(
         icon: _iconForType(widget.type),
-        text: 'У цьому розділі ще немає оголошень.',
+        text: _nearbyOnly
+            ? 'Поруч немає оголошень у радіусі $_nearbyRadiusKm км.'
+            : 'У цьому розділі ще немає оголошень.',
       );
     } else {
       content = RefreshIndicator(
@@ -671,6 +883,22 @@ class _CommunityAnnouncementFormScreenState
     setState(() => _saving = true);
     final id = widget.item?.id ?? _uuidV4();
     try {
+      var latitude = widget.item?.latitude;
+      var longitude = widget.item?.longitude;
+      if (_city.text.trim().isNotEmpty && _address.text.trim().isNotEmpty) {
+        try {
+          await geo.setLocaleIdentifier('uk_UA');
+          final locations = await geo.locationFromAddress(
+            '${_city.text.trim()}, ${_address.text.trim()}',
+          );
+          if (locations.isNotEmpty) {
+            latitude = locations.first.latitude;
+            longitude = locations.first.longitude;
+          }
+        } catch (_) {
+          // Publishing remains available if the platform geocoder is offline.
+        }
+      }
       if (_selectedPhoto != null) {
         _photoStoragePath = await AnnouncementMediaStorage.uploadImage(
           announcementId: id,
@@ -712,6 +940,8 @@ class _CommunityAnnouncementFormScreenState
         isActive: widget.item?.isActive ?? true,
         ownerId: widget.item?.ownerId ?? _repository.currentUserId,
         listingCreditId: widget.item?.listingCreditId ?? widget.listingCreditId,
+        latitude: latitude,
+        longitude: longitude,
       );
       if (_editing) {
         await _repository.updateCommunityAnnouncement(item);
@@ -750,6 +980,10 @@ class _CommunityAnnouncementFormScreenState
           children: [
             _FormGuidanceCard(type: widget.type),
             const SizedBox(height: 14),
+            if (!_editing)
+              PublicationRemainingCard(
+                announcementType: widget.type.databaseValue,
+              ),
             if (widget.type == CommunityAnnouncementType.event) ...[
               AspectRatio(
                 aspectRatio: 1,
@@ -1172,7 +1406,128 @@ class _FilterSelection<T> {
   final T? value;
 }
 
-Future<_FilterSelection<T>?> _showFilterPicker<T>(BuildContext context, {
+class _CityFilterSelection {
+  const _CityFilterSelection({this.city, this.nearby = false});
+
+  final String? city;
+  final bool nearby;
+}
+
+Future<_CityFilterSelection?> _showCityFilterPicker(
+  BuildContext context, {
+  required List<String> cities,
+  required String? selectedCity,
+  required bool nearbySelected,
+  required int nearbyRadiusKm,
+}) {
+  return showModalBottomSheet<_CityFilterSelection>(
+    context: context,
+    showDragHandle: true,
+    builder: (context) => SafeArea(
+      child: ListView(
+        shrinkWrap: true,
+        children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
+            child: Text(
+              'Оберіть місто',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+            ),
+          ),
+          ListTile(
+            leading:
+                const Icon(Icons.near_me_outlined, color: AppTheme.primary),
+            title: const Text('Поруч'),
+            subtitle: Text('Оголошення в радіусі $nearbyRadiusKm км'),
+            trailing: nearbySelected
+                ? const Icon(Icons.check, color: AppTheme.primary)
+                : null,
+            onTap: () => Navigator.pop(
+              context,
+              const _CityFilterSelection(nearby: true),
+            ),
+          ),
+          ListTile(
+            title: const Text('Всі міста'),
+            trailing: !nearbySelected && selectedCity == null
+                ? const Icon(Icons.check, color: AppTheme.primary)
+                : null,
+            onTap: () => Navigator.pop(context, const _CityFilterSelection()),
+          ),
+          ...cities.map((city) => ListTile(
+                title: Text(city),
+                trailing: !nearbySelected && city == selectedCity
+                    ? const Icon(Icons.check, color: AppTheme.primary)
+                    : null,
+                onTap: () => Navigator.pop(
+                  context,
+                  _CityFilterSelection(city: city),
+                ),
+              )),
+        ],
+      ),
+    ),
+  );
+}
+
+Future<int?> _showNearbyRadiusPicker(
+  BuildContext context, {
+  required int initialRadiusKm,
+}) {
+  return showModalBottomSheet<int>(
+    context: context,
+    showDragHandle: true,
+    builder: (context) {
+      var radiusKm = initialRadiusKm.toDouble();
+      return StatefulBuilder(
+        builder: (context, setModalState) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Радіус пошуку «Поруч»',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Показувати оголошення в межах ${radiusKm.round()} км від вас.',
+                  style: const TextStyle(color: AppTheme.textSecondary),
+                ),
+                Slider(
+                  value: radiusKm,
+                  min: 1,
+                  max: 10,
+                  divisions: 9,
+                  label: '${radiusKm.round()} км',
+                  onChanged: (value) =>
+                      setModalState(() => radiusKm = value.roundToDouble()),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: const [
+                    Text('1 км'),
+                    Text('10 км'),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                FilledButton(
+                  onPressed: () => Navigator.pop(context, radiusKm.round()),
+                  child: const Text('Застосувати'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    },
+  );
+}
+
+Future<_FilterSelection<T>?> _showFilterPicker<T>(
+  BuildContext context, {
   required String title,
   required String allLabel,
   required List<T> values,
@@ -1204,8 +1559,7 @@ Future<_FilterSelection<T>?> _showFilterPicker<T>(BuildContext context, {
                 trailing: value == selected
                     ? const Icon(Icons.check, color: AppTheme.primary)
                     : null,
-                onTap: () =>
-                    Navigator.pop(context, _FilterSelection<T>(value)),
+                onTap: () => Navigator.pop(context, _FilterSelection<T>(value)),
               )),
         ],
       ),

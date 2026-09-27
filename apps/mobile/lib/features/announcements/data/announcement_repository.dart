@@ -29,7 +29,8 @@ class AnnouncementRepository {
     id, owner_id, announcement_type, title, address, city, description,
     event_date, contact_info, service_category, offer_category, price_amount,
     website, offer_text, valid_from, valid_until, promo_code, cover_photo_url,
-    cover_photo_storage_path, status, created_at, listing_credit_id
+    cover_photo_storage_path, status, created_at, listing_credit_id,
+    latitude, longitude
   ''';
 
   bool get _useMockData => SupabaseConfig.useMockData;
@@ -201,7 +202,9 @@ class AnnouncementRepository {
     String? city,
     ServiceCategory? serviceCategory,
     OfferCategory? offerCategory,
+    int? pageSize,
   }) async {
+    final size = pageSize ?? _pageSize;
     if (_useMockData) {
       final userId = currentUserId;
       return _communityMock
@@ -213,8 +216,8 @@ class AnnouncementRepository {
               (serviceCategory == null ||
                   item.serviceCategory == serviceCategory) &&
               (offerCategory == null || item.offerCategory == offerCategory))
-          .skip(page * _pageSize)
-          .take(_pageSize)
+          .skip(page * size)
+          .take(size)
           .toList();
     }
 
@@ -243,15 +246,15 @@ class AnnouncementRepository {
     if (offerCategory != null) {
       query = query.eq('offer_category', offerCategory.databaseValue);
     }
-    final from = page * _pageSize;
+    final from = page * size;
     final rows = type == CommunityAnnouncementType.event
         ? await query
             .order('event_date', ascending: true)
-            .range(from, from + _pageSize - 1)
+            .range(from, from + size - 1)
         : await query
             .order('promoted_until', ascending: false, nullsFirst: false)
             .order('ranking_at', ascending: false)
-            .range(from, from + _pageSize - 1);
+            .range(from, from + size - 1);
     final hydrated = await _hydrateCommunityPhotos(rows as List);
     if (mine) await _attachOwnerMetrics(hydrated);
     return hydrated.map(CommunityAnnouncement.fromJson).toList();
@@ -393,6 +396,9 @@ class AnnouncementRepository {
           isActive: !item.isActive,
           ownerId: item.ownerId,
           viewCount: item.viewCount,
+          listingCreditId: item.listingCreditId,
+          latitude: item.latitude,
+          longitude: item.longitude,
         );
       }
       AppDataEvents.notifyChanged();

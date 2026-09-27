@@ -12,7 +12,6 @@ import '../../../shared/services/private_pet_storage.dart';
 import '../../../shared/widgets/city_autocomplete_field.dart';
 import '../../../shared/widgets/pet_avatar.dart';
 import '../../billing/data/billing_repository.dart';
-import '../../billing/domain/owner_plan.dart';
 import '../../billing/screens/listing_packages_screen.dart';
 import '../../pets/data/pet_repository.dart';
 import '../../pets/domain/pet.dart';
@@ -35,10 +34,7 @@ class AnnouncementsScreen extends StatefulWidget {
 class _AnnouncementsScreenState extends State<AnnouncementsScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tab = TabController(length: 6, vsync: this);
-  final _billingRepository = BillingRepository();
   RealtimeChannel? _channel;
-  Map<String, PublicationAccess>? _publicationAccess;
-  bool _publicationUsageLoading = true;
   final Map<String, int> _versions = {
     'breeding': 0,
     'sale': 0,
@@ -51,7 +47,6 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen>
   @override
   void initState() {
     super.initState();
-    _loadPublicationUsage();
     if (!SupabaseConfig.useMockData) {
       final client = Supabase.instance.client;
       _channel = client
@@ -71,7 +66,6 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen>
                 }
                 _versions['mine'] = _versions['mine']! + 1;
               });
-              unawaited(_loadPublicationUsage());
             },
           )
           .subscribe();
@@ -137,10 +131,6 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen>
       ),
       body: Column(
         children: [
-          _PublicationUsageBanner(
-            access: _publicationAccess,
-            loading: _publicationUsageLoading,
-          ),
           Expanded(
             child: TabBarView(
               controller: _tab,
@@ -170,27 +160,6 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen>
         ],
       ),
     );
-  }
-
-  Future<void> _loadPublicationUsage() async {
-    try {
-      final accesses = await Future.wait([
-        _billingRepository.getPublicationAccess('breeding'),
-        _billingRepository.getPublicationAccess('sale'),
-        _billingRepository.getPublicationAccess('service'),
-      ]);
-      if (!mounted) return;
-      setState(() {
-        _publicationAccess = {
-          'breeding': accesses[0],
-          'sale': accesses[1],
-          'service': accesses[2],
-        };
-        _publicationUsageLoading = false;
-      });
-    } catch (_) {
-      if (mounted) setState(() => _publicationUsageLoading = false);
-    }
   }
 
   Future<void> _createCurrent() async {
@@ -274,7 +243,6 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen>
         _versions[type] = _versions[type]! + 1;
         _versions['mine'] = _versions['mine']! + 1;
       });
-      unawaited(_loadPublicationUsage());
     }
   }
 
@@ -327,71 +295,6 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen>
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _PublicationUsageBanner extends StatelessWidget {
-  const _PublicationUsageBanner({
-    required this.access,
-    required this.loading,
-  });
-
-  final Map<String, PublicationAccess>? access;
-  final bool loading;
-
-  @override
-  Widget build(BuildContext context) {
-    if (loading && access == null) {
-      return const Padding(
-        padding: EdgeInsets.fromLTRB(16, 10, 16, 4),
-        child: LinearProgressIndicator(minHeight: 2),
-      );
-    }
-    if (access == null) return const SizedBox.shrink();
-
-    final breeding = access?['breeding']?.remaining;
-    final sale = access?['sale']?.remaining;
-    final service = access?['service']?.remaining;
-    String remaining(int? value) =>
-        value == null ? 'Без обмежень' : value.toString();
-
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 10, 16, 4),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.14)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Залишок оголошень цього місяця',
-            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-          ),
-          const SizedBox(height: 7),
-          Wrap(
-            spacing: 18,
-            runSpacing: 6,
-            children: [
-              Text(
-                'Пошук партнера: ${remaining(breeding)}',
-                style: const TextStyle(fontSize: 12),
-              ),
-              Text(
-                'Продаж: ${remaining(sale)}',
-                style: const TextStyle(fontSize: 12),
-              ),
-              Text(
-                'Послуги: ${remaining(service)}',
-                style: const TextStyle(fontSize: 12),
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }

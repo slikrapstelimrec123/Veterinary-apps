@@ -10,6 +10,7 @@ import '../../../shared/services/private_pet_storage.dart';
 import '../../../features/pets/domain/pet.dart';
 import '../data/announcement_repository.dart';
 import '../domain/sale_announcement.dart';
+import '../widgets/publication_remaining_card.dart';
 
 class AddSaleAnnouncementScreen extends StatefulWidget {
   const AddSaleAnnouncementScreen({
@@ -148,6 +149,7 @@ class _AddSaleAnnouncementScreenState extends State<AddSaleAnnouncementScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            const PublicationRemainingCard(announcementType: 'sale'),
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(14),

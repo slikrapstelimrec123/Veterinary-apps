@@ -523,6 +523,41 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Future<void> _openRecentItem(_HomeRecentItem item) async {
+    if (item.type == _HomeFocusType.medication) {
+      await Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => MedicationsScreen(
+          petId: item.pet.id,
+          petName: item.pet.name,
+        ),
+      ));
+    } else if (item.visitRecordId != null) {
+      await Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => VisitRecordDetailsScreen(
+          recordId: item.visitRecordId!,
+        ),
+      ));
+    } else if (item.type == _HomeFocusType.reminder) {
+      widget.onOpenCalendar();
+    } else {
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(item.title),
+          content: Text(
+              '${item.pet.name}\nДата: ${item.date.day.toString().padLeft(2, '0')}.${item.date.month.toString().padLeft(2, '0')}.${item.date.year}'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Закрити'),
+            ),
+          ],
+        ),
+      );
+    }
+    if (mounted) refresh();
+  }
+
   Future<List<_HomeRecentItem>> _loadRecentItems(List<Pet> pets) async {
     final result = <_HomeRecentItem>[];
     for (final pet in pets) {
@@ -818,6 +853,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       .where((item) => item.pet.id == selectedPet.id)
                       .take(3)
                       .toList(growable: false),
+                  onOpenItem: _openRecentItem,
                 ),
               ],
             ],
@@ -1212,8 +1248,9 @@ class _QuickActionsCard extends StatelessWidget {
 }
 
 class _RecentRecordsCard extends StatelessWidget {
-  const _RecentRecordsCard({required this.items});
+  const _RecentRecordsCard({required this.items, required this.onOpenItem});
   final List<_HomeRecentItem> items;
+  final ValueChanged<_HomeRecentItem> onOpenItem;
 
   @override
   Widget build(BuildContext context) => Card(
@@ -1237,6 +1274,11 @@ class _RecentRecordsCard extends StatelessWidget {
                         color: AppTheme.primary),
                     title: Text(item.title),
                     subtitle: Text('${item.pet.name} · ${item.subtitle}'),
+                    trailing: const Icon(
+                      Icons.chevron_right,
+                      color: AppTheme.primary,
+                    ),
+                    onTap: () => onOpenItem(item),
                   )),
           ]),
         ),
@@ -1364,10 +1406,6 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
       try {
         final feedings = await _feedingRepository.getFeedings(pet.id);
         items.addAll(feedings
-            // Keep events scheduled for today; the calendar view applies the
-            // inclusive 30-day window when it renders the list.
-            .where(
-                (item) => !_day(item.startDate).isBefore(_day(DateTime.now())))
             .map((item) => _HomeFocusItem(
                   type: _HomeFocusType.feeding,
                   pet: pet,
@@ -1379,8 +1417,6 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
         final achievements =
             await _achievementRepository.getAchievements(pet.id);
         items.addAll(achievements
-            .where(
-                (item) => !_day(item.eventDate).isBefore(_day(DateTime.now())))
             .map((item) => _HomeFocusItem(
                   type: _HomeFocusType.achievement,
                   pet: pet,
@@ -1391,8 +1427,6 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
       try {
         final visits = await _visitRepository.getVisitRecordsForPet(pet.id);
         items.addAll(visits
-            .where(
-                (item) => !_day(item.visitDate).isBefore(_day(DateTime.now())))
             .map((item) => _HomeFocusItem(
                   type: _HomeFocusType.visit,
                   pet: pet,
@@ -1768,8 +1802,11 @@ class _EventsCalendarTabState extends State<_EventsCalendarTab> {
               ),
               Builder(
                 builder: (context) {
-                  final selectedEvents = upcoming
-                      .where((item) => _day(item.date) == _selectedDate)
+                  final selectedEvents = events
+                      .where((item) =>
+                          (_selectedPetId == null ||
+                              item.pet.id == _selectedPetId) &&
+                          _day(item.date) == _selectedDate)
                       .toList(growable: false);
                   if (selectedEvents.isEmpty) return const SizedBox.shrink();
                   return Card(

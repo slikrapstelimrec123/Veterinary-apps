@@ -10,6 +10,7 @@ import '../../../shared/services/private_pet_storage.dart';
 import '../../../features/pets/domain/pet.dart';
 import '../data/announcement_repository.dart';
 import '../domain/breeding_announcement.dart';
+import '../widgets/publication_remaining_card.dart';
 
 class AddBreedingAnnouncementScreen extends StatefulWidget {
   const AddBreedingAnnouncementScreen({
@@ -147,6 +148,7 @@ class _AddBreedingAnnouncementScreenState
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            const PublicationRemainingCard(announcementType: 'breeding'),
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(14),

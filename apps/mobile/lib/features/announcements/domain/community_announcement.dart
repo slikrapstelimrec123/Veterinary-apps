@@ -80,6 +80,8 @@ class CommunityAnnouncement {
     this.ownerId,
     this.viewCount = 0,
     this.listingCreditId,
+    this.latitude,
+    this.longitude,
   });
 
   final String id;
@@ -105,6 +107,18 @@ class CommunityAnnouncement {
   final String? ownerId;
   final int viewCount;
   final String? listingCreditId;
+  final double? latitude;
+  final double? longitude;
+
+  bool get hasCoordinates => latitude != null && longitude != null;
+
+  bool get isMobileService {
+    if (type != CommunityAnnouncementType.service) return false;
+    final text = '${address.toLowerCase()} ${description.toLowerCase()}';
+    return RegExp(
+      r'виїзд|виїзн|за адресою клієнта|на дому|по місту|у клієнта',
+    ).hasMatch(text);
+  }
 
   factory CommunityAnnouncement.fromJson(Map<String, dynamic> json) {
     return CommunityAnnouncement(
@@ -136,6 +150,8 @@ class CommunityAnnouncement {
       ownerId: json['owner_id'] as String?,
       viewCount: (json['view_count'] as num?)?.toInt() ?? 0,
       listingCreditId: json['listing_credit_id'] as String?,
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
     );
   }
 
@@ -161,6 +177,8 @@ class CommunityAnnouncement {
         'cover_photo_url': photoUrl,
         'cover_photo_storage_path': photoStoragePath,
         'listing_credit_id': listingCreditId,
+        'latitude': latitude,
+        'longitude': longitude,
       };
 
   Map<String, dynamic> toUpdateJson() {
@@ -170,6 +188,39 @@ class CommunityAnnouncement {
     values.remove('pet_id');
     values.remove('announcement_type');
     return values;
+  }
+
+  CommunityAnnouncement copyWithCoordinates({
+    required double? latitude,
+    required double? longitude,
+  }) {
+    return CommunityAnnouncement(
+      id: id,
+      type: type,
+      title: title,
+      address: address,
+      city: city,
+      description: description,
+      createdAt: createdAt,
+      eventDate: eventDate,
+      contact: contact,
+      serviceCategory: serviceCategory,
+      offerCategory: offerCategory,
+      priceAmount: priceAmount,
+      website: website,
+      offerText: offerText,
+      validFrom: validFrom,
+      validUntil: validUntil,
+      promoCode: promoCode,
+      photoUrl: photoUrl,
+      photoStoragePath: photoStoragePath,
+      isActive: isActive,
+      ownerId: ownerId,
+      viewCount: viewCount,
+      listingCreditId: listingCreditId,
+      latitude: latitude,
+      longitude: longitude,
+    );
   }
 
   String get subtitle {

@@ -43,6 +43,8 @@
 	<string>Lappo використовує камеру, щоб ви могли додавати фото тварини та ветеринарних документів.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Lappo використовує вибрані вами фото для картки тварини та ветеринарних документів.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Lappo використовує ваше місцезнаходження лише для показу оголошень поруч у радіусі 3 км.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
